@@ -41,6 +41,7 @@ A custom Cloudflare VibeSDK application built with React, Vite, and Tailwind CSS
 
 - Node.js 18 or higher
 - npm or yarn
+- Docker (recommended) or Daytona (alternative) - see [DAYTONA-SETUP.md](./DAYTONA-SETUP.md)
 - Cloudflare account (for deployment)
 - Stripe account (for payments)
 
@@ -117,19 +118,23 @@ npm run db:migrate
    - `customer.subscription.deleted`
 4. Copy the webhook secret to your environment variables
 
-## Docker Deployment
+## Container Deployment
 
-### Build the Docker image:
+> **Note**: If Docker is not working, see [DAYTONA-SETUP.md](./DAYTONA-SETUP.md) for an alternative using Daytona.
+
+### Option 1: Docker (Recommended)
+
+#### Build the Docker image:
 ```bash
 docker build -t nurdscode-app .
 ```
 
-### Run locally:
+#### Run locally:
 ```bash
-docker run -p 3000:3000 nurdscode-app
+docker run -p 80:80 nurdscode-app
 ```
 
-### Push to Cloudflare Registry:
+#### Push to Cloudflare Registry:
 
 The GitHub Action automatically builds and pushes the image when you push to `main` or `develop` branches.
 
@@ -137,6 +142,43 @@ Manual push:
 ```bash
 docker tag nurdscode-app registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
+```
+
+### Option 2: Daytona (Alternative to Docker)
+
+If Docker is not available or not working, you can use [Daytona](https://www.daytona.io/) as an alternative container runtime.
+
+#### Install Daytona:
+```bash
+# Install Daytona
+curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
+
+# Verify installation
+daytona version
+```
+
+#### Run with Daytona:
+```bash
+# Create a Daytona workspace
+daytona create
+
+# The application will be automatically containerized and run
+daytona start
+```
+
+### Option 3: Ubuntu.cloud Container
+
+You can also deploy using Ubuntu.cloud containers for cloud-native deployments:
+
+```bash
+# Pull Ubuntu base image
+docker pull ubuntu:latest
+
+# Build with Ubuntu base
+docker build -f Dockerfile -t nurdscode-ubuntu .
+
+# Run the container
+docker run -p 80:80 nurdscode-ubuntu
 ```
 
 ## GitHub Actions Setup

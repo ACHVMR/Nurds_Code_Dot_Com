@@ -98,7 +98,7 @@ VITE_STRIPE_PUBLISHABLE_KEY=pk_live_your_key
 VITE_API_URL=https://your-worker-url.workers.dev
 ```
 
-## Step 7: Set Up Docker Container Registry
+## Step 7: Set Up Container Registry
 
 ### Configure GitHub Secrets
 
@@ -117,7 +117,9 @@ Add these secrets to your GitHub repository (Settings > Secrets):
 
 The GitHub Action will automatically build and push the Docker image when you push to `main` or `develop` branches.
 
-### Manual Docker Build and Push
+### Manual Build and Push
+
+#### Using Docker (Default)
 
 ```bash
 # Build the image
@@ -130,6 +132,43 @@ docker tag nurdscode-app registry.cloudflare.com/nurdscode-userappsandboxservice
 echo $CLOUDFLARE_REGISTRY_TOKEN | docker login registry.cloudflare.com -u $CLOUDFLARE_REGISTRY_USERNAME --password-stdin
 
 # Push to registry
+docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
+```
+
+#### Using Daytona (Alternative if Docker isn't working)
+
+If you encounter issues with Docker, use Daytona as an alternative:
+
+```bash
+# Install Daytona
+curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
+
+# Create Daytona workspace
+daytona create --name nurdscode-app
+
+# Build with Daytona
+daytona build
+
+# Export container image
+daytona export nurdscode-app:latest
+
+# Tag and push to registry (Daytona supports Docker registry protocol)
+daytona push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
+```
+
+#### Using Ubuntu.cloud Container
+
+For Ubuntu-based cloud deployments:
+
+```bash
+# Build with Ubuntu base
+docker build -f Dockerfile -t nurdscode-ubuntu .
+
+# Run locally for testing
+docker run -p 80:80 nurdscode-ubuntu
+
+# Tag and push
+docker tag nurdscode-ubuntu registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 ```
 
@@ -184,6 +223,23 @@ npm run worker:deploy
 ```
 
 ## Troubleshooting
+
+### Issue: Docker not working or unavailable
+**Solution**: Use Daytona as an alternative container runtime
+```bash
+# Install Daytona
+curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
+
+# Create workspace
+daytona create
+
+# Start development environment
+daytona start
+```
+
+**Alternative**: Use Ubuntu.cloud containers
+- Deploy directly to cloud providers with Ubuntu base images
+- Compatible with most container orchestration platforms
 
 ### Issue: Stripe webhook not working
 - Verify webhook secret is correct
