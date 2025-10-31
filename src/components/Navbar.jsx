@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,9 +27,14 @@ function Navbar() {
             <Link to="/editor" className="text-text hover:text-accent transition-colors">
               Editor
             </Link>
-            <Link to="/subscribe" className="btn-primary">
-              Get Started
-            </Link>
+            <SignedOut>
+              <Link to="/auth" className="btn-primary">
+                Sign In
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <UserButton appearance={{ elements: { userButtonAvatarBox: 'ring-2 ring-accent' } }} />
+            </SignedIn>
           </div>
 
           <div className="md:hidden">
@@ -60,9 +66,16 @@ function Navbar() {
             <Link to="/editor" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
               Editor
             </Link>
-            <Link to="/subscribe" className="block px-3 py-2 text-accent hover:text-neon">
-              Get Started
-            </Link>
+            <SignedOut>
+              <Link to="/auth" className="block px-3 py-2 text-accent hover:text-neon">
+                Sign In
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <div className="px-3 py-2 text-text">
+                <UserButton />
+              </div>
+            </SignedIn>
           </div>
         </div>
       )}

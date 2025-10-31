@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 
 function Subscribe() {
@@ -8,11 +8,39 @@ function Subscribe() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
 
-  const plans = {
-    free: { name: 'Free', price: 0 },
-    price_pro: { name: 'Pro', price: 29 },
-    price_enterprise: { name: 'Enterprise', price: 99 },
-  };
+  const plans = useMemo(() => ({
+    free: {
+      name: 'Free',
+      price: 0,
+      billing: 'per month',
+      summary: 'Groq 8B playground access and community tutorials',
+    },
+    price_coffee: {
+      name: 'Buy Me a Coffee ☕',
+      price: 7,
+      billing: 'per month',
+      summary: 'Groq 70B default routing with extended token limits',
+    },
+    price_pro: {
+      name: 'Pro',
+      price: 29,
+      billing: 'per month',
+      summary: 'GPT-4o mini via Cloudflare gateway with project workspaces',
+    },
+    price_enterprise: {
+      name: 'Enterprise',
+      price: 99,
+      billing: 'per month',
+      summary: 'Hybrid routing with Claude for teams, governance, and SLA support',
+    },
+  }), []);
+
+  useEffect(() => {
+    const planParam = searchParams.get('plan');
+    if (planParam && plans[planParam]) {
+      setSelectedPlan(planParam);
+    }
+  }, [searchParams, plans]);
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
@@ -87,6 +115,7 @@ function Subscribe() {
                 className="input-field w-full"
               >
                 <option value="free">Free - $0/month</option>
+                  <option value="price_coffee">Buy Me a Coffee ☕ - $7/month</option>
                 <option value="price_pro">Pro - $29/month</option>
                 <option value="price_enterprise">Enterprise - $99/month</option>
               </select>
@@ -103,9 +132,14 @@ function Subscribe() {
                 <span className="text-lg text-text">Total:</span>
                 <span className="text-3xl font-bold text-text">
                   ${plans[selectedPlan]?.price}
-                  <span className="text-sm text-text/60">/month</span>
+                  <span className="text-sm text-text/60">/{plans[selectedPlan]?.billing || 'month'}</span>
                 </span>
               </div>
+              {plans[selectedPlan]?.summary && (
+                <p className="text-sm text-text/60 mt-4">
+                  {plans[selectedPlan].summary}
+                </p>
+              )}
             </div>
 
             <button

@@ -8,11 +8,12 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
 
 - 🚀 **Modern Stack**: React + Vite + Tailwind CSS
 - ⚡ **Serverless Backend**: Cloudflare Workers + D1 Database
-- 💳 **Subscription System**: Three-tier pricing (Free, Pro, Enterprise)
+- 💳 **Subscription System**: Four-tier pricing (Free, Coffee, Pro, Enterprise)
 - 🔐 **Authentication**: Secure user authentication
 - 🎨 **Custom Branding**: Flat UI design with neon green tagline (#39FF14) and gold accents (#C9A449)
 - 🖋️ **Typography**: Doto font for UI, Permanent Marker for tagline
 - 📱 **Responsive Design**: Mobile-first, WCAG AA contrast compliant
+- 🤖 **Vibe Coding Assistant**: Cloudflare AI Gateway chat helper with tier-aware guidance
 - 🐳 **Containerized**: Docker + Daytona support with multi-stage builds
 - 🔄 **CI/CD**: GitHub Actions for automated deployments
 
@@ -22,17 +23,19 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
 - `/pricing` - Three-tier pricing plans
 - `/subscribe` - Subscription checkout flow
 - `/success` - Post-subscription success page
-- `/editor` - Code editor with real-time execution
+- `/editor` - Code editor with real-time execution and Vibe Coding assistant
 
 ## Tech Stack
 
 ### Frontend
+
 - **React 19** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **React Router** - Client-side routing
 
 ### Backend
+
 - **Cloudflare Workers** - Serverless functions
 - **Cloudflare D1** - SQLite database
 - **Stripe** - Payment processing
@@ -51,65 +54,74 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
 ### Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/ACHVMR/Nurds_Code_Dot_Com.git
-cd Nurds_Code_Dot_Com
-```
+
+   ```bash
+   git clone https://github.com/ACHVMR/Nurds_Code_Dot_Com.git
+   cd Nurds_Code_Dot_Com
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
+
+   ```bash
+   npm install
+   ```
 
 3. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your actual keys
-```
+
+   ```bash
+   cp .env.example .env
+   # Edit .env with your actual keys
+   ```
 
 4. Start the development server:
-```bash
-npm run dev
-```
+
+   ```bash
+   npm run dev
+   ```
 
 The application will be available at `http://localhost:3000`
 
 ### Running the Backend
 
 1. Start the Cloudflare Worker locally:
-```bash
-npm run worker:dev
-```
+
+   ```bash
+   npm run worker:dev
+   ```
 
 The API will be available at `http://localhost:8787`
 
 ## Database Setup
 
 1. Create a D1 database:
-```bash
-wrangler d1 create nurdscode_db
-```
 
-2. Update `wrangler.toml` with your database ID
+   ```bash
+   wrangler d1 create nurdscode_db
+   ```
+
+2. Update `wrangler.toml` with your database ID.
 
 3. Run migrations:
-```bash
-npm run db:migrate
-```
+
+   ```bash
+   npm run db:migrate
+   ```
 
 ## Stripe Configuration
 
 ### Create Products and Prices
 
-1. Log in to your Stripe Dashboard
-2. Create three products:
+1. Log in to your Stripe Dashboard.
+
+2. Create four products:
    - Free (for demo purposes)
+   - Coffee ($7/month)
    - Pro ($29/month)
    - Enterprise ($99/month)
 
 3. Copy the price IDs and update:
    - `src/pages/Subscribe.jsx`
-   - Environment variables
+   - Environment variables (if you mirror prices in worker metadata)
 
 ### Set up Webhook
 
@@ -127,21 +139,24 @@ npm run db:migrate
 
 ### Option 1: Docker (Recommended)
 
-#### Build the Docker image:
+#### Build the Docker image
+
 ```bash
 docker build -t nurdscode-app .
 ```
 
-#### Run locally:
+#### Run locally
+
 ```bash
 docker run -p 80:80 nurdscode-app
 ```
 
-#### Push to Cloudflare Registry:
+#### Push to Cloudflare Registry
 
 The GitHub Action automatically builds and pushes the image when you push to `main` or `develop` branches.
 
 Manual push:
+
 ```bash
 docker tag nurdscode-app registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
@@ -151,7 +166,8 @@ docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 
 If Docker is not available or not working, you can use [Daytona](https://www.daytona.io/) as an alternative container runtime.
 
-#### Install Daytona:
+#### Install Daytona
+
 ```bash
 # Install Daytona
 curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
@@ -160,7 +176,8 @@ curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
 daytona version
 ```
 
-#### Run with Daytona:
+#### Run with Daytona
+
 ```bash
 # Create a Daytona workspace
 daytona create
@@ -198,9 +215,11 @@ docker run -p 80:80 nurdscode-ubuntu
 ## API Endpoints
 
 ### POST `/api/create-checkout-session`
+
 Create a Stripe checkout session for subscription
 
 **Request:**
+
 ```json
 {
   "priceId": "price_xxx",
@@ -209,6 +228,7 @@ Create a Stripe checkout session for subscription
 ```
 
 **Response:**
+
 ```json
 {
   "url": "https://checkout.stripe.com/..."
@@ -216,19 +236,52 @@ Create a Stripe checkout session for subscription
 ```
 
 ### POST `/api/webhook`
+
 Stripe webhook handler for subscription events
 
 ### GET `/api/subscription`
+
 Get user's subscription details (requires JWT token)
 
 **Headers:**
-```
+
+```text
 Authorization: Bearer <jwt_token>
+```
+
+### POST `/api/chat`
+
+Generate a Vibe Coding assistant response tailored to the requested plan tier
+
+**Request:**
+
+```json
+{
+   "message": "How do I build a prompt pipeline?",
+   "plan": "pro",
+   "history": [
+      { "role": "user", "content": "Help me structure a project" },
+      { "role": "assistant", "content": "Start with a clear spec..." }
+   ]
+}
+```
+
+**Response:**
+
+```json
+{
+   "message": "Start by defining your Cloudflare Worker entrypoint...",
+   "plan": "pro",
+   "model": "gpt-4o-mini",
+   "usage": {
+      "total_tokens": 412
+   }
+}
 ```
 
 ## Project Structure
 
-```
+```text
 .
 ├── .github/
 │   └── workflows/
@@ -261,30 +314,48 @@ Authorization: Bearer <jwt_token>
 ## Deployment
 
 ### Frontend (Cloudflare Pages)
+
 ```bash
 npm run build
 wrangler pages deploy dist
 ```
 
 ### Backend (Cloudflare Workers)
+
 ```bash
 npm run worker:deploy
 ```
 
 ### Docker Container
+
 The GitHub Action automatically handles this on push to main/develop.
 
 ## Environment Variables
 
 ### Frontend (Vite)
+
 - `VITE_STRIPE_PUBLISHABLE_KEY` - Stripe publishable key
 - `VITE_API_URL` - Backend API URL
 
-### Backend (Cloudflare Workers)
+### Backend (Workers Runtime)
+
 - `STRIPE_SECRET_KEY` - Stripe secret key (secret)
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret (secret)
 - `JWT_SECRET` - JWT signing secret (variable)
 - `STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (variable)
+- `GROQ_API_KEY` - GROQ key for free/coffee plans
+- `OPENROUTER_API_KEY` - Optional fallback for Pro/Enterprise outside Cloudflare Gateway
+- `AI_GATEWAY_URL` - Cloudflare AI Gateway base URL for routed providers
+
+## Vibe Coding Assistant
+
+The `/editor` page ships with a Cloudflare VibeSDK powered assistant. Configure the underlying providers with:
+
+1. `GROQ_API_KEY` for the Free/Coffee tiers.
+2. `AI_GATEWAY_URL` pointing at your Cloudflare AI Gateway with OpenAI, Groq, and Anthropic integrations.
+3. Optional `OPENROUTER_API_KEY` for local testing without the Gateway.
+
+Messages are persisted to the D1 `chat_history` table when a database binding is present.
 
 ## Contributing
 
@@ -300,7 +371,7 @@ This project is licensed under the MIT License.
 
 ## Support
 
-For support, email support@nurdscode.com or open an issue on GitHub.
+For support, email [support@nurdscode.com](mailto:support@nurdscode.com) or open an issue on the GitHub repository.
 
 ## Acknowledgments
 

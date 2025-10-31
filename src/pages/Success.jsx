@@ -5,8 +5,20 @@ function Success() {
   const [searchParams] = useSearchParams();
   const [plan, setPlan] = useState('');
 
+  const planLabels = {
+    free: 'Free',
+    price_coffee: 'Buy Me a Coffee ☕',
+    price_pro: 'Pro',
+    price_enterprise: 'Enterprise',
+  };
+
+  const planText = plan === 'subscription' || !plan
+    ? 'subscription'
+    : `${plan} plan`;
+
   useEffect(() => {
-    setPlan(searchParams.get('plan') || 'subscription');
+    const planParam = searchParams.get('plan');
+    setPlan(planLabels[planParam] || 'subscription');
   }, [searchParams]);
 
   return (
@@ -33,7 +45,7 @@ function Success() {
               Subscription Successful!
             </h1>
             <p className="text-xl text-text mb-8">
-              Welcome to Nurds Code! Your {plan} subscription is now active.
+              Welcome to Nurds Code! Your {planText} is now active.
             </p>
           </div>
 

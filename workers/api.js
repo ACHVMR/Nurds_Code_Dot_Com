@@ -1,4 +1,11 @@
 import Stripe from 'stripe';
+import { chatHandler } from '../src/server/chat.js';
+import {
+  handleTranscribe,
+  handleSynthesize,
+  handleListVoices,
+  handleVoiceConversation
+} from '../src/server/voiceAPI.js';
 
 // JWT utility functions
 function generateToken(userId, secret) {
@@ -44,6 +51,97 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+// ============================================
+// Clerk Auth Helpers (JWT verification via JWKS)
+// ============================================
+let JWKS_CACHE = { keys: null, fetchedAt: 0 };
+
+function base64urlToUint8Array(base64url) {
+  const pad = '='.repeat((4 - (base64url.length % 4)) % 4);
+  const base64 = (base64url + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+async function getClerkJWKS(env) {
+  const maxAgeMs = 5 * 60 * 1000; // 5 minutes
+  const now = Date.now();
+  if (JWKS_CACHE.keys && now - JWKS_CACHE.fetchedAt < maxAgeMs) return JWKS_CACHE.keys;
+  const url = env.CLERK_JWKS_URL;
+  if (!url) throw new Error('CLERK_JWKS_URL not configured');
+  const res = await fetch(url, { cf: { cacheTtl: 300, cacheEverything: true } });
+  if (!res.ok) throw new Error(`Failed to fetch Clerk JWKS: ${res.status}`);
+  const jwks = await res.json();
+  JWKS_CACHE = { keys: jwks, fetchedAt: now };
+  return jwks;
+}
+
+async function verifyClerkJWT(token, env) {
+  if (!token) throw new Error('Missing token');
+  const [headerB64, payloadB64, signatureB64] = token.split('.');
+  if (!headerB64 || !payloadB64 || !signatureB64) throw new Error('Invalid JWT format');
+
+  const header = JSON.parse(new TextDecoder().decode(base64urlToUint8Array(headerB64)));
+  const payload = JSON.parse(new TextDecoder().decode(base64urlToUint8Array(payloadB64)));
+  const signature = base64urlToUint8Array(signatureB64);
+
+  const jwks = await getClerkJWKS(env);
+  const jwk = (jwks.keys || []).find(k => k.kid === header.kid);
+  if (!jwk) throw new Error('No matching JWK for token kid');
+
+  const algo = header.alg || 'RS256';
+  const verifyAlg = algo === 'RS256' ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' } : null;
+  if (!verifyAlg) throw new Error(`Unsupported alg: ${algo}`);
+
+  const key = await crypto.subtle.importKey(
+    'jwk',
+    jwk,
+    verifyAlg,
+    false,
+    ['verify']
+  );
+
+  const encoder = new TextEncoder();
+  const signingInput = encoder.encode(`${headerB64}.${payloadB64}`);
+  const ok = await crypto.subtle.verify(
+    verifyAlg,
+    key,
+    signature,
+    signingInput
+  );
+  if (!ok) throw new Error('Invalid token signature');
+
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && now > payload.exp) throw new Error('Token expired');
+  if (payload.nbf && now < payload.nbf) throw new Error('Token not yet valid');
+
+  return payload;
+}
+
+async function getClerkSession(request, env) {
+  // Prefer Authorization: Bearer <token>
+  const auth = request.headers.get('Authorization') || request.headers.get('authorization');
+  let token = null;
+  if (auth && auth.startsWith('Bearer ')) token = auth.slice(7).trim();
+
+  // Fallback: __session cookie for same-origin
+  if (!token) {
+    const cookie = request.headers.get('Cookie') || request.headers.get('cookie') || '';
+    const match = cookie.match(/(?:^|;\s*)__session=([^;]+)/);
+    if (match) token = decodeURIComponent(match[1]);
+  }
+
+  if (!token) return null;
+  try {
+    const claims = await verifyClerkJWT(token, env);
+    return { token, claims };
+  } catch (_) {
+    return null;
+  }
+}
+
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -74,7 +172,7 @@ async function handleRequest(request, env) {
           },
         ],
         customer_email: email,
-        success_url: `${url.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${url.origin}/success?plan=${encodeURIComponent(priceId)}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${url.origin}/subscribe`,
         metadata: {
           priceId: priceId,
@@ -97,6 +195,47 @@ async function handleRequest(request, env) {
         }
       );
     }
+  }
+
+  // Route: Vibe Coding chat assistant (with Clerk auth if available)
+  if (path === '/api/chat' && request.method === 'POST') {
+    const session = await getClerkSession(request, env);
+    if (session?.claims?.sub) {
+      // Pass user override to chatHandler
+      return chatHandler(request, env, { userId: session.claims.sub });
+    }
+    return chatHandler(request, env);
+  }
+
+  // Route: Auth check (returns Clerk claims)
+  if (path === '/api/auth/me' && request.method === 'GET') {
+    const session = await getClerkSession(request, env);
+    if (!session) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    return new Response(JSON.stringify({ userId: session.claims.sub, claims: session.claims }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Voice AI Routes
+  if (path === '/api/voice/transcribe' && request.method === 'POST') {
+    return handleTranscribe(request, env);
+  }
+
+  if (path === '/api/voice/synthesize' && request.method === 'POST') {
+    return handleSynthesize(request, env);
+  }
+
+  if (path === '/api/voice/voices' && request.method === 'GET') {
+    return handleListVoices(request, env);
+  }
+
+  if (path === '/api/voice/conversation' && request.method === 'POST') {
+    return handleVoiceConversation(request, env);
   }
 
   // Route: Stripe webhook

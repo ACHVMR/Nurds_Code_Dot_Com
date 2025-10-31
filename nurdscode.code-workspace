@@ -1,0 +1,170 @@
+{
+  "folders": [
+    {
+      "name": "Nurds Code",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "editor.fontFamily": "'Doto', 'Consolas', monospace",
+    "editor.fontSize": 15,
+    "editor.lineHeight": 22,
+    "editor.tabSize": 2,
+    "editor.wordWrap": "on",
+    "editor.minimap.enabled": false,
+    "editor.formatOnSave": true,
+    "workbench.colorTheme": "Default Dark+",
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true,
+      "node_modules": true,
+      "dist": true,
+      "build": true
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell",
+    "terminal.integrated.fontFamily": "'Cascadia Code', 'Consolas', monospace",
+    "terminal.integrated.fontSize": 13,
+    "eslint.enable": true,
+    "eslint.validate": [
+      "javascript",
+      "javascriptreact"
+    ],
+    "prettier.singleQuote": true,
+    "prettier.trailingComma": "es5",
+    "prettier.tabWidth": 2,
+    "tailwindCSS.includeLanguages": {
+      "plaintext": "html",
+      "javascript": "javascriptreact"
+    },
+    "tailwindCSS.experimental.classRegex": [
+      ["tw`([^`]*)", "'([^']*)'"]
+    ],
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.autoImports": true,
+    "files.associations": {
+      "*.js": "javascript",
+      "*.jsx": "javascriptreact",
+      "wrangler.toml": "toml"
+    }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "🚀 Dev Server (Vite)",
+        "type": "shell",
+        "command": "npm run dev",
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated",
+          "focus": true
+        }
+      },
+      {
+        "label": "🌩 Wrangler Dev (Worker)",
+        "type": "shell",
+        "command": "npm run worker:dev",
+        "group": "build",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always",
+          "panel": "dedicated"
+        }
+      },
+      {
+        "label": "📦 Build Production",
+        "type": "shell",
+        "command": "npm run build",
+        "group": "build",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "🚀 Deploy Worker",
+        "type": "shell",
+        "command": "npm run worker:deploy",
+        "group": "none",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "🗄️ Migrate Database",
+        "type": "shell",
+        "command": "npm run db:migrate",
+        "group": "none",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "💅 Tailwind Watch",
+        "type": "shell",
+        "command": "npx tailwindcss -i ./src/styles/index.css -o ./dist/output.css --watch",
+        "group": "build",
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "🔍 Git Status",
+        "type": "shell",
+        "command": "git status",
+        "group": "none",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always"
+        }
+      },
+      {
+        "label": "🌐 Preview Build",
+        "type": "shell",
+        "command": "npm run preview",
+        "group": "test",
+        "problemMatcher": [],
+        "presentation": {
+          "reveal": "always"
+        }
+      }
+    ]
+  },
+  "launch": {
+    "configurations": [
+      {
+        "name": "🐛 Debug Worker",
+        "type": "node",
+        "request": "launch",
+        "runtimeExecutable": "npx",
+        "runtimeArgs": [
+          "wrangler",
+          "dev",
+          "workers/api.js",
+          "--local"
+        ],
+        "console": "integratedTerminal"
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "cloudflare.wrangler",
+      "formulahendry.code-runner",
+      "ms-vscode.vscode-typescript-next",
+      "usernamehw.errorlens",
+      "eamodio.gitlens",
+      "github.copilot",
+      "stripe.vscode-stripe"
+    ]
+  }
+}

@@ -9,7 +9,17 @@
     "preview": "vite preview",
     "worker:dev": "wrangler dev workers/api.js",
     "worker:deploy": "wrangler deploy workers/api.js",
-    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql"
+    "worker:deploy:staging": "wrangler deploy workers/api.js --env staging",
+    "worker:deploy:prod": "wrangler deploy workers/api.js --env production",
+    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql",
+    "supabase:migrate": "psql $SUPABASE_URL -f supabase_schema.sql",
+    "setup:secrets": "pwsh -File scripts/setup-secrets.ps1",
+    "setup:storage": "pwsh -File scripts/setup-cloudflare-storage.ps1",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "deploy:full": "npm run build && npm run worker:deploy:prod",
+    "test": "echo 'Tests not yet implemented' && exit 0"
   },
   "keywords": [
     "cloudflare",
@@ -22,7 +32,9 @@
   "author": "Nurdscode",
   "license": "MIT",
   "dependencies": {
+    "@clerk/clerk-react": "^5.53.4",
     "@stripe/stripe-js": "^8.2.0",
+    "@supabase/supabase-js": "^2.78.0",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

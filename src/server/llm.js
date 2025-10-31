@@ -78,35 +78,55 @@ export async function generateForUser(user, prompt, env) {
 
   // Coffee tier: GROQ 70B (better reasoning)
   if (user.plan === 'coffee') {
-    return callViaGateway(
-      'groq/chat/completions',
-      {
-        model: 'llama3-70b-8192',
-        messages: [{ role: 'user', content: prompt }],
-      },
-      env
-    );
+    if (env.AI_GATEWAY_URL) {
+      return callViaGateway(
+        'groq/chat/completions',
+        {
+          model: 'llama3-70b-8192',
+          messages: [{ role: 'user', content: prompt }],
+        },
+        env
+      );
+    }
+
+    return callGroq(prompt, env, 'llama3-70b-8192');
   }
 
   // Pro tier: GPT-4o mini (balanced)
   if (user.plan === 'pro') {
+    if (env.AI_GATEWAY_URL) {
+      return callViaGateway(
+        'openai/chat/completions',
+        {
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+        },
+        env
+      );
+    }
+
+    if (env.OPENROUTER_API_KEY) {
+      return callOpenRouter(prompt, env, 'openai/gpt-4o-mini');
+    }
+
+    return callGroq(prompt, env, 'llama3-70b-8192');
+  }
+
+  // Enterprise tier: Claude (premium)
+  if (env.AI_GATEWAY_URL) {
     return callViaGateway(
-      'openai/chat/completions',
+      'anthropic/messages',
       {
-        model: 'gpt-4o-mini',
+        model: 'claude-3-opus-20240229',
         messages: [{ role: 'user', content: prompt }],
       },
       env
     );
   }
 
-  // Enterprise tier: Claude (premium)
-  return callViaGateway(
-    'anthropic/messages',
-    {
-      model: 'claude-3-opus-20240229',
-      messages: [{ role: 'user', content: prompt }],
-    },
-    env
-  );
+  if (env.OPENROUTER_API_KEY) {
+    return callOpenRouter(prompt, env, 'anthropic/claude-3-opus');
+  }
+
+  return callGroq(prompt, env, 'llama3-70b-8192');
 }

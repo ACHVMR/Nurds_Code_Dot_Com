@@ -7,18 +7,21 @@ import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
 import Editor from './pages/Editor';
+import Auth from './pages/Auth';
+import RequireAuth from './components/RequireAuth';
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow">
+  <main className="grow">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/success" element={<Success />} />
-          <Route path="/editor" element={<Editor />} />
+          <Route path="/editor" element={<RequireAuth><Editor /></RequireAuth>} />
+          <Route path="/auth" element={<Auth />} />
         </Routes>
       </main>
       <Footer />
