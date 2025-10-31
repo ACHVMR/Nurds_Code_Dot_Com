@@ -1,0 +1,68 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="200" height="200" fill="#0a0a0a"/>
+  
+  <!-- Circuit board pattern -->
+  <g stroke="#00ff00" stroke-width="1" opacity="0.3" fill="none">
+    <line x1="20" y1="20" x2="180" y2="20"/>
+    <line x1="20" y1="180" x2="180" y2="180"/>
+    <line x1="20" y1="20" x2="20" y2="180"/>
+    <line x1="180" y1="20" x2="180" y2="180"/>
+    
+    <!-- Circuit nodes -->
+    <circle cx="30" cy="30" r="2" fill="#00ff00"/>
+    <circle cx="170" cy="30" r="2" fill="#00ff00"/>
+    <circle cx="30" cy="170" r="2" fill="#00ff00"/>
+    <circle cx="170" cy="170" r="2" fill="#00ff00"/>
+  </g>
+  
+  <!-- Main NURD text with glow effect -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- "NURD" text with gradient -->
+  <defs>
+    <linearGradient id="nurdGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00ff00;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#00ffaa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00ff88;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <text x="100" y="110" font-family="Arial, sans-serif" font-size="64" font-weight="bold" 
+        text-anchor="middle" fill="url(#nurdGradient)" filter="url(#glow)" letter-spacing="4">
+    NURD
+  </text>
+  
+  <!-- "Drip" accent line beneath -->
+  <line x1="50" y1="135" x2="150" y2="135" stroke="#00ffaa" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Corner accents (hacker style) -->
+  <g stroke="#00ff00" stroke-width="2" fill="none">
+    <!-- Top-left corner -->
+    <line x1="25" y1="25" x2="45" y2="25"/>
+    <line x1="25" y1="25" x2="25" y2="45"/>
+    
+    <!-- Top-right corner -->
+    <line x1="175" y1="25" x2="155" y2="25"/>
+    <line x1="175" y1="25" x2="175" y2="45"/>
+    
+    <!-- Bottom-left corner -->
+    <line x1="25" y1="175" x2="45" y2="175"/>
+    <line x1="25" y1="175" x2="25" y2="155"/>
+    
+    <!-- Bottom-right corner -->
+    <line x1="175" y1="175" x2="155" y2="175"/>
+    <line x1="175" y1="175" x2="175" y2="155"/>
+  </g>
+  
+  <!-- Center dot (cyber element) -->
+  <circle cx="100" cy="100" r="3" fill="#00ffaa" opacity="0.5"/>
+</svg>
