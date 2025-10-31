@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import VoiceControl from '../components/VoiceControl';
 
 const INITIAL_ASSISTANT_MESSAGES = [
   {
@@ -241,6 +242,11 @@ function Editor() {
           </div>
 
           <div className="flex flex-col gap-6">
+            {/* Voice Control */}
+            <VoiceControl
+              onTranscript={(text) => setAssistantInput((prev) => (prev ? prev + "\n" : "") + text)}
+              onError={(err) => setAssistantError(err?.message || 'Voice error')}
+            />
             {/* Output Panel */}
             <div className="panel">
               <h2 className="text-xl font-semibold mb-4 text-text">Output</h2>
@@ -312,7 +318,7 @@ function Editor() {
                 <textarea
                   value={assistantInput}
                   onChange={(event) => setAssistantInput(event.target.value)}
-                  className="w-full bg-background border border-border text-sm text-text p-3 focus:outline-none focus:border-accent min-h-[96px] resize-none"
+                  className="w-full bg-background border border-border text-sm text-text p-3 focus:outline-none focus:border-accent min-h-24 resize-none"
                   placeholder="Ask about scaffolding, SDK usage, or how to improve your prompt..."
                   disabled={assistantLoading}
                 />

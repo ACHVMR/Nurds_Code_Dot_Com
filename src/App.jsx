@@ -7,6 +7,7 @@ import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
 import Editor from './pages/Editor';
+import Admin from './pages/Admin';
 import Auth from './pages/Auth';
 import RequireAuth from './components/RequireAuth';
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/success" element={<Success />} />
           <Route path="/editor" element={<RequireAuth><Editor /></RequireAuth>} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         </Routes>
       </main>
       <Footer />

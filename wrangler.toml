@@ -52,6 +52,13 @@ CLERK_BACKEND_API_URL = "https://api.clerk.com"
 CLERK_JWKS_URL = "https://precise-lamprey-55.clerk.accounts.dev/.well-known/jwks.json"
 # Set secret via wrangler: CLERK_SECRET_KEY
 
+# Superadmin / RBAC
+# Comma-separated email allowlist for superadmins (e.g., "owner@example.com,cofounder@example.com")
+ADMIN_ALLOWLIST = ""
+# Optional Clerk organization RBAC: if set, members with this role in this org are superadmins
+CLERK_ORG_ID_SUPERADMINS = ""
+CLERK_SUPERADMIN_ROLE = "owner"
+
 # Stripe Configuration
 STRIPE_PUBLISHABLE_KEY = "pk_live_51LPsOjHW9f80DXRWn1sPqOxChAwxi2e2VkxNBS3KH5e5nAHGyIn4hFOtEeXieH3h9ZH6Etzdwh6SKlZ3iPvx41Ow00Y2WF0Icg"
 

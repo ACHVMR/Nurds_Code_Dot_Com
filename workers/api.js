@@ -142,6 +142,68 @@ async function getClerkSession(request, env) {
   }
 }
 
+function parseEmailAllowlist(env) {
+  const raw = env.ADMIN_ALLOWLIST || '';
+  return raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function claimsOrgRoles(claims) {
+  // Clerk tokens can include org info in different shapes; try a few
+  const roles = new Set();
+  if (claims?.org_role) roles.add(String(claims.org_role).toLowerCase());
+  if (Array.isArray(claims?.orgs)) {
+    for (const o of claims.orgs) {
+      if (o?.role) roles.add(String(o.role).toLowerCase());
+    }
+  }
+  return roles;
+}
+
+function isSuperadminFromClaims(claims, env) {
+  if (!claims) return false;
+  const allow = parseEmailAllowlist(env);
+  const email = (claims.email || claims.email_address || '').toLowerCase();
+  if (email && allow.includes(email)) return true;
+
+  const orgIdCfg = (env.CLERK_ORG_ID_SUPERADMINS || '').trim();
+  const roleCfg = (env.CLERK_SUPERADMIN_ROLE || 'owner').toLowerCase();
+  const roles = claimsOrgRoles(claims);
+
+  // If org is specified, require both org match and role match when available
+  if (orgIdCfg) {
+    const orgIds = new Set();
+    if (claims.org_id) orgIds.add(String(claims.org_id));
+    if (Array.isArray(claims.orgs)) {
+      for (const o of claims.orgs) if (o?.id) orgIds.add(String(o.id));
+    }
+    if (orgIds.has(orgIdCfg) && (roles.has(roleCfg) || roles.size === 0)) {
+      // If roles missing in token, allow org match alone
+      return true;
+    }
+  } else {
+    // No org constraint provided; role alone suffices if present
+    if (roles.has(roleCfg)) return true;
+  }
+
+  return false;
+}
+
+async function requireAuth(request, env) {
+  const session = await getClerkSession(request, env);
+  if (!session) throw new Error('Unauthorized');
+  return session;
+}
+
+async function requireSuperadmin(request, env) {
+  const session = await requireAuth(request, env);
+  const ok = isSuperadminFromClaims(session.claims, env);
+  if (!ok) throw new Error('Forbidden');
+  return session;
+}
+
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -216,9 +278,26 @@ async function handleRequest(request, env) {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    return new Response(JSON.stringify({ userId: session.claims.sub, claims: session.claims }), {
+    const isSuperadmin = isSuperadminFromClaims(session.claims, env);
+    return new Response(JSON.stringify({ userId: session.claims.sub, isSuperadmin, claims: session.claims }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+  }
+
+  // Admin: health check (superadmin only)
+  if (path === '/api/admin/health' && request.method === 'GET') {
+    try {
+      await requireSuperadmin(request, env);
+      return new Response(JSON.stringify({ ok: true, ts: Date.now() }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    } catch (err) {
+      const status = err.message === 'Unauthorized' ? 401 : 403;
+      return new Response(JSON.stringify({ ok: false, error: err.message }), {
+        status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   // Voice AI Routes
