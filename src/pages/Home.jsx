@@ -105,15 +105,15 @@ function Home() {
               </div>
             </div>
 
-            {/* Right Column - NURD Logo + Upload Zone */}
+            {/* Right Column - Foster Develop Illustration */}
             <div className="flex flex-col items-center gap-8">
-              {/* NURD Drip Logo */}
+              {/* Foster Develop Stack Illustration */}
               <div className="relative w-full max-w-md mx-auto">
                 <img 
-                  src="/nurd-drip-logo.png" 
-                  alt="NURD Logo"
-                  className="w-full h-auto drop-shadow-2xl animate-pulse-slow"
-                  style={{ filter: 'drop-shadow(0 0 30px rgba(57, 255, 20, 0.5))' }}
+                  src="/assets/illustrations/foster-develop-home.png" 
+                  alt="Foster, Develop, Home, SMART, PACT, STEAM"
+                  className="w-full h-auto drop-shadow-2xl"
+                  style={{ filter: 'drop-shadow(0 0 20px rgba(57, 255, 20, 0.3))' }}
                 />
               </div>
 

@@ -80,13 +80,23 @@ function Pricing() {
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10">
+        {/* Header with Tagline */}
+        <div className="text-center mb-12">
           <h1 className="text-3xl font-bold mb-4 text-text">
             Pricing
           </h1>
-          <p className="tagline mb-10">
+          <p className="tagline mb-8">
             Think It. Prompt It. Build It.
           </p>
+          
+          {/* NURD Tagline Sticker */}
+          <div className="flex justify-center mb-8">
+            <img 
+              src="/assets/branding/nurd-tagline.png" 
+              alt="NURD I'm cool like that"
+              className="h-16 md:h-20 object-contain hover:scale-105 transition-transform"
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">

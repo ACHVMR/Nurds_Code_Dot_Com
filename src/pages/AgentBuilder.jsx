@@ -150,17 +150,32 @@ function AgentBuilder() {
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <Sparkles className="w-8 h-8 text-[#39FF14]" />
-            <h1 className="text-4xl font-bold text-text">Agent Builder</h1>
+      <div className="max-w-6xl mx-auto">
+        {/* Header with Illustration */}
+        <div className="grid lg:grid-cols-2 gap-12 items-start mb-12">
+          {/* Left: Developer Illustration */}
+          <div className="hidden lg:flex justify-center order-last lg:order-first">
+            <img 
+              src="/assets/illustrations/nurd-developer.png" 
+              alt="Developer with NURD"
+              className="w-full max-w-md h-auto drop-shadow-2xl"
+              style={{ filter: 'drop-shadow(0 0 20px rgba(57, 255, 20, 0.3))' }}
+            />
           </div>
-          <p className="text-text/60 text-lg">
-            Create custom AI agents with the Boomer_Angs naming ceremony
-          </p>
+
+          {/* Right: Header Text */}
+          <div className="text-center lg:text-left">
+            <div className="flex items-center justify-center lg:justify-start gap-3 mb-3">
+              <Sparkles className="w-8 h-8 text-[#39FF14]" />
+              <h1 className="text-4xl font-bold text-text">Agent Builder</h1>
+            </div>
+            <p className="text-text/60 text-lg mb-6">
+              Create custom AI agents with the Boomer_Angs naming ceremony
+            </p>
+          </div>
         </div>
+
+        <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Success Message */}
         {created && (
