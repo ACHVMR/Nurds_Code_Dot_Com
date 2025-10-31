@@ -455,9 +455,11 @@ export class VoiceIntegration {
    * @returns {Promise<Array>|Array}
    */
   async getVoices() {
-    if (this.provider === 'openai' && this.openai) {
+    // Always reflect the active TTS provider's available voices
+    if (this.tts === this.openai && this.openai) {
       return this.openai.listVoices();
-    } else if (this.provider === 'elevenlabs' && this.elevenlabs) {
+    }
+    if (this.tts === this.elevenlabs && this.elevenlabs) {
       return await this.elevenlabs.listVoices();
     }
     return [];

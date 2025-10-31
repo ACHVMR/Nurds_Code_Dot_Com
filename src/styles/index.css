@@ -1,10 +1,10 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600&family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600;700;800&family=Permanent+Marker&display=swap');
 
 :root {
   --bg: #0E0E0E;
   --surface: #151515;
-  --text: #EAEAEA;
+  --text: #F2F7FF; /* Frosty white */
   --mute: #9A9A9A;
   --accent: #C9A449;
   --neon: #39FF14;
@@ -16,10 +16,11 @@
     background-color: var(--bg);
     color: var(--text);
     font-family: 'Doto', sans-serif;
+    font-weight: 500; /* Heavier default weight for Doto */
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
+    font-weight: 700; /* Heavier headings */
   }
 
   a {
@@ -34,7 +35,8 @@
 
 .tagline {
   font-family: 'Permanent Marker', cursive;
-  color: var(--neon);
+  /* Neon Honey Gold */
+  color: #FFC83B;
   text-align: center;
   letter-spacing: 0.5px;
   font-size: clamp(2rem, 5vw, 4rem);

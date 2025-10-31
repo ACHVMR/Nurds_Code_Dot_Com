@@ -10,9 +10,9 @@ const INITIAL_ASSISTANT_MESSAGES = [
 ];
 
 function Editor() {
-  const [code, setCode] = useState('// Nurds Code Editor\n// Think It. Prompt It. Build It.\n\nconsole.log("Hello, World!");');
+  const [code, setCode] = useState('');
   const [output, setOutput] = useState('');
-  const [language, setLanguage] = useState('javascript');
+  const [language, setLanguage] = useState('auto');
   const [assistantMessages, setAssistantMessages] = useState(() => [...INITIAL_ASSISTANT_MESSAGES]);
   const [assistantInput, setAssistantInput] = useState('');
   const [assistantPlan, setAssistantPlan] = useState('free');
@@ -103,10 +103,22 @@ function Editor() {
     }
   }, [assistantMessages, assistantLoading]);
 
+  function detectLanguage(sample) {
+    const s = (sample || '').trim();
+    if (/<!DOCTYPE html>|<html[\s>]/i.test(s) || /<\/?(div|span|script|style|head|body)\b/i.test(s)) return 'html';
+    if (/^\s*\/\//.test(s) || /function\s+|=>|console\.log\(/.test(s)) return 'javascript';
+    if (/^\s*#\!\/usr\/bin\/env\s+node/.test(s)) return 'javascript';
+    if (/\bdef\s+\w+\(|\bprint\(|^\s*#/.test(s)) return 'python';
+    if (/\binterface\s+\w+\s*\{|:\s*\w+;|<\w+>/.test(s)) return 'typescript';
+    if (/\{\s*[^}]*:\s*[^;]+;\s*\}/.test(s) && !/function|class|=>/.test(s)) return 'css';
+    return 'javascript';
+  }
+
   const runCode = () => {
     try {
       // Simple JavaScript execution for demo
-      if (language === 'javascript') {
+      const langToUse = language === 'auto' ? detectLanguage(code) : language;
+      if (langToUse === 'javascript') {
         const logs = [];
         const customConsole = {
           log: (...args) => logs.push(args.join(' ')),
@@ -118,7 +130,7 @@ function Editor() {
         
         setOutput(logs.join('\n') || 'Code executed successfully!');
       } else {
-        setOutput('This is a demo editor. Full execution support coming soon!');
+        setOutput(`Detected ${language === 'auto' ? 'language: ' + (detectLanguage(code)) : language}. Execution support coming soon.`);
       }
     } catch (error) {
       setOutput(`Error: ${error.message}`);
@@ -218,6 +230,7 @@ function Editor() {
                 onChange={(e) => setLanguage(e.target.value)}
                 className="input-field text-sm"
               >
+                <option value="auto">Auto (detect)</option>
                 <option value="javascript">JavaScript</option>
                 <option value="python">Python</option>
                 <option value="typescript">TypeScript</option>
@@ -275,7 +288,7 @@ function Editor() {
                     className="input-field text-sm"
                   >
                     <option value="free">Free · GROQ 8B</option>
-                    <option value="coffee">Coffee · GROQ 70B</option>
+                    <option value="coffee">Buy Me a Coffee ☕ · GROQ 70B</option>
                     <option value="pro">Pro · GPT-4o mini</option>
                     <option value="enterprise">Enterprise · Claude mix</option>
                   </select>
@@ -313,6 +326,20 @@ function Editor() {
                   {assistantError}
                 </div>
               )}
+
+              <div className="flex items-center gap-3 mt-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    const lang = language === 'auto' ? detectLanguage(code) : language;
+                    const prompt = `You are ByteBot, an autonomous code diagnostician. Detect language and analyze the following code. Identify issues, improvements, and potential bugs. Provide actionable suggestions with examples.\n\nDetected/Selected language: ${lang}\n\nCode:\n\n` + code;
+                    setAssistantInput(prompt);
+                  }}
+                >
+                  Ask ByteBot to Diagnose
+                </button>
+              </div>
 
               <form onSubmit={sendAssistantMessage} className="mt-4 space-y-3">
                 <textarea
