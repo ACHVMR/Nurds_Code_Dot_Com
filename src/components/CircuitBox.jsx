@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { Power, AlertTriangle, CheckCircle, XCircle, Activity, Zap } from 'lucide-react';
 
 const CircuitBox = () => {
@@ -6,6 +7,8 @@ const CircuitBox = () => {
   const [selectedBreaker, setSelectedBreaker] = useState(null);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'on', 'off', 'error'
+  const [apiError, setApiError] = useState('');
+  const { getToken } = useAuth();
 
   useEffect(() => {
     fetchCircuitStatus();
@@ -16,12 +19,23 @@ const CircuitBox = () => {
 
   const fetchCircuitStatus = async () => {
     try {
-      // In production, this would fetch from /api/admin/circuit-box
-      // For now, we'll load the static config with simulated health checks
-      const response = await fetch('/circuit-box/breakers.yaml');
-      const yamlText = await response.text();
-      
-      // Parse YAML (simplified - in production use a proper YAML parser)
+      // Try live API first (superadmin only)
+      const token = await getToken?.();
+      const res = await fetch('/api/admin/circuit-box', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json?.breakers)) {
+          setBreakers(json.breakers);
+          setApiError('');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Fallback: load static config with simulated health checks
       const mockBreakers = [
         {
           id: 'breaker-1',
@@ -141,9 +155,11 @@ const CircuitBox = () => {
       ];
 
       setBreakers(mockBreakers);
+      setApiError('');
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch circuit status:', error);
+      setApiError('Failed to load circuit status');
       setLoading(false);
     }
   };
@@ -153,14 +169,43 @@ const CircuitBox = () => {
     if (!breaker) return;
 
     const newStatus = breaker.status === 'on' ? 'off' : 'on';
-    
-    // In production, this would call /api/admin/circuit-box/toggle
-    // For now, update locally
-    setBreakers(breakers.map(b => 
-      b.id === breakerId 
+    // Optimistic update
+    const prev = breakers;
+    setBreakers(prev.map(b =>
+      b.id === breakerId
         ? { ...b, status: newStatus, health: newStatus === 'on' ? 'healthy' : 'disabled' }
         : b
     ));
+
+    try {
+      const token = await getToken?.();
+      const res = await fetch(`/api/admin/circuit-box/${breakerId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!res.ok) {
+        // Revert on failure
+        setBreakers(prev);
+        const errText = await res.text();
+        setApiError(`Failed to toggle breaker: ${errText || res.status}`);
+      } else {
+        const data = await res.json().catch(() => null);
+        if (data?.breaker) {
+          // Reconcile with server response
+          setBreakers((curr) => curr.map(b => b.id === breakerId ? { ...b, ...data.breaker } : b));
+        }
+        setApiError('');
+      }
+    } catch (e) {
+      // Revert on exception
+      setBreakers(prev);
+      setApiError(e.message || 'Toggle failed');
+    }
   };
 
   const getStatusIcon = (status, health) => {
@@ -204,6 +249,11 @@ const CircuitBox = () => {
 
   return (
     <div className="space-y-6">
+      {apiError && (
+        <div className="card border-red-500/30 bg-red-500/10 text-red-300 text-sm p-3">
+          {apiError}
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
