@@ -1,16 +1,19 @@
-# Nurdscode - ACHIEVEMOR Coding Platform
+# Nurds Code
 
-A custom Cloudflare VibeSDK application built with React, Vite, and Tailwind CSS, featuring a complete subscription system powered by Stripe and Cloudflare Workers.
+**Think It. Prompt It. Build It.**
+
+A modern development platform built on Cloudflare infrastructure with React, Vite, and Tailwind CSS. Features complete authentication and subscription management.
 
 ## Features
 
 - 🚀 **Modern Stack**: React + Vite + Tailwind CSS
 - ⚡ **Serverless Backend**: Cloudflare Workers + D1 Database
-- 💳 **Stripe Integration**: Three-tier pricing (Free, Pro, Enterprise)
-- 🔐 **JWT Authentication**: Secure user authentication
-- 🎨 **Custom Branding**: Nurdscode-themed UI with purple, blue, and green accents
-- 📱 **Responsive Design**: Mobile-first approach
-- 🐳 **Containerized**: Docker support with multi-stage builds
+- 💳 **Subscription System**: Three-tier pricing (Free, Pro, Enterprise)
+- 🔐 **Authentication**: Secure user authentication
+- 🎨 **Custom Branding**: Flat UI design with neon green tagline (#39FF14) and gold accents (#C9A449)
+- 🖋️ **Typography**: Doto font for UI, Permanent Marker for tagline
+- 📱 **Responsive Design**: Mobile-first, WCAG AA contrast compliant
+- 🐳 **Containerized**: Docker + Daytona support with multi-stage builds
 - 🔄 **CI/CD**: GitHub Actions for automated deployments
 
 ## Pages

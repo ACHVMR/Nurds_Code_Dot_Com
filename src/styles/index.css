@@ -1,98 +1,103 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600&family=Permanent+Marker&display=swap');
 
 @layer base {
   body {
-    background-color: #1a1a2e;
-    color: #f3f4f6;
-    font-family: Inter, system-ui, sans-serif;
+    background-color: #0E0E0E;
+    color: #EAEAEA;
+    font-family: 'Doto', sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
+    font-weight: 600;
   }
 }
 
+.tagline {
+  font-family: 'Permanent Marker', cursive;
+  color: #39FF14;
+  text-align: center;
+  letter-spacing: 0.5px;
+  font-size: clamp(2rem, 4vw, 4rem);
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 49% { border-right-color: #39FF14; }
+  50%, 100% { border-right-color: transparent; }
+}
+
+.cursor-blink {
+  border-right: 3px solid #39FF14;
+  animation: blink 1s step-end infinite;
+}
+
 .btn-primary {
-  background-color: #9d4edd;
-  color: white;
-  font-weight: 600;
+  background-color: #C9A449;
+  color: #0E0E0E;
+  border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  border-radius: 0px;
+  transition: all 0.2s ease-in-out;
 }
 
 .btn-primary:hover {
-  background-color: #9333ea;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  opacity: 0.85;
 }
 
 .btn-secondary {
-  background-color: #3b82f6;
-  color: white;
-  font-weight: 600;
+  border: 2px solid #C9A449;
+  color: #C9A449;
+  background: transparent;
   padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
+  border-radius: 0px;
+  transition: all 0.2s ease-in-out;
 }
 
 .btn-secondary:hover {
-  background-color: #2563eb;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-}
-
-.btn-success {
-  background-color: #10b981;
-  color: white;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-}
-
-.btn-success:hover {
-  background-color: #16a34a;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  background-color: #C9A449;
+  color: #0E0E0E;
 }
 
 .card {
-  background-color: #1f2937;
-  border-radius: 0.75rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background-color: #1a1a1a;
+  border-radius: 0px;
   padding: 2rem;
-  border: 1px solid #374151;
+  border: 1px solid #2a2a2a;
 }
 
 .pricing-card {
-  background-color: #1f2937;
-  border-radius: 0.75rem;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background-color: #1a1a1a;
+  border-radius: 0px;
   padding: 2rem;
-  border: 1px solid #374151;
+  border: 1px solid #2a2a2a;
   transition: all 0.3s;
 }
 
 .pricing-card:hover {
-  border-color: #9d4edd;
-  transform: scale(1.05);
+  border-color: #C9A449;
 }
 
 .input-field {
-  background-color: #374151;
-  border: 1px solid #4b5563;
-  border-radius: 0.5rem;
+  background-color: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 0px;
   padding: 0.75rem 1rem;
-  color: white;
+  color: #EAEAEA;
 }
 
 .input-field::placeholder {
-  color: #9ca3af;
+  color: #666;
 }
 
 .input-field:focus {
   outline: none;
-  ring: 2px solid #9d4edd;
-  border-color: transparent;
+  border-color: #C9A449;
 }

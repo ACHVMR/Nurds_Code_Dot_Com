@@ -63,10 +63,10 @@ function Pricing() {
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4">
+          <h1 className="text-5xl font-bold mb-4 text-text">
             Simple, Transparent Pricing
           </h1>
-          <p className="text-xl text-gray-300">
+          <p className="text-xl text-text">
             Choose the perfect plan for your needs
           </p>
         </div>
@@ -76,31 +76,31 @@ function Pricing() {
             <div
               key={plan.name}
               className={`pricing-card relative ${
-                plan.popular ? 'ring-2 ring-nurd-purple' : ''
+                plan.popular ? 'border-2 border-accent' : ''
               }`}
             >
               {plan.popular && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-nurd-purple text-white px-4 py-1 rounded-full text-sm font-semibold">
+                  <span className="bg-accent text-background px-4 py-1 text-sm font-semibold">
                     Most Popular
                   </span>
                 </div>
               )}
               
               <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <h3 className="text-2xl font-bold mb-2 text-text">{plan.name}</h3>
                 <div className="mb-2">
-                  <span className="text-5xl font-bold">{plan.price}</span>
-                  <span className="text-gray-400 ml-2">/{plan.period}</span>
+                  <span className="text-5xl font-bold text-text">{plan.price}</span>
+                  <span className="text-text/60 ml-2">/{plan.period}</span>
                 </div>
-                <p className="text-gray-400">{plan.description}</p>
+                <p className="text-text/60">{plan.description}</p>
               </div>
 
               <ul className="space-y-4 mb-8">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start">
                     <svg
-                      className="w-6 h-6 text-nurd-green mr-2 flex-shrink-0"
+                      className="w-6 h-6 text-accent mr-2 flex-shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -112,17 +112,17 @@ function Pricing() {
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span className="text-gray-300">{feature}</span>
+                    <span className="text-text">{feature}</span>
                   </li>
                 ))}
               </ul>
 
               <Link
                 to={`/subscribe?plan=${plan.priceId}`}
-                className={`block text-center py-3 px-6 rounded-lg font-semibold transition-all ${
+                className={`block text-center py-3 px-6 font-semibold transition-all ${
                   plan.popular
-                    ? 'bg-nurd-purple hover:bg-purple-600 text-white'
-                    : 'bg-gray-700 hover:bg-gray-600 text-white'
+                    ? 'btn-primary'
+                    : 'btn-secondary'
                 }`}
               >
                 {plan.cta}
@@ -132,7 +132,7 @@ function Pricing() {
         </div>
 
         <div className="mt-16 text-center">
-          <p className="text-gray-400">
+          <p className="text-text/60">
             All plans include a 14-day money-back guarantee. No questions asked.
           </p>
         </div>

@@ -56,8 +56,8 @@ function Subscribe() {
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="card">
-          <h1 className="text-4xl font-bold mb-8 text-center">
-            Subscribe to Nurdscode
+          <h1 className="text-4xl font-bold mb-8 text-center text-text">
+            Subscribe to Nurds Code
           </h1>
 
           <form onSubmit={handleSubscribe} className="space-y-6">
@@ -92,18 +92,18 @@ function Subscribe() {
               </select>
             </div>
 
-            <div className="bg-gray-700 rounded-lg p-6">
+            <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-6">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-lg">Selected Plan:</span>
-                <span className="text-2xl font-bold text-nurd-purple">
+                <span className="text-lg text-text">Selected Plan:</span>
+                <span className="text-2xl font-bold text-accent">
                   {plans[selectedPlan]?.name}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-lg">Total:</span>
-                <span className="text-3xl font-bold">
+                <span className="text-lg text-text">Total:</span>
+                <span className="text-3xl font-bold text-text">
                   ${plans[selectedPlan]?.price}
-                  <span className="text-sm text-gray-400">/month</span>
+                  <span className="text-sm text-text/60">/month</span>
                 </span>
               </div>
             </div>
@@ -119,7 +119,7 @@ function Subscribe() {
             </button>
           </form>
 
-          <p className="text-sm text-gray-400 text-center mt-6">
+          <p className="text-sm text-text/60 text-center mt-6">
             By subscribing, you agree to our Terms of Service and Privacy Policy.
           </p>
         </div>

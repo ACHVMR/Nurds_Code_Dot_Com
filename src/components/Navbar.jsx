@@ -5,26 +5,25 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
+    <nav className="bg-background border-b border-[#2a2a2a] sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="text-2xl font-bold">
-                <span className="text-nurd-purple">Nurds</span>
-                <span className="text-nurd-blue">Code</span>
+              <div className="text-2xl font-bold text-text">
+                Nurds Code
               </div>
             </Link>
           </div>
           
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-300 hover:text-white transition-colors">
+            <Link to="/" className="text-text hover:text-accent transition-colors">
               Home
             </Link>
-            <Link to="/pricing" className="text-gray-300 hover:text-white transition-colors">
+            <Link to="/pricing" className="text-text hover:text-accent transition-colors">
               Pricing
             </Link>
-            <Link to="/editor" className="text-gray-300 hover:text-white transition-colors">
+            <Link to="/editor" className="text-text hover:text-accent transition-colors">
               Editor
             </Link>
             <Link to="/subscribe" className="btn-primary">
@@ -35,7 +34,7 @@ function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-300 hover:text-white"
+              className="text-text hover:text-accent"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 {isOpen ? (
@@ -50,18 +49,18 @@ function Navbar() {
       </div>
 
       {isOpen && (
-        <div className="md:hidden bg-gray-800 border-t border-gray-700">
+        <div className="md:hidden bg-[#1a1a1a] border-t border-[#2a2a2a]">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <Link to="/" className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">
+            <Link to="/" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
               Home
             </Link>
-            <Link to="/pricing" className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">
+            <Link to="/pricing" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
               Pricing
             </Link>
-            <Link to="/editor" className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded">
+            <Link to="/editor" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
               Editor
             </Link>
-            <Link to="/subscribe" className="block px-3 py-2 text-nurd-purple hover:text-purple-400">
+            <Link to="/subscribe" className="block px-3 py-2 text-accent hover:text-neon">
               Get Started
             </Link>
           </div>
