@@ -71,6 +71,25 @@ export async function callViaGateway(providerPath, payload, env) {
  * @returns {Promise<object>} - API response
  */
 export async function generateForUser(user, prompt, env) {
+  // Global override: enable GPT-5 for all clients if feature flag is set and provider available
+  const enableGpt5 = String(env?.ENABLE_GPT5 || '').toLowerCase() === 'true';
+  if (enableGpt5) {
+    if (env?.AI_GATEWAY_URL) {
+      return callViaGateway(
+        'openai/chat/completions',
+        {
+          model: 'gpt-5',
+          messages: [{ role: 'user', content: prompt }],
+        },
+        env
+      );
+    }
+    if (env?.OPENROUTER_API_KEY) {
+      return callOpenRouter(prompt, env, 'openai/gpt-5');
+    }
+    // If neither OpenAI via Gateway nor OpenRouter is available, fall back to plan-based routing below.
+  }
+
   // Free tier: GROQ 8B (fast, free)
   if (user.plan === 'free') {
     return callGroq(prompt, env, 'llama3-8b-instant');

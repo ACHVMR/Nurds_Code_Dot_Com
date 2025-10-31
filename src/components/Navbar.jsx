@@ -27,6 +27,11 @@ function Navbar() {
             <Link to="/editor" className="text-text hover:text-accent transition-colors">
               Editor
             </Link>
+            <SignedIn>
+              <Link to="/admin" className="text-text hover:text-accent transition-colors">
+                Admin
+              </Link>
+            </SignedIn>
             <SignedOut>
               <Link to="/auth" className="btn-primary">
                 Sign In
@@ -66,6 +71,11 @@ function Navbar() {
             <Link to="/editor" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
               Editor
             </Link>
+            <SignedIn>
+              <Link to="/admin" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
+                Admin
+              </Link>
+            </SignedIn>
             <SignedOut>
               <Link to="/auth" className="block px-3 py-2 text-accent hover:text-neon">
                 Sign In

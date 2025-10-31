@@ -13,7 +13,7 @@ const assistantHeaders = {
 const MODEL_BY_PLAN = {
   free: 'llama3-8b-instant',
   coffee: 'llama3-70b-8192',
-  pro: 'gpt-4o-mini',
+  pro: 'gpt-4o mini',
   enterprise: 'claude-3-opus-20240229',
 };
 
@@ -117,6 +117,12 @@ export function extractAssistantPayload(rawResponse) {
   };
 }
 
+function fallbackModelForPlan(plan, env) {
+  const enableGpt5 = String(env?.ENABLE_GPT5 || '').toLowerCase() === 'true';
+  if (enableGpt5) return 'gpt-5';
+  return MODEL_BY_PLAN[plan] || MODEL_BY_PLAN.free;
+}
+
 /**
  * Handle chat requests from the onboard assistant
  * @param {Request} req - Request object
@@ -144,7 +150,7 @@ export async function chatHandler(req, env, overrides = {}) {
 
     const fullPrompt = buildAssistantPrompt(user, message, history);
     const rawResponse = await generateForUser(user, fullPrompt, env);
-    const { message: assistantMessage, model, usage } = extractAssistantPayload(rawResponse);
+  const { message: assistantMessage, model, usage } = extractAssistantPayload(rawResponse);
 
     if (!assistantMessage) {
       throw new Error('Assistant returned an empty response. Please try again.');
@@ -159,7 +165,7 @@ export async function chatHandler(req, env, overrides = {}) {
     const responsePayload = {
       message: assistantMessage,
       plan: user.plan,
-      model: model ?? MODEL_BY_PLAN[user.plan],
+      model: model ?? fallbackModelForPlan(user.plan, env),
       usage: usage,
     };
 

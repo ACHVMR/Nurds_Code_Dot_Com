@@ -45,6 +45,7 @@ VOICE_DEFAULT_PROVIDER = "openai"
 OPENAI_VOICE_MODEL = "whisper-1"
 OPENAI_TTS_MODEL = "tts-1"
 OPENAI_TTS_VOICE = "alloy"
+ENABLE_GPT5 = "false" # Set to "true" to route all plans to GPT-5 (requires provider support)
 
 # Authentication (Clerk)
 CLERK_FRONTEND_API_URL = "https://precise-lamprey-55.clerk.accounts.dev"

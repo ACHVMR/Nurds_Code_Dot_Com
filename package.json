@@ -15,6 +15,7 @@
     "supabase:migrate": "psql $SUPABASE_URL -f supabase_schema.sql",
     "setup:secrets": "pwsh -File scripts/setup-secrets.ps1",
     "setup:storage": "pwsh -File scripts/setup-cloudflare-storage.ps1",
+  "supabase:migrate:ps": "pwsh -File scripts/apply-supabase-schema.ps1",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
