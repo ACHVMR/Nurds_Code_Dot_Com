@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import VoiceControl from '../components/VoiceControl';
 
 const INITIAL_ASSISTANT_MESSAGES = [
@@ -21,6 +22,7 @@ function Editor() {
   const [userId, setUserId] = useState('');
   const messagesEndRef = useRef(null);
   const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+  const location = useLocation();
 
   useEffect(() => {
     try {
@@ -29,6 +31,13 @@ function Editor() {
       const storedPlan = localStorage.getItem('nurdscode_assistant_plan');
       const storedMessages = localStorage.getItem('nurdscode_assistant_history');
       const storedUserId = localStorage.getItem('nurdscode_user_id');
+
+      // Hydrate idea from ChatWidget teleport
+      const ideaPrompt = location.state?.ideaPrompt || localStorage.getItem('nurd_idea_prompt');
+      if (ideaPrompt) {
+        setAssistantInput(ideaPrompt);
+        try { localStorage.removeItem('nurd_idea_prompt'); } catch {}
+      }
 
       if (storedCode) {
         setCode(storedCode);

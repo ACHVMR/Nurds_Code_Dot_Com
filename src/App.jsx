@@ -11,12 +11,13 @@ import Admin from './pages/Admin';
 import AgentBuilder from './pages/AgentBuilder';
 import Auth from './pages/Auth';
 import RequireAuth from './components/RequireAuth';
+import ChatWidget from './components/ChatWidget';
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-  <main className="grow">
+      <main className="grow">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/pricing" element={<Pricing />} />
@@ -29,6 +30,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <ChatWidget />
     </div>
   );
 }
