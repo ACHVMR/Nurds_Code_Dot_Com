@@ -41,7 +41,6 @@ $secrets = @(
     "GEMINI_API_KEY",
     "PERPLEXITY_API_KEY",
     "TAVILY_API_KEY",
-    "RESEND_API_KEY",
     "GITHUB_TOKEN"
 )
 

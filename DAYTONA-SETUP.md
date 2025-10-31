@@ -1,4 +1,7 @@
-# Daytona Setup Guide
+<!-- removed: non-Nurdscode template file -->
+# Removed: Daytona Setup Guide
+
+This document was removed because it belonged to a different template. Nurdscode does not use Daytona in this repository.
 
 This guide explains how to use Daytona as an alternative to Docker for running the Nurdscode application.
 

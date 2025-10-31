@@ -135,26 +135,6 @@ echo $CLOUDFLARE_REGISTRY_TOKEN | docker login registry.cloudflare.com -u $CLOUD
 docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 ```
 
-#### Using Daytona (Alternative if Docker isn't working)
-
-If you encounter issues with Docker, use Daytona as an alternative:
-
-```bash
-# Install Daytona
-curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
-
-# Create Daytona workspace
-daytona create --name nurdscode-app
-
-# Build with Daytona
-daytona build
-
-# Export container image
-daytona export nurdscode-app:latest
-
-# Tag and push to registry (Daytona supports Docker registry protocol)
-daytona push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
-```
 
 #### Using Ubuntu.cloud Container
 
@@ -223,19 +203,6 @@ npm run worker:deploy
 ```
 
 ## Troubleshooting
-
-### Issue: Docker not working or unavailable
-**Solution**: Use Daytona as an alternative container runtime
-```bash
-# Install Daytona
-curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
-
-# Create workspace
-daytona create
-
-# Start development environment
-daytona start
-```
 
 **Alternative**: Use Ubuntu.cloud containers
 - Deploy directly to cloud providers with Ubuntu base images

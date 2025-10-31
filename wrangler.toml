@@ -47,6 +47,13 @@ OPENAI_TTS_MODEL = "tts-1"
 OPENAI_TTS_VOICE = "alloy"
 ENABLE_GPT5 = "false" # Set to "true" to route all plans to GPT-5 (requires provider support)
 
+# ACHEEVY Orchestrator (optional bridge)
+# When set, /api/chat will proxy to this orchestrator service.
+# For local dev you can use: http://localhost:5050
+AGENT_CORE_URL = ""
+# Optional Authorization header for ACHEEVY (set as a secret in production)
+# wrangler secret put AGENT_CORE_AUTH
+
 # Authentication (Clerk)
 CLERK_FRONTEND_API_URL = "https://precise-lamprey-55.clerk.accounts.dev"
 CLERK_BACKEND_API_URL = "https://api.clerk.com"

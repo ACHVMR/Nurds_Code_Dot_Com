@@ -22,7 +22,7 @@
   - Supabase (URL + anon + service role keys)
   - All AI providers (Groq, OpenAI, Anthropic, OpenRouter, etc.)
   - Voice AI (Deepgram, ElevenLabs)
-  - Infrastructure (Modal, Daytona, GitHub)
+  - Infrastructure (Cloudflare, GitHub)
 - [x] Updated `wrangler.toml` for maximum Cloudflare capabilities:
   - KV namespaces (CACHE + SESSIONS)
   - R2 buckets for asset storage

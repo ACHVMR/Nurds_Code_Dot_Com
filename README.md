@@ -14,7 +14,7 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
 - 🖋️ **Typography**: Doto font for UI, Permanent Marker for tagline
 - 📱 **Responsive Design**: Mobile-first, WCAG AA contrast compliant
 - 🤖 **Vibe Coding Assistant**: Cloudflare AI Gateway chat helper with tier-aware guidance
-- 🐳 **Containerized**: Docker + Daytona support with multi-stage builds
+- 🐳 **Containerized**: Docker support with multi-stage builds
 - 🔄 **CI/CD**: GitHub Actions for automated deployments
 
 ## Pages
@@ -47,11 +47,11 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
 
 - Node.js 18 or higher
 - npm or yarn
-- Docker (recommended) or Daytona (alternative) - see [DAYTONA-SETUP.md](./DAYTONA-SETUP.md)
+- Docker (recommended)
 - Cloudflare account (for deployment)
 - Stripe account (for payments)
 
-### Installation
+### Installation (Local)
 
 1. Clone the repository:
 
@@ -73,23 +73,25 @@ A modern development platform built on Cloudflare infrastructure with React, Vit
    # Edit .env with your actual keys
    ```
 
-4. Start the development server:
+4. Start the development servers (two terminals):
 
-   ```bash
-   npm run dev
-   ```
-
-The application will be available at `http://localhost:3000`
-
-### Running the Backend
-
-1. Start the Cloudflare Worker locally:
-
+   Terminal A (API Worker):
    ```bash
    npm run worker:dev
    ```
 
-The API will be available at `http://localhost:8787`
+   Terminal B (UI):
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at `http://localhost:3000` and proxies `/api` to `http://localhost:8787`.
+
+### ACHEEVY Orchestrator (Optional)
+
+If you run an external reasoning/orchestration service (ACHEEVY), set `AGENT_CORE_URL` in `wrangler.toml` (or as a secret/env var in production).
+
+When set, the Worker will proxy `/api/chat` requests to `${AGENT_CORE_URL}/agent`, including Clerk claims when available. Otherwise, it uses the built-in `chatHandler`.
 
 ## Database Setup
 
@@ -135,7 +137,7 @@ The API will be available at `http://localhost:8787`
 
 ## Container Deployment
 
-> **Note**: If Docker is not working, see [DAYTONA-SETUP.md](./DAYTONA-SETUP.md) for an alternative using Daytona.
+ 
 
 ### Option 1: Docker (Recommended)
 
@@ -162,29 +164,7 @@ docker tag nurdscode-app registry.cloudflare.com/nurdscode-userappsandboxservice
 docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
 ```
 
-### Option 2: Daytona (Alternative to Docker)
 
-If Docker is not available or not working, you can use [Daytona](https://www.daytona.io/) as an alternative container runtime.
-
-#### Install Daytona
-
-```bash
-# Install Daytona
-curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
-
-# Verify installation
-daytona version
-```
-
-#### Run with Daytona
-
-```bash
-# Create a Daytona workspace
-daytona create
-
-# The application will be automatically containerized and run
-daytona start
-```
 
 ### Option 3: Ubuntu.cloud Container
 

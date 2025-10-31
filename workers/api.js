@@ -260,14 +260,57 @@ async function handleRequest(request, env) {
     }
   }
 
-  // Route: Vibe Coding chat assistant (with Clerk auth if available)
+  // Route: Vibe Coding chat assistant
+  // If AGENT_CORE_URL is configured, proxy to ACHEEVY orchestrator.
+  // Otherwise, fall back to local chatHandler.
   if (path === '/api/chat' && request.method === 'POST') {
-    const session = await getClerkSession(request, env);
-    if (session?.claims?.sub) {
-      // Pass user override to chatHandler
-      return chatHandler(request, env, { userId: session.claims.sub });
+    try {
+      const session = await getClerkSession(request, env);
+      const agentCoreUrl = (env.AGENT_CORE_URL || '').trim();
+      if (agentCoreUrl) {
+        const body = await request.json();
+        const payload = {
+          message: body?.message,
+          history: body?.history || [],
+          plan: body?.plan || null,
+          context: body?.context || null,
+          user: session?.claims?.sub || null,
+          claims: session?.claims || null,
+          session: {
+            ip: request.headers.get('CF-Connecting-IP') || null,
+            userAgent: request.headers.get('User-Agent') || null,
+          },
+        };
+
+        const authHeader = (env.AGENT_CORE_AUTH || '').trim();
+        const res = await fetch(`${agentCoreUrl.replace(/\/$/, '')}/agent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authHeader ? { Authorization: authHeader } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const text = await res.text();
+        return new Response(text, {
+          status: res.status,
+          headers: { ...corsHeaders, 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
+        });
+      }
+
+      // Fallback to local handler
+      if (session?.claims?.sub) {
+        return chatHandler(request, env, { userId: session.claims.sub });
+      }
+      return chatHandler(request, env);
+    } catch (err) {
+      console.error('Chat route error:', err);
+      return new Response(JSON.stringify({ error: err.message || 'Chat failed' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
-    return chatHandler(request, env);
   }
 
   // Route: Auth check (returns Clerk claims)
