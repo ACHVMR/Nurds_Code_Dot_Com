@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 function Editor() {
-  const [code, setCode] = useState('// Welcome to Nurds Code Editor\n// Think It. Prompt It. Build It.\n\nconsole.log("Hello, World!");');
+  const [code, setCode] = useState('// Nurds Code Editor\n// Think It. Prompt It. Build It.\n\nconsole.log("Hello, World!");');
   const [output, setOutput] = useState('');
   const [language, setLanguage] = useState('javascript');
 
@@ -30,14 +30,14 @@ function Editor() {
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold mb-2 text-text">Code Editor</h1>
-          <p className="text-text/60">Build and test your code in real-time</p>
+        <div className="mb-6 text-center">
+          <h1 className="text-3xl font-bold mb-2 text-text">Editor</h1>
+          <p className="tagline text-2xl">Think It. Prompt It. Build It.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor Panel */}
-          <div className="card">
+          <div className="panel">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-text">Editor</h2>
               <select
@@ -56,7 +56,7 @@ function Editor() {
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="w-full h-96 bg-background text-text font-mono text-sm p-4 border border-[#2a2a2a] focus:outline-none focus:border-accent resize-none"
+              className="w-full h-96 bg-background text-text font-mono text-sm p-4 border border-border focus:outline-none focus:border-accent resize-none"
               spellCheck="false"
             />
             
@@ -69,13 +69,13 @@ function Editor() {
           </div>
 
           {/* Output Panel */}
-          <div className="card">
+          <div className="panel">
             <h2 className="text-xl font-semibold mb-4 text-text">Output</h2>
-            <div className="bg-background text-text font-mono text-sm p-4 border border-[#2a2a2a] h-96 overflow-auto">
+            <div className="bg-background text-text font-mono text-sm p-4 border border-border h-96 overflow-auto">
               {output ? (
                 <pre className="whitespace-pre-wrap">{output}</pre>
               ) : (
-                <div className="text-text/40">Output will appear here...</div>
+                <div className="text-mute">Output will appear here...</div>
               )}
             </div>
           </div>
@@ -83,31 +83,31 @@ function Editor() {
 
         {/* Features */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-          <div className="card text-center">
+          <div className="panel text-center">
             <div className="text-3xl mb-3">⚡</div>
             <h3 className="text-lg font-semibold mb-2 text-accent">Instant Execution</h3>
-            <p className="text-text/60 text-sm">
+            <p className="text-mute text-sm">
               Run your code instantly and see results in real-time
             </p>
           </div>
-          <div className="card text-center">
+          <div className="panel text-center">
             <div className="text-3xl mb-3">💾</div>
             <h3 className="text-lg font-semibold mb-2 text-accent">Auto-Save</h3>
-            <p className="text-text/60 text-sm">
+            <p className="text-mute text-sm">
               Your code is automatically saved as you type
             </p>
           </div>
-          <div className="card text-center">
+          <div className="panel text-center">
             <div className="text-3xl mb-3">🔧</div>
             <h3 className="text-lg font-semibold mb-2 text-accent">Multi-Language</h3>
-            <p className="text-text/60 text-sm">
+            <p className="text-mute text-sm">
               Support for JavaScript, Python, TypeScript, and more
             </p>
           </div>
         </div>
 
         {/* Pro Features CTA */}
-        <div className="card mt-8 border-accent">
+        <div className="panel mt-8 border-2 border-accent">
           <div className="text-center">
             <h3 className="text-2xl font-bold mb-4 text-text">Unlock Pro Features</h3>
             <p className="text-text mb-6">

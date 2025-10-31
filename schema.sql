@@ -44,8 +44,19 @@ CREATE TABLE IF NOT EXISTS api_usage (
   FOREIGN KEY (user_id) REFERENCES users (id)
 );
 
+-- Chat history for onboard assistant
+CREATE TABLE IF NOT EXISTS chat_history (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id TEXT NOT NULL,
+  message TEXT NOT NULL,
+  response TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users (id)
+);
+
 -- Indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_subscriptions_customer ON subscriptions(customer_id);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_api_usage_user_date ON api_usage(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_chat_history_user ON chat_history(user_id);

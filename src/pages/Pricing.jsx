@@ -2,137 +2,153 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 function Pricing() {
-  const plans = [
+  const tiers = [
     {
       name: 'Free',
       price: '$0',
-      period: 'forever',
-      description: 'Perfect for getting started',
-      features: [
-        'Basic code editor',
-        '100 API requests/day',
-        'Community support',
-        '1 project',
-        'Basic templates',
-      ],
       cta: 'Get Started',
+      bullets: [
+        'GROQ 8B default • 5K tokens/day',
+        'Basic editor & tutorials',
+        'Community support',
+      ],
+      footnote: 'Best for learning.',
       priceId: 'free',
-      popular: false,
+    },
+    {
+      name: 'Coffee',
+      price: '$7 / mo',
+      cta: 'Join Coffee Tier',
+      bullets: [
+        'GROQ 70B default • 150K tokens/mo',
+        'Priority tutorial tracks',
+        'Early access labs',
+      ],
+      footnote: 'Great for hobbyists.',
+      priceId: 'price_coffee',
     },
     {
       name: 'Pro',
-      price: '$29',
-      period: 'per month',
-      description: 'For professional developers',
-      features: [
-        'Advanced code editor',
-        'Unlimited API requests',
-        'Priority support',
-        'Unlimited projects',
-        'Premium templates',
-        'Team collaboration',
-        'Custom domains',
-        'Advanced analytics',
+      price: '$29 / mo',
+      cta: 'Upgrade to Pro',
+      bullets: [
+        'GPT-4o mini default • 2M tokens/mo',
+        'Project workspaces & sharing',
+        'Priority inference routing',
       ],
-      cta: 'Start Pro Trial',
+      footnote: 'For serious builders.',
       priceId: 'price_pro',
       popular: true,
     },
     {
       name: 'Enterprise',
-      price: '$99',
-      period: 'per month',
-      description: 'For teams and organizations',
-      features: [
-        'Everything in Pro',
-        'Dedicated support',
-        'Custom integrations',
-        'SSO authentication',
-        'SLA guarantee',
-        'Advanced security',
-        'Audit logs',
-        'Custom contracts',
+      price: '$99 / mo',
+      cta: 'Talk to Sales',
+      bullets: [
+        'Mixed routing (GROQ + Claude/GPT)',
+        '5M tokens/mo • Team features',
+        'SLA + custom controls',
       ],
-      cta: 'Contact Sales',
+      footnote: 'Teams & schools.',
       priceId: 'price_enterprise',
-      popular: false,
+    },
+  ];
+
+  const modelNotes = [
+    {
+      name: 'GROQ 8B (default free)',
+      pro: 'fast, $0',
+      con: 'weaker reasoning & tools',
+    },
+    {
+      name: 'GROQ 70B',
+      pro: 'stronger coding',
+      con: 'higher latency',
+    },
+    {
+      name: 'GPT-4o mini',
+      pro: 'balanced quality/cost',
+      con: 'paid',
+    },
+    {
+      name: 'Claude mix',
+      pro: 'long-context, safety',
+      con: 'premium',
     },
   ];
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold mb-4 text-text">
-            Simple, Transparent Pricing
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold mb-4 text-text">
+            Pricing
           </h1>
-          <p className="text-xl text-text">
-            Choose the perfect plan for your needs
+          <p className="tagline mb-10">
+            Think It. Prompt It. Build It.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+          {tiers.map((tier) => (
             <div
-              key={plan.name}
-              className={`pricing-card relative ${
-                plan.popular ? 'border-2 border-accent' : ''
+              key={tier.name}
+              className={`panel flex flex-col ${
+                tier.popular ? 'border-2 border-accent' : ''
               }`}
             >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-accent text-background px-4 py-1 text-sm font-semibold">
+              {tier.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-accent text-background px-3 py-1 text-xs font-semibold">
                     Most Popular
                   </span>
                 </div>
               )}
               
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-2 text-text">{plan.name}</h3>
-                <div className="mb-2">
-                  <span className="text-5xl font-bold text-text">{plan.price}</span>
-                  <span className="text-text/60 ml-2">/{plan.period}</span>
-                </div>
-                <p className="text-text/60">{plan.description}</p>
-              </div>
-
-              <ul className="space-y-4 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start">
-                    <svg
-                      className="w-6 h-6 text-accent mr-2 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span className="text-text">{feature}</span>
+              <div className="text-xl mb-1 text-text">{tier.name}</div>
+              <div className="text-3xl mb-4 text-text">{tier.price}</div>
+              
+              <ul className="space-y-2 mb-6 flex-grow">
+                {tier.bullets.map((bullet) => (
+                  <li key={bullet} className="text-sm text-text">
+                    • {bullet}
                   </li>
                 ))}
               </ul>
 
               <Link
-                to={`/subscribe?plan=${plan.priceId}`}
-                className={`block text-center py-3 px-6 font-semibold transition-all ${
-                  plan.popular
-                    ? 'btn-primary'
-                    : 'btn-secondary'
-                }`}
+                to={`/subscribe?plan=${tier.priceId}`}
+                className="btn-primary text-center block mt-auto"
               >
-                {plan.cta}
+                {tier.cta}
               </Link>
+              
+              <div className="text-xs text-mute mt-3">{tier.footnote}</div>
             </div>
           ))}
         </div>
 
+        <hr className="my-10 border-border" />
+
+        <div className="mb-10">
+          <h2 className="text-2xl mb-4 text-text">Model options & upgrade guidance</h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            {modelNotes.map((model) => (
+              <div key={model.name} className="panel p-4">
+                <div className="font-semibold text-text mb-2">{model.name}</div>
+                <div className="text-sm mt-1">
+                  <span className="text-neon">+</span> {model.pro}
+                </div>
+                <div className="text-sm">
+                  <span className="text-accent">–</span> {model.con}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-16 text-center">
-          <p className="text-text/60">
+          <p className="text-mute text-sm">
             All plans include a 14-day money-back guarantee. No questions asked.
           </p>
         </div>

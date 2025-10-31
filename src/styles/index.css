@@ -1,24 +1,43 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600&family=Permanent+Marker&display=swap');
 
+:root {
+  --bg: #0E0E0E;
+  --surface: #151515;
+  --text: #EAEAEA;
+  --mute: #9A9A9A;
+  --accent: #C9A449;
+  --neon: #39FF14;
+  --border: #222222;
+}
+
 @layer base {
-  body {
-    background-color: #0E0E0E;
-    color: #EAEAEA;
+  html, body {
+    background-color: var(--bg);
+    color: var(--text);
     font-family: 'Doto', sans-serif;
   }
   
   h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
   }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  hr, .divider {
+    border-color: var(--border);
+  }
 }
 
 .tagline {
   font-family: 'Permanent Marker', cursive;
-  color: #39FF14;
+  color: var(--neon);
   text-align: center;
   letter-spacing: 0.5px;
-  font-size: clamp(2rem, 4vw, 4rem);
+  font-size: clamp(2rem, 5vw, 4rem);
   animation: fadeIn 1s ease-in;
 }
 
@@ -33,17 +52,17 @@
 }
 
 .cursor-blink {
-  border-right: 3px solid #39FF14;
+  border-right: 3px solid var(--neon);
   animation: blink 1s step-end infinite;
 }
 
 .btn-primary {
-  background-color: #C9A449;
+  background-color: var(--accent);
   color: #0E0E0E;
   border: none;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.25rem;
   font-weight: 600;
-  border-radius: 0px;
+  border-radius: 0;
   transition: all 0.2s ease-in-out;
 }
 
@@ -52,52 +71,58 @@
 }
 
 .btn-secondary {
-  border: 2px solid #C9A449;
-  color: #C9A449;
+  border: 2px solid var(--accent);
+  color: var(--accent);
   background: transparent;
-  padding: 0.75rem 1.5rem;
+  padding: 0.75rem 1.25rem;
   font-weight: 600;
-  border-radius: 0px;
+  border-radius: 0;
   transition: all 0.2s ease-in-out;
 }
 
 .btn-secondary:hover {
-  background-color: #C9A449;
+  background-color: var(--accent);
   color: #0E0E0E;
 }
 
-.card {
-  background-color: #1a1a1a;
-  border-radius: 0px;
+.panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   padding: 2rem;
-  border: 1px solid #2a2a2a;
+}
+
+.card {
+  background-color: var(--surface);
+  border-radius: 0;
+  padding: 2rem;
+  border: 1px solid var(--border);
 }
 
 .pricing-card {
-  background-color: #1a1a1a;
-  border-radius: 0px;
+  background-color: var(--surface);
+  border-radius: 0;
   padding: 2rem;
-  border: 1px solid #2a2a2a;
+  border: 1px solid var(--border);
   transition: all 0.3s;
 }
 
 .pricing-card:hover {
-  border-color: #C9A449;
+  border-color: var(--accent);
 }
 
 .input-field {
-  background-color: #1a1a1a;
-  border: 1px solid #2a2a2a;
-  border-radius: 0px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
   padding: 0.75rem 1rem;
-  color: #EAEAEA;
+  color: var(--text);
 }
 
 .input-field::placeholder {
-  color: #666;
+  color: var(--mute);
 }
 
 .input-field:focus {
   outline: none;
-  border-color: #C9A449;
+  border-color: var(--accent);
 }
