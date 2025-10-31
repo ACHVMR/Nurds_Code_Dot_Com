@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/clerk-react';
-import { Power, AlertTriangle, CheckCircle, XCircle, Activity, Zap } from 'lucide-react';
+import { Power, AlertTriangle, CheckCircle, XCircle, Activity, Zap, Boxes, MessageCircle, Send, Sparkles } from 'lucide-react';
+import { USE_CASES, orchestrateCircuitBox, getAvailableUseCases } from '../services/circuitOrchestration.js';
+import { ACHEEVYAssistant } from '../services/acheevy.js';
 
 const CircuitBox = () => {
   const [breakers, setBreakers] = useState([]);
@@ -8,14 +10,132 @@ const CircuitBox = () => {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'on', 'off', 'error'
   const [apiError, setApiError] = useState('');
-  const { getToken } = useAuth();
+  const [showOrchestration, setShowOrchestration] = useState(false);
+  const [selectedUseCase, setSelectedUseCase] = useState('');
+  const [userTier, setUserTier] = useState('free');
+  const [orchestrating, setOrchestrating] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessage, setChatMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [acheevy, setAcheevy] = useState(null);
+  const chatEndRef = useRef(null);
+  const { getToken, userId } = useAuth();
 
   useEffect(() => {
     fetchCircuitStatus();
+    fetchUserTier();
     // Refresh every 30 seconds
     const interval = setInterval(fetchCircuitStatus, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const initAssistant = async () => {
+      if (userId && userTier) {
+        const token = await getToken?.();
+        const assistant = new ACHEEVYAssistant(userId, userTier, token);
+        setAcheevy(assistant);
+      }
+    };
+    initAssistant();
+  }, [userId, userTier, getToken]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory]);
+
+  const fetchUserTier = async () => {
+    try {
+      const token = await getToken?.();
+      const res = await fetch('/api/auth/me', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Extract tier from claims or metadata
+        setUserTier(data?.claims?.tier || data?.tier || 'free');
+      }
+    } catch (e) {
+      console.error('Failed to fetch user tier:', e);
+    }
+  };
+
+  const handleOrchestrate = async () => {
+    if (!selectedUseCase) {
+      setApiError('Please select a use case');
+      return;
+    }
+
+    setOrchestrating(true);
+    setApiError('');
+
+    try {
+      const token = await getToken?.();
+      const result = await orchestrateCircuitBox(selectedUseCase, userTier, token);
+      
+      // Refresh breakers to show new state
+      await fetchCircuitStatus();
+      
+      setShowOrchestration(false);
+      setSelectedUseCase('');
+      setApiError('');
+      
+      // Show success message
+      alert(`✓ Circuit Box configured for ${USE_CASES[selectedUseCase].name}\n\nEnabled: ${result.enabled.length} services\nDisabled: ${result.disabled?.length || 0} services`);
+    } catch (error) {
+      setApiError(error.message || 'Orchestration failed');
+    } finally {
+      setOrchestrating(false);
+    }
+  };
+
+  const handleChatSend = async () => {
+    if (!chatMessage.trim() || !acheevy) return;
+
+    const userMessage = { role: 'user', content: chatMessage, timestamp: Date.now() };
+    setChatHistory(prev => [...prev, userMessage]);
+    setChatMessage('');
+
+    try {
+      const token = await getToken?.();
+      acheevy.token = token;
+      
+      const response = await acheevy.analyzeIntent(chatMessage);
+      const guidance = acheevy.generateGuidance();
+      
+      const assistantMessage = {
+        role: 'assistant',
+        content: guidance,
+        intent: acheevy.detectedIntent,
+        confidence: response.confidence,
+        suggestedTools: acheevy.suggestedTools,
+        timestamp: Date.now()
+      };
+      
+      setChatHistory(prev => [...prev, assistantMessage]);
+      
+      // Auto-provision if high confidence and user seems ready
+      if (response.confidence > 0.7 && chatMessage.toLowerCase().includes('set up')) {
+        setTimeout(async () => {
+          const provisionResult = await acheevy.autoProvision(true);
+          if (provisionResult.success) {
+            await fetchCircuitStatus();
+            setChatHistory(prev => [...prev, {
+              role: 'system',
+              content: `✓ Auto-configured ${provisionResult.enabled.length} services for you!`,
+              timestamp: Date.now()
+            }]);
+          }
+        }, 1000);
+      }
+    } catch (error) {
+      setChatHistory(prev => [...prev, {
+        role: 'error',
+        content: `Error: ${error.message}`,
+        timestamp: Date.now()
+      }]);
+    }
+  };
 
   const fetchCircuitStatus = async () => {
     try {
@@ -255,17 +375,33 @@ const CircuitBox = () => {
         </div>
       )}
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-text flex items-center gap-2">
-            <Zap className="w-6 h-6 text-[#39FF14]" />
+          <h2 className="text-xl sm:text-2xl font-bold text-text flex items-center gap-2">
+            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-[#39FF14]" />
             Circuit Box Dashboard
           </h2>
-          <p className="text-text/60 mt-1">
+          <p className="text-sm sm:text-base text-text/60 mt-1">
             Infrastructure control panel • Toggle breakers to enable/disable services
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowOrchestration(true)}
+            className="px-3 sm:px-4 py-2 bg-[#39FF14]/20 text-[#39FF14] hover:bg-[#39FF14]/30 rounded-lg flex items-center gap-2 font-semibold transition-colors text-sm"
+          >
+            <Boxes className="w-4 h-4" />
+            <span className="hidden sm:inline">Auto-Configure</span>
+            <span className="sm:hidden">Configure</span>
+          </button>
+          <button
+            onClick={() => setShowChat(true)}
+            className="px-3 sm:px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg flex items-center gap-2 font-semibold transition-colors text-sm"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span className="hidden sm:inline">ACHEEVY Assistant</span>
+            <span className="sm:hidden">AI Help</span>
+          </button>
           <button
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 rounded-lg text-sm ${
@@ -300,7 +436,7 @@ const CircuitBox = () => {
       </div>
 
       {/* Circuit Box Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {filteredBreakers.map((breaker) => (
           <div
             key={breaker.id}
@@ -309,10 +445,10 @@ const CircuitBox = () => {
           >
             {/* Breaker Header */}
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   {getStatusIcon(breaker.status, breaker.health)}
-                  <h3 className="font-semibold text-text text-sm">{breaker.name}</h3>
+                  <h3 className="font-semibold text-text text-xs sm:text-sm truncate">{breaker.name}</h3>
                 </div>
                 <span className={`inline-block px-2 py-0.5 rounded text-xs border ${getTierColor(breaker.tier)}`}>
                   {breaker.tier}
@@ -392,14 +528,118 @@ const CircuitBox = () => {
         ))}
       </div>
 
+      {/* Orchestration Modal */}
+      {showOrchestration && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
+          onClick={() => setShowOrchestration(false)}
+        >
+          <div
+            className="card w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto m-0 sm:m-4 rounded-t-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-text mb-2 flex items-center gap-2">
+                  <Boxes className="w-6 h-6 text-[#39FF14]" />
+                  ACHEEVY Orchestration
+                </h3>
+                <p className="text-text/60 text-sm">
+                  Auto-configure Circuit Box for your use case • Current tier: <span className="text-[#39FF14] font-semibold">{userTier}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setShowOrchestration(false)}
+                className="text-text/60 hover:text-text"
+              >
+                ✕
+              </button>
+            </div>
+
+            {apiError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded text-red-300 text-sm">
+                {apiError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-text mb-2">
+                  Select Use Case
+                </label>
+                <select
+                  value={selectedUseCase}
+                  onChange={(e) => setSelectedUseCase(e.target.value)}
+                  className="input-field w-full"
+                  disabled={orchestrating}
+                >
+                  <option value="">-- Choose a use case --</option>
+                  {getAvailableUseCases(userTier).map((uc) => (
+                    <option key={uc.id} value={uc.id}>
+                      {uc.name} - {uc.description}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {selectedUseCase && USE_CASES[selectedUseCase] && (
+                <div className="p-4 bg-[#1a1a1a] border border-[#2a2a2a] rounded">
+                  <h4 className="font-semibold text-text mb-2">
+                    {USE_CASES[selectedUseCase].name}
+                  </h4>
+                  <p className="text-text/60 text-sm mb-3">
+                    {USE_CASES[selectedUseCase].description}
+                  </p>
+                  <div>
+                    <p className="text-xs text-text/40 mb-2">Services to enable:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {USE_CASES[selectedUseCase].services.map((service, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 rounded text-xs"
+                        >
+                          {service}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-[#2a2a2a]">
+                    <p className="text-xs text-text/60">
+                      <strong>Minimum Tier:</strong> {USE_CASES[selectedUseCase].minTier}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <button
+                  onClick={handleOrchestrate}
+                  disabled={!selectedUseCase || orchestrating}
+                  className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {orchestrating ? 'Configuring...' : 'Apply Configuration'}
+                </button>
+                <button
+                  onClick={() => setShowOrchestration(false)}
+                  disabled={orchestrating}
+                  className="px-4 py-2 bg-[#2a2a2a] text-text hover:bg-[#3a3a3a] rounded-lg"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Detailed View Modal */}
       {selectedBreaker && (
         <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
           onClick={() => setSelectedBreaker(null)}
         >
           <div
-            className="card max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            className="card w-full sm:max-w-2xl max-h-[90vh] overflow-y-auto m-0 sm:m-4 rounded-t-2xl sm:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-4">
@@ -485,6 +725,112 @@ const CircuitBox = () => {
                   {selectedBreaker.status === 'on' ? 'Disable Service' : 'Enable Service'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ACHEEVY Chat Assistant */}
+      {showChat && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-4 z-50"
+          onClick={() => setShowChat(false)}
+        >
+          <div
+            className="card w-full sm:max-w-2xl h-[90vh] sm:h-[600px] flex flex-col m-0 sm:m-4 rounded-t-2xl sm:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Chat Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[#2a2a2a]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                <h3 className="text-lg font-bold text-text">ACHEEVY Assistant</h3>
+              </div>
+              <button
+                onClick={() => setShowChat(false)}
+                className="text-text/60 hover:text-text text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {chatHistory.length === 0 && (
+                <div className="text-center text-text/40 mt-8">
+                  <Sparkles className="w-12 h-12 mx-auto mb-3 text-purple-400/40" />
+                  <p className="text-sm">Hi! I'm ACHEEVY, your AI assistant.</p>
+                  <p className="text-xs mt-2">Ask me about setting up voice control, robotics, AI agents, and more!</p>
+                </div>
+              )}
+              
+              {chatHistory.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-lg p-3 ${
+                      msg.role === 'user'
+                        ? 'bg-[#39FF14]/20 text-text'
+                        : msg.role === 'error'
+                        ? 'bg-red-500/20 text-red-300'
+                        : msg.role === 'system'
+                        ? 'bg-blue-500/20 text-blue-300'
+                        : 'bg-[#1a1a1a] text-text border border-[#2a2a2a]'
+                    }`}
+                  >
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    
+                    {msg.suggestedTools && msg.suggestedTools.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-[#2a2a2a]">
+                        <p className="text-xs text-text/60 mb-1">Suggested services:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {msg.suggestedTools.slice(0, 4).map((tool, i) => (
+                            <span
+                              key={i}
+                              className="px-2 py-0.5 bg-purple-500/20 text-purple-300 border border-purple-500/30 rounded text-xs"
+                            >
+                              {tool}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {msg.intent && msg.confidence && (
+                      <div className="mt-2 pt-2 border-t border-[#2a2a2a] text-xs text-text/40">
+                        Intent: {msg.intent.replace(/-/g, ' ')} ({Math.round(msg.confidence * 100)}%)
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <div className="p-4 border-t border-[#2a2a2a]">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={chatMessage}
+                  onChange={(e) => setChatMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleChatSend()}
+                  placeholder="Ask me anything... (e.g., 'I want to build a voice assistant')"
+                  className="flex-1 input-field text-sm"
+                />
+                <button
+                  onClick={handleChatSend}
+                  disabled={!chatMessage.trim() || !acheevy}
+                  className="px-4 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-text/40 mt-2">
+                💡 Try: "Set up voice control" or "I need robotics APIs"
+              </p>
             </div>
           </div>
         </div>

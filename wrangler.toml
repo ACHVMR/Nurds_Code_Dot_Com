@@ -1,151 +1,60 @@
 # ============================================
-# Nurds Code - Maximum Cloudflare Workers Configuration
-# Multi-tenant, AI-powered, globally distributed
+# Nurds Code - Cloudflare Workers Configuration (Dev-friendly)
 # ============================================
 
 name = "nurdscode-api"
 main = "workers/api.js"
 compatibility_date = "2024-10-30"
-node_compat = true
 workers_dev = true
 
-# Account configuration
-account_id = "" # Add your Cloudflare account ID
-route = "api.nurdscode.com/*"
+# Account configuration (optional for local dev)
+# account_id can be set for deploy; omit/empty for local
+# route only applies in production
 
 # ============================================
-# Resource Limits (Maximized)
+# Development Configuration
 # ============================================
-limits = { cpu_ms = 50000 }  # 50 seconds CPU time (max for paid)
+[dev]
+port = 8787
+local_protocol = "http"
 
 # ============================================
-# Environment: Production
-# ============================================
-[env.production]
-name = "nurdscode-api-prod"
-route = "api.nurdscode.com/*"
-
-# ============================================
-# Environment: Staging
-# ============================================
-[env.staging]
-name = "nurdscode-api-staging"
-route = "staging-api.nurdscode.com/*"
-
-# ============================================
-# Supabase Integration (replaces D1)
+# Supabase Integration
 # ============================================
 [vars]
 SUPABASE_URL = "https://qwwjmujbfnwbcyvfmfaj.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF3d2ptdWpiZm53YmN5dmZtZmFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4NzAwNzQsImV4cCI6MjA3NzQ0NjA3NH0.iXUI0CHL4WwVTpstR4rXU0ENA_SsSDaWfpohYjW_v48"
 
-# Voice AI Configuration (OpenAI Whisper by default)
+# Voice AI Configuration
 VOICE_ENABLED = "true"
 VOICE_DEFAULT_PROVIDER = "openai"
 OPENAI_VOICE_MODEL = "whisper-1"
 OPENAI_TTS_MODEL = "tts-1"
 OPENAI_TTS_VOICE = "alloy"
-ENABLE_GPT5 = "false" # Set to "true" to route all plans to GPT-5 (requires provider support)
+ENABLE_GPT5 = "false"
 
 # ACHEEVY Orchestrator (optional bridge)
-# When set, /api/chat will proxy to this orchestrator service.
-# For local dev you can use: http://localhost:5050
 AGENT_CORE_URL = ""
-# Optional Authorization header for ACHEEVY (set as a secret in production)
-# wrangler secret put AGENT_CORE_AUTH
 
 # Authentication (Clerk)
 CLERK_FRONTEND_API_URL = "https://precise-lamprey-55.clerk.accounts.dev"
 CLERK_BACKEND_API_URL = "https://api.clerk.com"
 CLERK_JWKS_URL = "https://precise-lamprey-55.clerk.accounts.dev/.well-known/jwks.json"
-# Set secret via wrangler: CLERK_SECRET_KEY
 
-# Superadmin / RBAC
-# Comma-separated email allowlist for superadmins (e.g., "owner@example.com,cofounder@example.com")
+# RBAC
 ADMIN_ALLOWLIST = ""
-# Optional Clerk organization RBAC: if set, members with this role in this org are superadmins
 CLERK_ORG_ID_SUPERADMINS = ""
 CLERK_SUPERADMIN_ROLE = "owner"
 
-# Stripe Configuration
+# Stripe (publishable only here; secrets set via wrangler secret)
 STRIPE_PUBLISHABLE_KEY = "pk_live_51LPsOjHW9f80DXRWn1sPqOxChAwxi2e2VkxNBS3KH5e5nAHGyIn4hFOtEeXieH3h9ZH6Etzdwh6SKlZ3iPvx41Ow00Y2WF0Icg"
 
-# AI Gateway Configuration
-AI_GATEWAY_ACCOUNT_ID = "" # Add your Cloudflare account ID
+# AI Gateway (optional)
+AI_GATEWAY_ACCOUNT_ID = ""
 AI_GATEWAY_GATEWAY_NAME = "nurdscode-gateway"
 
-# Performance Settings
 MAX_REQUESTS_PER_MINUTE = "60"
 RESPONSE_TIMEOUT_MS = "30000"
-
-# ============================================
-# Secrets (Set with: wrangler secret put SECRET_NAME)
-# ============================================
-# Run these commands:
-# wrangler secret put STRIPE_SECRET_KEY
-# wrangler secret put STRIPE_WEBHOOK_SECRET
-# wrangler secret put JWT_SECRET
-# wrangler secret put SUPABASE_SERVICE_ROLE_KEY
-# wrangler secret put GROQ_API_KEY
-# wrangler secret put OPENAI_API_KEY
-# wrangler secret put ANTHROPIC_API_KEY
-# wrangler secret put OPENROUTER_API_KEY
-# wrangler secret put CLERK_SECRET_KEY
-
-# ============================================
-# KV Namespaces (Cache & Session Storage)
-# ============================================
-[[kv_namespaces]]
-binding = "CACHE"
-id = "" # Create with: wrangler kv:namespace create "CACHE"
-
-[[kv_namespaces]]
-binding = "SESSIONS"
-id = "" # Create with: wrangler kv:namespace create "SESSIONS"
-
-# Production KV
-[[env.production.kv_namespaces]]
-binding = "CACHE"
-id = "" # Create with: wrangler kv:namespace create "CACHE" --env production
-
-[[env.production.kv_namespaces]]
-binding = "SESSIONS"
-id = "" # Create with: wrangler kv:namespace create "SESSIONS" --env production
-
-# ============================================
-# Durable Objects (Real-time Chat State)
-# ============================================
-[[durable_objects.bindings]]
-name = "CHAT_ROOMS"
-class_name = "ChatRoom"
-script_name = "nurdscode-api"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["ChatRoom"]
-
-# Production Durable Objects
-[[env.production.durable_objects.bindings]]
-name = "CHAT_ROOMS"
-class_name = "ChatRoom"
-script_name = "nurdscode-api-prod"
-
-# ============================================
-# R2 Storage (File/Asset Storage)
-# ============================================
-[[r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nurdscode-assets"
-
-[[env.production.r2_buckets]]
-binding = "ASSETS"
-bucket_name = "nurdscode-assets-prod"
-
-# ============================================
-# Analytics Engine (Usage Tracking)
-# ============================================
-[[analytics_engine_datasets]]
-binding = "ANALYTICS"
 
 # ============================================
 # AI Bindings (Cloudflare Workers AI)
@@ -154,37 +63,37 @@ binding = "ANALYTICS"
 binding = "AI"
 
 # ============================================
-# Observability
-# ============================================
-[observability]
-enabled = true
-
-# Logpush configuration
-[[logpush]]
-enabled = true
-destination = "https://logs.nurdscode.com"
-
-# ============================================
-# Build Configuration
-# ============================================
-[build]
-command = "npm run build"
-
-[build.upload]
-format = "service-worker"
-main = "./workers/api.js"
-
-# ============================================
-# CORS & Security Headers
-# ============================================
-[site]
-bucket = "./dist"
-
-# ============================================
-# Compatibility Flags (Latest features)
+# Compatibility Flags
 # ============================================
 compatibility_flags = [
   "nodejs_compat",
   "transformstream_enable_standard_constructor",
   "streams_enable_constructors"
 ]
+
+# ============================================
+# Observability
+# ============================================
+[observability]
+enabled = true
+
+# ============================================
+# Environment: Production (bindings only for deploy)
+# ============================================
+[env.production]
+name = "nurdscode-api-prod"
+route = "api.nurdscode.com/*"
+
+# KV / R2 / Durable Objects / Analytics can be set here for prod only
+# [[env.production.kv_namespaces]]
+# binding = "CACHE"
+# id = "<kv-id>"
+
+# [[env.production.r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "nurdscode-assets-prod"
+
+# [[env.production.durable_objects.bindings]]
+# name = "CHAT_ROOMS"
+# class_name = "ChatRoom"
+# script_name = "nurdscode-api-prod"

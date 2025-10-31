@@ -707,7 +707,7 @@ Boomer_Angs naming convention and is ready for deployment.
       const clerkPayload = await verifyClerkJWT(token, env);
       const userId = clerkPayload.sub;
       const userEmail = clerkPayload.email;
-      const isSuperadmin = checkSuperadmin(userEmail, clerkPayload, env);
+      const isSuperadmin = isSuperadminFromClaims(clerkPayload, env);
 
       if (!isSuperadmin) {
         return new Response(JSON.stringify({ error: 'Forbidden: superadmin only' }), {
@@ -753,7 +753,7 @@ Boomer_Angs naming convention and is ready for deployment.
 
       const clerkPayload = await verifyClerkJWT(token, env);
       const userEmail = clerkPayload.email;
-      const isSuperadmin = checkSuperadmin(userEmail, clerkPayload, env);
+      const isSuperadmin = isSuperadminFromClaims(clerkPayload, env);
 
       if (!isSuperadmin) {
         return new Response(JSON.stringify({ error: 'Forbidden: superadmin only' }), {
@@ -791,6 +791,93 @@ Boomer_Angs naming convention and is ready for deployment.
       console.error('Toggle circuit error:', error);
       return new Response(
         JSON.stringify({ error: error.message || 'Failed to toggle circuit' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Route: ACHEEVY orchestration - Auto-configure circuit breakers based on use case
+  if (path === '/api/admin/circuit-box/orchestrate' && request.method === 'POST') {
+    try {
+      // Verify superadmin
+      const session = await requireSuperadmin(request, env);
+
+      const { useCase, tier, services } = await request.json();
+
+      if (!useCase) {
+        return new Response(
+          JSON.stringify({ error: 'useCase is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // ACHEEVY orchestration logic: Auto-enable required services based on use case
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+      
+      // Use case to breaker mapping
+      const useCaseBreakers = {
+        'voice-assistant': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-5', 'breaker-10'],
+        'ai-agent-builder': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-5', 'breaker-15'],
+        'code-editor': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-35'],
+        'full-platform': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-5', 'breaker-10', 'breaker-15', 'breaker-20', 'breaker-30', 'breaker-35'],
+        'security-scan': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-30', 'breaker-32'],
+        'billing-only': ['breaker-1', 'breaker-2', 'breaker-3', 'breaker-20']
+      };
+
+      const breakersToEnable = services || useCaseBreakers[useCase] || [];
+
+      if (breakersToEnable.length === 0) {
+        return new Response(
+          JSON.stringify({ error: 'No breakers configured for this use case', useCase }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Enable required breakers
+      const { data: enabled, error: enableError } = await supabase
+        .from('circuit_breakers')
+        .update({ status: 'on', updated_at: new Date().toISOString() })
+        .in('id', breakersToEnable)
+        .select();
+
+      if (enableError) throw enableError;
+
+      // Optionally disable breakers not in the list (if tier-limited)
+      let disabled = [];
+      if (tier && tier !== 'superior') {
+        const { data: allBreakers } = await supabase
+          .from('circuit_breakers')
+          .select('id')
+          .not('id', 'in', `(${breakersToEnable.join(',')})`);
+        
+        const breakersToDisable = (allBreakers || []).map(b => b.id);
+        
+        if (breakersToDisable.length > 0) {
+          const { data: disabledData } = await supabase
+            .from('circuit_breakers')
+            .update({ status: 'off', updated_at: new Date().toISOString() })
+            .in('id', breakersToDisable)
+            .select();
+          
+          disabled = disabledData || [];
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          useCase,
+          tier,
+          enabled: enabled || [],
+          disabled,
+          message: `Circuit Box configured for ${useCase}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Orchestration error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Orchestration failed' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
