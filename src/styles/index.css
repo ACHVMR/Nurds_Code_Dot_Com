@@ -1,0 +1,128 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600&family=Permanent+Marker&display=swap');
+
+:root {
+  --bg: #0E0E0E;
+  --surface: #151515;
+  --text: #EAEAEA;
+  --mute: #9A9A9A;
+  --accent: #C9A449;
+  --neon: #39FF14;
+  --border: #222222;
+}
+
+@layer base {
+  html, body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Doto', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+  }
+
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  hr, .divider {
+    border-color: var(--border);
+  }
+}
+
+.tagline {
+  font-family: 'Permanent Marker', cursive;
+  color: var(--neon);
+  text-align: center;
+  letter-spacing: 0.5px;
+  font-size: clamp(2rem, 5vw, 4rem);
+  animation: fadeIn 1s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes blink {
+  0%, 49% { border-right-color: #39FF14; }
+  50%, 100% { border-right-color: transparent; }
+}
+
+.cursor-blink {
+  border-right: 3px solid var(--neon);
+  animation: blink 1s step-end infinite;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: #0E0E0E;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  border-radius: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+.btn-secondary {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: transparent;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  border-radius: 0;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-secondary:hover {
+  background-color: var(--accent);
+  color: #0E0E0E;
+}
+
+.panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  padding: 2rem;
+}
+
+.card {
+  background-color: var(--surface);
+  border-radius: 0;
+  padding: 2rem;
+  border: 1px solid var(--border);
+}
+
+.pricing-card {
+  background-color: var(--surface);
+  border-radius: 0;
+  padding: 2rem;
+  border: 1px solid var(--border);
+  transition: all 0.3s;
+}
+
+.pricing-card:hover {
+  border-color: var(--accent);
+}
+
+.input-field {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  color: var(--text);
+}
+
+.input-field::placeholder {
+  color: var(--mute);
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--accent);
+}
