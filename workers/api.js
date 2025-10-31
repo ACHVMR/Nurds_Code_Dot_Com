@@ -883,11 +883,120 @@ Boomer_Angs naming convention and is ready for deployment.
     }
   }
 
+  // OCR endpoint - Extract text from images using Cloudflare AI
+  if (path === '/api/ai/ocr' && request.method === 'POST') {
+    try {
+      const { image, mode, language, enhanceQuality } = await request.json();
+
+      if (!image) {
+        return new Response(
+          JSON.stringify({ error: 'Image data required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Use Cloudflare AI Workers AI for OCR
+      // Model: @cf/meta/llama-3.2-11b-vision-instruct (supports image analysis)
+      const prompt = mode === 'code'
+        ? 'Extract all code from this image. Preserve exact formatting, indentation, and syntax. Output ONLY the code, no explanations.'
+        : mode === 'handwriting'
+        ? 'Extract all handwritten text from this image. Convert to typed text.'
+        : 'Extract all text from this image exactly as shown.';
+
+      const inputs = {
+        image: image.startsWith('data:') ? image : `data:image/png;base64,${image}`,
+        prompt,
+        max_tokens: 2048
+      };
+
+      const aiResponse = await env.AI.run(
+        '@cf/meta/llama-3.2-11b-vision-instruct',
+        inputs
+      );
+
+      // Extract text from response
+      const extractedText = aiResponse.response || aiResponse.description || '';
+
+      // Detect language for code mode
+      let detectedLanguage = language;
+      if (mode === 'code' && language === 'auto') {
+        detectedLanguage = detectLanguageFromCode(extractedText);
+      }
+
+      return new Response(
+        JSON.stringify({
+          text: extractedText,
+          confidence: 0.85,
+          detectedLanguage,
+          metadata: {
+            mode,
+            enhanceQuality,
+            model: '@cf/meta/llama-3.2-11b-vision-instruct'
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('OCR error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'OCR extraction failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Kie.ai proxy endpoints (avoid CORS issues)
+  if (path.startsWith('/api/kieai/')) {
+    const kieaiPath = path.replace('/api/kieai/', '');
+    const kieaiUrl = `https://api.kie.ai/api/v1/${kieaiPath}`;
+    
+    const kieaiHeaders = {
+      'Authorization': `Bearer ${env.KIE_API_KEY || '6423cd116ad6e1e3f43f3506aaf4b751'}`,
+      'Content-Type': request.headers.get('Content-Type') || 'application/json'
+    };
+
+    try {
+      const kieaiResponse = await fetch(kieaiUrl + url.search, {
+        method: request.method,
+        headers: kieaiHeaders,
+        body: request.method !== 'GET' ? await request.text() : undefined
+      });
+
+      const kieaiData = await kieaiResponse.text();
+      
+      return new Response(kieaiData, {
+        status: kieaiResponse.status,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      });
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Kie.ai proxy error: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
   // Default 404
   return new Response('Not Found', {
     status: 404,
     headers: corsHeaders,
   });
+}
+
+// Helper: Detect programming language
+function detectLanguageFromCode(code) {
+  if (/function\s+\w+|const\s+\w+\s*=|import\s+.*from/.test(code)) return 'javascript';
+  if (/def\s+\w+|import\s+\w+|if\s+__name__/.test(code)) return 'python';
+  if (/public\s+class|System\.out/.test(code)) return 'java';
+  if (/#include|std::|cout/.test(code)) return 'cpp';
+  if (/fn\s+main|let\s+mut|impl/.test(code)) return 'rust';
+  if (/package\s+main|func\s+main/.test(code)) return 'go';
+  if (/<html|<div|<body/.test(code)) return 'html';
+  if (/SELECT.*FROM|INSERT\s+INTO/i.test(code)) return 'sql';
+  return 'plaintext';
 }
 
 export default {

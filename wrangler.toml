@@ -36,6 +36,9 @@ ENABLE_GPT5 = "false"
 # ACHEEVY Orchestrator (optional bridge)
 AGENT_CORE_URL = ""
 
+# Kie.ai API (Video/Image Generation)
+KIE_API_KEY = "6423cd116ad6e1e3f43f3506aaf4b751"
+
 # Authentication (Clerk)
 CLERK_FRONTEND_API_URL = "https://precise-lamprey-55.clerk.accounts.dev"
 CLERK_BACKEND_API_URL = "https://api.clerk.com"

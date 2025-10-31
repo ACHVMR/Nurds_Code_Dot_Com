@@ -1,26 +1,194 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Upload, Image as ImageIcon, FileCode, Video, Sparkles } from 'lucide-react';
+import { extractCodeFromImage, cloneProjectFromScreenshot } from '../services/ocr.js';
+import { generateVideoFromMedia } from '../services/kieai.js';
 
 function Home() {
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState('');
+  const fileInputRef = useRef(null);
+  const navigate = useNavigate();
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      await handleFile(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleFileInput = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      await handleFile(e.target.files[0]);
+    }
+  };
+
+  const handleFile = async (file) => {
+    setUploadedFile(file);
+    setProcessing(true);
+
+    try {
+      // Check file type
+      if (file.type.startsWith('image/')) {
+        setProcessingMessage('Extracting code from image...');
+        
+        // Use OCR to extract code
+        const result = await cloneProjectFromScreenshot(file);
+        
+        setProcessingMessage('Code extracted! Redirecting to editor...');
+        
+        // Redirect to editor with extracted code
+        setTimeout(() => {
+          navigate('/editor', {
+            state: {
+              code: result.code,
+              language: result.language,
+              projectName: result.projectName,
+              fromOCR: true
+            }
+          });
+        }, 1000);
+      } else {
+        setProcessingMessage('File uploaded!');
+        setProcessing(false);
+      }
+    } catch (error) {
+      console.error('Processing failed:', error);
+      setProcessingMessage(`Error: ${error.message}`);
+      setTimeout(() => {
+        setProcessing(false);
+        setUploadedFile(null);
+        setProcessingMessage('');
+      }, 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative py-32 px-4 sm:px-6 lg:px-8">
+      {/* Hero Section with NURD Logo */}
+      <section className="relative py-20 sm:py-32 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <h1 className="tagline mb-8">
-              Think It. Prompt It. Build It.
-            </h1>
-            <p className="text-xl md:text-2xl text-text mb-12 max-w-3xl mx-auto">
-              Build powerful applications with modern tools and workflows
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/subscribe" className="btn-primary text-lg px-8 py-4">
-                Start Building Now
-              </Link>
-              <Link to="/pricing" className="btn-secondary text-lg px-8 py-4">
-                View Pricing
-              </Link>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text & CTA */}
+            <div className="text-center lg:text-left">
+              <h1 className="tagline mb-6 sm:mb-8">
+                Think It. Prompt It. Build It.
+              </h1>
+              <p className="text-lg sm:text-xl md:text-2xl text-text mb-8 sm:mb-12 max-w-2xl mx-auto lg:mx-0">
+                Build powerful applications with modern tools and workflows. 
+                <span className="block mt-4 text-[#39FF14]">
+                  Upload screenshots, clone code, or generate videos with AI! ✨
+                </span>
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Link to="/subscribe" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
+                  Start Building Now
+                </Link>
+                <Link to="/pricing" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
+                  View Pricing
+                </Link>
+              </div>
+            </div>
+
+            {/* Right Column - NURD Logo + Upload Zone */}
+            <div className="flex flex-col items-center gap-8">
+              {/* NURD Drip Logo */}
+              <div className="relative w-full max-w-md mx-auto">
+                <img 
+                  src="/nurd-drip-logo.png" 
+                  alt="NURD Logo"
+                  className="w-full h-auto drop-shadow-2xl animate-pulse-slow"
+                  style={{ filter: 'drop-shadow(0 0 30px rgba(57, 255, 20, 0.5))' }}
+                />
+              </div>
+
+              {/* Upload Drop Zone */}
+              <div
+                className={`relative w-full max-w-md mx-auto border-2 border-dashed rounded-2xl p-8 transition-all ${
+                  dragActive
+                    ? 'border-[#39FF14] bg-[#39FF14]/10'
+                    : 'border-[#2a2a2a] bg-[#1a1a1a]/50 hover:border-[#39FF14]/50'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileInput}
+                  accept="image/*,audio/*"
+                />
+
+                {!processing ? (
+                  <div className="text-center">
+                    <div className="flex justify-center gap-3 mb-4">
+                      <ImageIcon className="w-8 h-8 text-[#39FF14]" />
+                      <FileCode className="w-8 h-8 text-purple-400" />
+                      <Video className="w-8 h-8 text-cyan-400" />
+                    </div>
+                    
+                    <h3 className="text-lg font-semibold text-text mb-2">
+                      Drop files here or click to upload
+                    </h3>
+                    
+                    <p className="text-sm text-text/60 mb-6">
+                      📸 Screenshot → Code extraction<br />
+                      🎨 Image + Audio → AI Video<br />
+                      🤖 Powered by Kie.ai & OCR
+                    </p>
+
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="btn-primary flex items-center gap-2 mx-auto"
+                    >
+                      <Upload className="w-4 h-4" />
+                      Choose File
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <Sparkles className="w-12 h-12 text-[#39FF14] mx-auto mb-4 animate-spin" />
+                    <p className="text-text font-semibold">{processingMessage}</p>
+                    {uploadedFile && (
+                      <p className="text-sm text-text/60 mt-2">{uploadedFile.name}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-3 gap-4 w-full max-w-md mx-auto text-center">
+                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                  <div className="text-2xl font-bold text-[#39FF14]">OCR</div>
+                  <div className="text-xs text-text/60">Code Extract</div>
+                </div>
+                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                  <div className="text-2xl font-bold text-purple-400">AI</div>
+                  <div className="text-xs text-text/60">Video Gen</div>
+                </div>
+                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                  <div className="text-2xl font-bold text-cyan-400">24/7</div>
+                  <div className="text-xs text-text/60">Support</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
