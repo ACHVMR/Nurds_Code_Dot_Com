@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import { createClient } from '@supabase/supabase-js';
 import { chatHandler } from '../src/server/chat.js';
 import {
   handleTranscribe,
@@ -445,6 +446,309 @@ async function handleRequest(request, env) {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
+      );
+    }
+  }
+
+  // ============================================
+  // Agent Management API
+  // ============================================
+
+  // Route: Create new agent with Boomer_Angs naming ceremony
+  if (path === '/api/agents/create' && request.method === 'POST') {
+    try {
+      const authHeader = request.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const clerkPayload = await verifyClerkJWT(token, env);
+      const userId = clerkPayload.sub;
+
+      const body = await request.json();
+      const { agentName, prefix, type, framework, description, metadata } = body;
+
+      if (!agentName || !prefix) {
+        return new Response(
+          JSON.stringify({ error: 'Agent name and prefix are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Generate naming ceremony certificate
+      const certificate = `
+╔════════════════════════════════════════════════════════════╗
+║           BOOMER_ANG NAMING CEREMONY CERTIFICATE           ║
+╠════════════════════════════════════════════════════════════╣
+║                                                            ║
+║  Agent Name: ${agentName.padEnd(48)} ║
+║  Prefix:     ${prefix.padEnd(48)} ║
+║  Owner:      ${userId.substring(0, 16).padEnd(48)} ║
+║  Type:       ${(type || 'custom').padEnd(48)} ║
+║  Framework:  ${(framework || 'boomer_angs').padEnd(48)} ║
+║  Ceremony:   Boomer_Ang Naming Convention v1.0             ║
+║  Created:    ${new Date().toISOString().padEnd(48)} ║
+║                                                            ║
+║  Pattern:    [UserPrefix]_Ang                              ║
+║  Status:     ✓ Naming Ceremony Complete                    ║
+║                                                            ║
+╚════════════════════════════════════════════════════════════╝
+
+This agent has been officially recognized under the Deploy Platform
+Boomer_Angs naming convention and is ready for deployment.
+      `.trim();
+
+      // In production, this would store agent in database
+      // For now, return success with certificate
+      const agentData = {
+        id: crypto.randomUUID(),
+        agentName,
+        prefix,
+        type: type || 'custom',
+        framework: framework || 'boomer_angs',
+        description: description || '',
+        userId,
+        metadata: metadata || {},
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        certificate
+      };
+
+      return new Response(
+        JSON.stringify(agentData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to create agent' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Route: List user's agents
+  if (path === '/api/agents' && request.method === 'GET') {
+    try {
+      const authHeader = request.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const clerkPayload = await verifyClerkJWT(token, env);
+      const userId = clerkPayload.sub;
+
+      // Query Supabase for user's agents
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      const { data: agents, error } = await supabase
+        .from('agents')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ agents: agents || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Error fetching agents:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to fetch agents' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Route: Provision new user (called after Clerk signup)
+  if (path === '/api/provision' && request.method === 'POST') {
+    try {
+      const { id, email, tier } = await request.json();
+
+      if (!id || !email) {
+        return new Response(
+          JSON.stringify({ error: 'Missing required fields: id, email' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+      // Create tenant
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          name: `tenant_${id}`,
+          slug: email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          metadata: { created_by: 'auto_provision', clerk_user_id: id }
+        })
+        .select()
+        .single();
+
+      if (tenantError) throw tenantError;
+
+      // Create user
+      const { data: user, error: userError } = await supabase
+        .from('users')
+        .insert({
+          id,
+          tenant_id: tenant.id,
+          email,
+          tier: tier || 'free',
+          credits_remaining: tier === 'coffee' ? 25000 : tier === 'lite' ? 200000 : 0,
+          metadata: { provisioned_at: new Date().toISOString() }
+        })
+        .select()
+        .single();
+
+      if (userError) throw userError;
+
+      // Create welcome plug
+      const { data: plug, error: plugError } = await supabase
+        .from('plugs')
+        .insert({
+          tenant_id: tenant.id,
+          owner: id,
+          name: 'Welcome Plug',
+          description: 'Your first Nurds Code plug - start building!',
+          tier: tier || 'free',
+          agent_name: 'Welcome_Ang',
+          framework: 'boomer_angs',
+          config: { auto_generated: true, template: 'welcome' }
+        })
+        .select()
+        .single();
+
+      if (plugError) throw plugError;
+
+      // Create tenant schema
+      await supabase.rpc('create_user_schema', { uid: id });
+
+      return new Response(
+        JSON.stringify({ tenant, user, plug }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Provision error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to provision user' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Route: Get circuit breaker status
+  if (path === '/api/admin/circuit-box' && request.method === 'GET') {
+    try {
+      // Verify superadmin
+      const authHeader = request.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const clerkPayload = await verifyClerkJWT(token, env);
+      const userId = clerkPayload.sub;
+      const userEmail = clerkPayload.email;
+      const isSuperadmin = checkSuperadmin(userEmail, clerkPayload, env);
+
+      if (!isSuperadmin) {
+        return new Response(JSON.stringify({ error: 'Forbidden: superadmin only' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get circuit breaker status from Supabase
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+      const { data: breakers, error } = await supabase
+        .from('circuit_breakers')
+        .select('*')
+        .order('tier', { ascending: true });
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ breakers: breakers || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Circuit box error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to fetch circuit status' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Route: Toggle circuit breaker
+  if (path.startsWith('/api/admin/circuit-box/') && request.method === 'PATCH') {
+    try {
+      // Verify superadmin
+      const authHeader = request.headers.get('Authorization');
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const clerkPayload = await verifyClerkJWT(token, env);
+      const userEmail = clerkPayload.email;
+      const isSuperadmin = checkSuperadmin(userEmail, clerkPayload, env);
+
+      if (!isSuperadmin) {
+        return new Response(JSON.stringify({ error: 'Forbidden: superadmin only' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      const breakerId = path.split('/').pop();
+      const { status } = await request.json();
+
+      if (!['on', 'off'].includes(status)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid status. Must be "on" or "off"' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Update circuit breaker
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+      const { data, error } = await supabase
+        .from('circuit_breakers')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', breakerId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ breaker: data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Toggle circuit error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to toggle circuit' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   }

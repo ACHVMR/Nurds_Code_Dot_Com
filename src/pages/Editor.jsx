@@ -327,20 +327,6 @@ function Editor() {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 mt-2">
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    const lang = language === 'auto' ? detectLanguage(code) : language;
-                    const prompt = `You are ByteBot, an autonomous code diagnostician. Detect language and analyze the following code. Identify issues, improvements, and potential bugs. Provide actionable suggestions with examples.\n\nDetected/Selected language: ${lang}\n\nCode:\n\n` + code;
-                    setAssistantInput(prompt);
-                  }}
-                >
-                  Ask ByteBot to Diagnose
-                </button>
-              </div>
-
               <form onSubmit={sendAssistantMessage} className="mt-4 space-y-3">
                 <textarea
                   value={assistantInput}

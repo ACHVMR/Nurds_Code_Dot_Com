@@ -28,6 +28,9 @@ function Navbar() {
               Editor
             </Link>
             <SignedIn>
+              <Link to="/agents" className="text-text hover:text-accent transition-colors">
+                Agents
+              </Link>
               <Link to="/admin" className="text-text hover:text-accent transition-colors">
                 Admin
               </Link>
@@ -72,6 +75,9 @@ function Navbar() {
               Editor
             </Link>
             <SignedIn>
+              <Link to="/agents" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
+                Agents
+              </Link>
               <Link to="/admin" className="block px-3 py-2 text-text hover:text-accent hover:bg-[#2a2a2a]">
                 Admin
               </Link>

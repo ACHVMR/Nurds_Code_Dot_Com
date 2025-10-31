@@ -1,0 +1,230 @@
+# Deploy Platform Circuit Box Registry
+# Organized like an electrical panel - each "breaker" is a service
+# Version: 4.0
+# Last Updated: 2025-10-31
+
+version: "4.0"
+last_updated: "2025-10-31T00:00:00Z"
+
+breakers:
+  # ============================================
+  # TIER 1: CORE INFRASTRUCTURE (Always On)
+  # ============================================
+  - id: "breaker-1"
+    name: "Cloudflare Workers API"
+    service: "workers-api"
+    tier: "core"
+    status: "on"
+    health_endpoint: "/api/health"
+    description: "Main API router with Clerk auth, chat, voice, Stripe webhooks"
+    
+  - id: "breaker-2"
+    name: "Clerk Authentication"
+    service: "clerk-auth"
+    tier: "core"
+    status: "on"
+    health_endpoint: "/api/auth/me"
+    description: "User authentication and session management"
+    
+  - id: "breaker-3"
+    name: "Supabase Database"
+    service: "supabase"
+    tier: "core"
+    status: "on"
+    health_endpoint: "https://qwwjmujbfnwbcyvfmfaj.supabase.co/rest/v1/"
+    description: "PostgreSQL database with RLS and real-time capabilities"
+    
+  - id: "breaker-4"
+    name: "Admin Console"
+    service: "admin-dashboard"
+    tier: "core"
+    status: "on"
+    health_endpoint: "/api/admin/health"
+    description: "Superadmin-only control panel"
+
+  # ============================================
+  # TIER 2: AI & LLM SERVICES
+  # ============================================
+  - id: "breaker-5"
+    name: "LLM Gateway"
+    service: "llm-router"
+    tier: "ai"
+    status: "on"
+    description: "Multi-provider LLM routing (OpenAI, Anthropic, GROQ, OpenRouter)"
+    models:
+      - name: "GPT-4o"
+        provider: "openai"
+        status: "on"
+      - name: "Claude 3.5 Sonnet"
+        provider: "anthropic"
+        status: "on"
+      - name: "GROQ Llama 3 70B"
+        provider: "groq"
+        status: "on"
+      - name: "DeepSeek V3"
+        provider: "openrouter"
+        status: "on"
+        
+  - id: "breaker-6"
+    name: "GPT-5 Feature Flag"
+    service: "gpt5-routing"
+    tier: "ai"
+    status: "off"
+    description: "Premium GPT-5 routing (when enabled)"
+
+  # ============================================
+  # TIER 3: VOICE SDKs (Multi-Provider)
+  # ============================================
+  - id: "breaker-10"
+    name: "Voice Integration Layer"
+    service: "voice-orchestrator"
+    tier: "voice"
+    status: "on"
+    description: "Multi-provider voice AI with STT/TTS orchestration"
+    sub_services:
+      - name: "OpenAI Whisper (STT)"
+        status: "on"
+        cost_per_minute: 0.006
+        default: true
+      - name: "OpenAI TTS"
+        status: "on"
+        cost_per_minute: 0.015
+        default: true
+      - name: "Deepgram STT"
+        status: "off"
+        cost_per_minute: 0.01
+      - name: "ElevenLabs TTS"
+        status: "off"
+        cost_per_minute: 0.03
+
+  # ============================================
+  # TIER 4: AGENT FRAMEWORKS (Multi-Framework Kit)
+  # ============================================
+  - id: "breaker-15"
+    name: "Multi-Agent Builder Kit"
+    service: "agent-orchestrator"
+    tier: "agents"
+    status: "on"
+    description: "Multi-framework agent builder with Boomer_Angs naming system"
+    frameworks:
+      - name: "Boomer_Angs (Custom)"
+        status: "on"
+        maturity: "production"
+        use_case: "Deploy-native agents with [UserPrefix]_Ang naming ceremony"
+        naming_pattern: "[UserPrefix]_Ang"
+      - name: "CrewAI"
+        status: "off"
+        maturity: "high"
+        use_case: "Multi-agent workflows, production-ready"
+      - name: "Microsoft Agent Framework"
+        status: "off"
+        maturity: "very-high"
+        use_case: "Enterprise governance, long-running tasks"
+      - name: "OpenAI Agents SDK"
+        status: "off"
+        maturity: "high"
+        use_case: "OpenAI ecosystem, GPT-4 agents"
+      - name: "DeerFlow"
+        status: "off"
+        maturity: "medium"
+        use_case: "Workflow automation, visual builder"
+      - name: "Google ADK"
+        status: "off"
+        maturity: "medium"
+        use_case: "Google Cloud native agents"
+      - name: "ModelScope-Agent"
+        status: "off"
+        maturity: "low"
+        use_case: "Research, experimental"
+
+  # ============================================
+  # TIER 5: PAYMENT & BILLING
+  # ============================================
+  - id: "breaker-20"
+    name: "Stripe Integration"
+    service: "stripe-billing"
+    tier: "payments"
+    status: "on"
+    health_endpoint: "/api/stripe/health"
+    description: "Subscription billing and payment processing"
+    tiers:
+      - name: "Buy Me a Coffee ☕"
+        monthly: 7.00
+        tokens: 25000
+      - name: "Lite"
+        monthly: 19.99
+        tokens: 200000
+      - name: "Medium"
+        monthly: 79.99
+        tokens: 600000
+      - name: "Heavy"
+        monthly: 149.99
+        tokens: 1500000
+      - name: "Superior"
+        monthly: 299.99
+        tokens: 1500000
+
+  # ============================================
+  # TIER 6: STORAGE & CACHING
+  # ============================================
+  - id: "breaker-25"
+    name: "KV Cache"
+    service: "kv-cache"
+    tier: "storage"
+    status: "on"
+    description: "Cloudflare KV for session and cache storage"
+    
+  - id: "breaker-26"
+    name: "R2 Assets"
+    service: "r2-storage"
+    tier: "storage"
+    status: "on"
+    description: "File and asset storage"
+    
+  - id: "breaker-27"
+    name: "Durable Objects"
+    service: "durable-objects"
+    tier: "storage"
+    status: "on"
+    description: "Stateful real-time chat rooms"
+
+  # ============================================
+  # TIER 7: SECURITY & MONITORING
+  # ============================================
+  - id: "breaker-30"
+    name: "Superadmin RBAC"
+    service: "rbac-enforcement"
+    tier: "security"
+    status: "on"
+    description: "Role-based access control with email allowlist"
+    
+  - id: "breaker-31"
+    name: "Analytics Engine"
+    service: "analytics"
+    tier: "monitoring"
+    status: "on"
+    description: "Usage tracking and performance monitoring"
+    
+  - id: "breaker-32"
+    name: "Security Scanner (The_Farmer)"
+    service: "security-scanner"
+    tier: "security"
+    status: "off"
+    description: "Autonomous vulnerability detection and patching"
+
+  # ============================================
+  # TIER 8: CODE EXECUTION & EDITOR
+  # ============================================
+  - id: "breaker-35"
+    name: "Code Editor"
+    service: "editor"
+    tier: "execution"
+    status: "on"
+    description: "Multi-language code editor with auto-detect"
+    languages:
+      - "JavaScript"
+      - "Python"
+      - "TypeScript"
+      - "HTML"
+      - "CSS"
+      - "Auto (detect)"

@@ -8,6 +8,7 @@ import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
 import Editor from './pages/Editor';
 import Admin from './pages/Admin';
+import AgentBuilder from './pages/AgentBuilder';
 import Auth from './pages/Auth';
 import RequireAuth from './components/RequireAuth';
 
@@ -22,6 +23,7 @@ function App() {
           <Route path="/subscribe" element={<Subscribe />} />
           <Route path="/success" element={<Success />} />
           <Route path="/editor" element={<RequireAuth><Editor /></RequireAuth>} />
+          <Route path="/agents" element={<RequireAuth><AgentBuilder /></RequireAuth>} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
         </Routes>
