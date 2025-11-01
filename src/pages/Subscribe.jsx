@@ -81,24 +81,64 @@ function Subscribe() {
   };
 
   return (
-    <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left: Developer Illustration */}
-          <div className="hidden lg:flex justify-center">
+        {/* NURD Drip Hero Section */}
+        <div className="flex justify-center mb-16">
+          <div className="relative w-full max-w-md h-96 flex items-center justify-center">
             <img 
-              src="/assets/illustrations/nurd-developer.png" 
-              alt="Developer with NURD"
-              className="w-full max-w-md h-auto drop-shadow-2xl"
-              style={{ filter: 'drop-shadow(0 0 20px rgba(57, 255, 20, 0.3))' }}
+              src="/assets/logos/nurd-drip-hero.svg" 
+              alt="NURD Drip Logo"
+              className="w-full h-full object-contain drop-shadow-2xl"
+              style={{ 
+                filter: 'drop-shadow(0 0 30px rgba(57, 255, 20, 0.4)) drop-shadow(0 0 60px rgba(217, 70, 239, 0.2))',
+                animation: 'float 3s ease-in-out infinite'
+              }}
             />
+            <style>{`
+              @keyframes float {
+                0%, 100% { transform: translateY(0px); }
+                50% { transform: translateY(-10px); }
+              }
+            `}</style>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left: Plan Description */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-5xl font-bold mb-4 text-text">
+              Start Building with <span className="text-[#39FF14]">Nurds Code</span>
+            </h1>
+            <p className="text-lg text-text/70 mb-8">
+              Choose a plan that fits your journey. Upgrade anytime to unlock more AI, more collaboration, and more power.
+            </p>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🤖</span>
+                <p className="text-text">ACHEEVY AI Assistant</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">🎯</span>
+                <p className="text-text">Real-time Code Collaboration</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">⚡</span>
+                <p className="text-text">One-Click Deployments</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">💰</span>
+                <p className="text-text">DIFU Digital Currency System</p>
+              </div>
+            </div>
           </div>
 
           {/* Right: Subscription Form */}
           <div className="card">
-          <h1 className="text-4xl font-bold mb-8 text-center text-text">
-            Subscribe to Nurds Code
-          </h1>
+            <h2 className="text-3xl font-bold mb-8 text-center text-text">
+              Choose Your Plan
+            </h2>
 
           <form onSubmit={handleSubscribe} className="space-y-6">
             <div>
