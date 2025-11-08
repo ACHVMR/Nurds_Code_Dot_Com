@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000,
+    port: 3002,
     proxy: {
       '/api': {
         target: 'http://localhost:8787',
@@ -16,5 +16,10 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: true,
     chunkSizeWarningLimit: 1000, // Increase chunk size warning limit (in kB)
+  },
+  resolve: {
+    alias: {
+      '@v0/chat-sdk': '/src/sdk/v0-mock.js', // Use mock implementation
+    },
   },
 });

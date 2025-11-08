@@ -44,6 +44,11 @@ CLERK_FRONTEND_API_URL = "https://precise-lamprey-55.clerk.accounts.dev"
 CLERK_BACKEND_API_URL = "https://api.clerk.com"
 CLERK_JWKS_URL = "https://precise-lamprey-55.clerk.accounts.dev/.well-known/jwks.json"
 
+# Algorand Configuration (testnet)
+ALGOD_SERVER = "https://testnet-algorand.api.purestake.io/ps2"
+ALGOD_PORT = ""
+INDEXER_SERVER = "https://testnet-algorand.api.purestake.io/idx2"
+
 # RBAC
 ADMIN_ALLOWLIST = ""
 CLERK_ORG_ID_SUPERADMINS = ""

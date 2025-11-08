@@ -1,37 +1,121 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import Layout from './components/Layout';
 import Home from './pages/Home';
 import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
-import Success from './pages/Success';
+import SignUp from './pages/SignUp';
+import Onboarding from './pages/Onboarding';
 import Editor from './pages/Editor';
-import Admin from './pages/Admin';
+import DailyInsights from './pages/DailyInsights';
 import AgentBuilder from './pages/AgentBuilder';
-import Auth from './pages/Auth';
-import RequireAuth from './components/RequireAuth';
-import ChatWidget from './components/ChatWidget';
+import CustomInstructions from './pages/CustomInstructions';
+import UsageLedger from './pages/UsageLedger';
+import SuperAdminDashboard from './pages/SuperAdminDashboard';
+import ACHEEVYIntent from './pages/ACHEEVYIntent';
+import LiveBuildEditor from './pages/LiveBuildEditor';
+
+// Voice-First Platform Pages
+import VoiceProfileSettings from './pages/VoiceProfileSettings';
+import PhoneTest from './pages/PhoneTest';
+
+// Phase 1 Setup
+import Phase1Setup from './pages/Phase1Setup';
+
+// C1 Thesys Card-Based UI
+import C1Examples from './pages/C1Examples';
+
+// Boomer_Ang Dashboard
+import BoomerAngDashboard from './pages/BoomerAngDashboard';
+
+// Audio Settings
+import AudioSettings from './pages/AudioSettings';
+
 
 function App() {
+  const { isSignedIn, user } = useAuth();
+  
+  // Check if user is SuperAdmin
+  const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="grow">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/subscribe" element={<Subscribe />} />
-          <Route path="/success" element={<Success />} />
-          <Route path="/editor" element={<RequireAuth><Editor /></RequireAuth>} />
-          <Route path="/agents" element={<RequireAuth><AgentBuilder /></RequireAuth>} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
-        </Routes>
-      </main>
-      <Footer />
-      <ChatWidget />
-    </div>
+    <Layout>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/auth/signup" element={<SignUp />} />
+        
+        {/* Auth Routes */}
+        <Route path="/auth/onboarding" element={
+          isSignedIn ? <Onboarding /> : <Navigate to="/auth/signup" />
+        } />
+        
+        {/* Protected Routes */}
+        <Route path="/subscribe" element={
+          isSignedIn ? <Subscribe /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/editor" element={
+          isSignedIn ? <Editor /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/editor/:projectId" element={
+          isSignedIn ? <LiveBuildEditor /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/insights" element={
+          isSignedIn ? <DailyInsights /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/voice-settings" element={
+          isSignedIn ? <VoiceProfileSettings /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/agents" element={
+          isSignedIn ? <AgentBuilder /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/custom-instructions" element={
+          isSignedIn ? <CustomInstructions /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/usage" element={
+          isSignedIn ? <UsageLedger /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/acheevy/:ideaId?" element={
+          isSignedIn ? <ACHEEVYIntent /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/phone-test" element={
+          isSignedIn ? <PhoneTest /> : <Navigate to="/" />
+        } />
+        
+        <Route path="/phase1-setup" element={
+          isSignedIn ? <Phase1Setup /> : <Navigate to="/" />
+        } />
+        
+        {/* C1 Thesys Examples (Development/Testing) */}
+        <Route path="/c1-examples" element={<C1Examples />} />
+        
+        {/* Boomer_Ang Dashboard - AI Agent Marketplace */}
+        <Route path="/boomer-angs" element={
+          isSignedIn ? <BoomerAngDashboard /> : <Navigate to="/" />
+        } />
+        
+        {/* Audio Settings - Customize notification sounds */}
+        <Route path="/audio-settings" element={
+          isSignedIn ? <AudioSettings /> : <Navigate to="/" />
+        } />
+        
+        {/* SuperAdmin Only */}
+        <Route path="/admin" element={
+          isSuperAdmin ? <SuperAdminDashboard /> : <Navigate to="/" />
+        } />
+      </Routes>
+    </Layout>
   );
 }
 

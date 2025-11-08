@@ -335,7 +335,7 @@ const CircuitBox = () => {
     if (health === 'error') {
       return <AlertTriangle className="w-5 h-5 text-red-500" />;
     }
-    return <CheckCircle className="w-5 h-5 text-[#39FF14]" />;
+    return <CheckCircle className="w-5 h-5 text-[#E68961]" />;
   };
 
   const getTierColor = (tier) => {
@@ -362,7 +362,7 @@ const CircuitBox = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Activity className="w-8 h-8 text-[#39FF14] animate-pulse" />
+        <Activity className="w-8 h-8 text-[#E68961] animate-pulse" />
       </div>
     );
   }
@@ -378,7 +378,7 @@ const CircuitBox = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold text-text flex items-center gap-2">
-            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-[#39FF14]" />
+            <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-[#E68961]" />
             Circuit Box Dashboard
           </h2>
           <p className="text-sm sm:text-base text-text/60 mt-1">
@@ -388,7 +388,7 @@ const CircuitBox = () => {
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowOrchestration(true)}
-            className="px-3 sm:px-4 py-2 bg-[#39FF14]/20 text-[#39FF14] hover:bg-[#39FF14]/30 rounded-lg flex items-center gap-2 font-semibold transition-colors text-sm"
+            className="px-3 sm:px-4 py-2 bg-[#E68961]/20 text-[#E68961] hover:bg-[#E68961]/30 rounded-lg flex items-center gap-2 font-semibold transition-colors text-sm"
           >
             <Boxes className="w-4 h-4" />
             <span className="hidden sm:inline">Auto-Configure</span>
@@ -406,7 +406,7 @@ const CircuitBox = () => {
             onClick={() => setStatusFilter('all')}
             className={`px-3 py-1 rounded-lg text-sm ${
               statusFilter === 'all' 
-                ? 'bg-[#39FF14]/20 text-[#39FF14]' 
+                ? 'bg-[#E68961]/20 text-[#E68961]' 
                 : 'bg-[#1a1a1a] text-text/60 hover:text-text'
             }`}
           >
@@ -416,7 +416,7 @@ const CircuitBox = () => {
             onClick={() => setStatusFilter('on')}
             className={`px-3 py-1 rounded-lg text-sm ${
               statusFilter === 'on' 
-                ? 'bg-[#39FF14]/20 text-[#39FF14]' 
+                ? 'bg-[#E68961]/20 text-[#E68961]' 
                 : 'bg-[#1a1a1a] text-text/60 hover:text-text'
             }`}
           >
@@ -440,7 +440,7 @@ const CircuitBox = () => {
         {filteredBreakers.map((breaker) => (
           <div
             key={breaker.id}
-            className="card hover:border-[#39FF14]/40 transition-all cursor-pointer"
+            className="card hover:border-[#E68961]/40 transition-all cursor-pointer"
             onClick={() => setSelectedBreaker(breaker)}
           >
             {/* Breaker Header */}
@@ -460,7 +460,7 @@ const CircuitBox = () => {
                   toggleBreaker(breaker.id);
                 }}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  breaker.status === 'on' ? 'bg-[#39FF14]' : 'bg-gray-600'
+                  breaker.status === 'on' ? 'bg-[#E68961]' : 'bg-gray-600'
                 }`}
               >
                 <span
@@ -478,7 +478,7 @@ const CircuitBox = () => {
             <div className="flex items-center justify-between text-xs">
               <span className="text-text/40">{breaker.service}</span>
               {breaker.uptime && (
-                <span className="text-[#39FF14]">{breaker.uptime} uptime</span>
+                <span className="text-[#E68961]">{breaker.uptime} uptime</span>
               )}
             </div>
 
@@ -541,11 +541,11 @@ const CircuitBox = () => {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h3 className="text-xl font-bold text-text mb-2 flex items-center gap-2">
-                  <Boxes className="w-6 h-6 text-[#39FF14]" />
+                  <Boxes className="w-6 h-6 text-[#E68961]" />
                   ACHEEVY Orchestration
                 </h3>
                 <p className="text-text/60 text-sm">
-                  Auto-configure Circuit Box for your use case • Current tier: <span className="text-[#39FF14] font-semibold">{userTier}</span>
+                  Auto-configure Circuit Box for your use case • Current tier: <span className="text-[#E68961] font-semibold">{userTier}</span>
                 </p>
               </div>
               <button
@@ -596,7 +596,7 @@ const CircuitBox = () => {
                       {USE_CASES[selectedUseCase].services.map((service, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-1 bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 rounded text-xs"
+                          className="px-2 py-1 bg-[#E68961]/10 text-[#E68961] border border-[#E68961]/30 rounded text-xs"
                         >
                           {service}
                         </span>

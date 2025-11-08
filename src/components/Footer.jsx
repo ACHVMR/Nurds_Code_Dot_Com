@@ -5,23 +5,17 @@ function Footer() {
   return (
     <footer className="bg-background border-t border-[#2a2a2a] mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Main Footer Content - Made In PLR + Branding */}
-        <div className="flex flex-col items-center justify-center gap-4">
-          {/* Centered Footer Branding */}
-          <div className="flex items-center justify-center gap-4 md:gap-6">
-            {/* Made In PLR Logo */}
+        {/* Main Footer Content */}
+        <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-6">
+          {/* Made In PLR Logo */}
+          <div className="flex items-center gap-3">
             <img 
               src="/assets/logos/made-in-plr.svg" 
               alt="Made in PLR" 
-              className="h-12 md:h-14 object-contain hover:opacity-80 transition-opacity"
+              className="h-10 md:h-12 object-contain hover:opacity-80 transition-opacity"
             />
-            
-            {/* Divider */}
-            <div className="h-8 w-px bg-gradient-to-b from-[#39FF14] to-transparent opacity-50"></div>
-            
-            {/* Nurds Code Branding */}
-            <span className="text-text font-semibold text-sm md:text-base whitespace-nowrap">
-              Nurds Code <span className="text-[#39FF14]">est. 2025</span>
+            <span className="hidden sm:inline text-text text-sm border-l border-[#2a2a2a] pl-3">
+              Nurds Code est. 2025
             </span>
           </div>
         </div>

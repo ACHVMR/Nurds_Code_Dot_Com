@@ -7,7 +7,7 @@
   --text: #F2F7FF; /* Frosty white */
   --mute: #9A9A9A;
   --accent: #C9A449;
-  --neon: #39FF14;
+  --neon: #E68961;
   --border: #222222;
 }
 
@@ -49,7 +49,7 @@
 }
 
 @keyframes blink {
-  0%, 49% { border-right-color: #39FF14; }
+  0%, 49% { border-right-color: #E68961; }
   50%, 100% { border-right-color: transparent; }
 }
 

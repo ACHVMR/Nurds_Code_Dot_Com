@@ -1,5 +1,5 @@
 /**
- * Boomer_Angs Naming Ceremony System
+ * ACHEEVY Agent Naming Ceremony System
  * Every agent created via Deploy receives a unique naming ceremony:
  * [UserPrefix]_Ang suffix
  * 
@@ -112,7 +112,7 @@ export class BoomerAngNamingCeremony {
       metadata: {
         userInput: userPrefix,
         sanitized: sanitizedPrefix,
-        ceremony: 'Boomer_Ang Naming Convention v1.0',
+        ceremony: 'ACHEEVY Agent Naming Convention v1.0',
         pattern: '[UserPrefix]_Ang'
       }
     };
@@ -131,7 +131,7 @@ export class BoomerAngNamingCeremony {
   }
 
   /**
-   * Check if a name follows Boomer_Ang convention
+   * Check if a name follows ACHEEVY Agent convention
    * @param {string} agentName - Name to check
    * @returns {boolean}
    */
@@ -170,12 +170,12 @@ export class BoomerAngNamingCeremony {
 
     return `
 ╔════════════════════════════════════════════════════════════╗
-║           BOOMER_ANG NAMING CEREMONY CERTIFICATE           ║
+║           ACHEEVY AGENT NAMING CEREMONY CERTIFICATE        ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                            ║
 ║  Agent Name: ${agentInfo.agentName.padEnd(48)} ║
 ║  Prefix:     ${agentInfo.prefix.padEnd(48)} ║
-║  Ceremony:   Boomer_Ang Naming Convention v1.0             ║
+║  Ceremony:   ACHEEVY Agent Naming Convention v1.0          ║
 ║  Created:    ${agentInfo.createdAt.padEnd(48)} ║
 ║                                                            ║
 ║  Pattern:    [UserPrefix]_Ang                              ║
@@ -183,14 +183,17 @@ export class BoomerAngNamingCeremony {
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 
-This agent has been officially recognized under the Deploy Platform
-Boomer_Ang naming convention and is ready for deployment.
+This agent has been officially recognized under the ACHEEVY Platform
+Agent naming convention and is ready for deployment.
     `.trim();
   }
 }
 
 // Export singleton instance
 export const namingCeremony = new BoomerAngNamingCeremony();
+
+// Convenience function export
+export const translateToBoomerAng = (prefix) => namingCeremony.generateAgentName(prefix);
 
 // Example usage:
 /*

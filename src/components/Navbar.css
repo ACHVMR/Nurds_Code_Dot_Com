@@ -1,0 +1,27 @@
+/* Navbar Component Styles */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(230, 137, 97, 0.1);
+  border: 1px solid rgba(230, 137, 97, 0.3);
+  color: #E68961;
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.nav-link:hover {
+  background: rgba(230, 137, 97, 0.2);
+  border-color: #E68961;
+  transform: scale(1.05);
+}
+
+.nav-link:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}

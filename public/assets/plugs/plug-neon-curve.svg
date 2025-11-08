@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-  <rect width="100%" height="100%" rx="16" fill="#071026"/>
-  <g transform="translate(80,40)">
-    <path d="M0 200 C120 0, 360 0, 480 200" stroke="#39FF14" stroke-width="12" fill="none" stroke-linecap="round"/>
-    <circle cx="0" cy="200" r="28" fill="#39FF14"/>
-    <circle cx="480" cy="200" r="28" fill="#D946EF"/>
-    <text x="60" y="320" fill="#9aa7b2" font-family="Arial" font-size="18">Plug — Connect AI to your app</text>
-  </g>
-</svg>

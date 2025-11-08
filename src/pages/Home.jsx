@@ -3,6 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Upload, Image as ImageIcon, FileCode, Video, Sparkles } from 'lucide-react';
 import { extractCodeFromImage, cloneProjectFromScreenshot } from '../services/ocr.js';
 import { generateVideoFromMedia } from '../services/kieai.js';
+import { useUser } from '@clerk/clerk-react';
+import PhoneSelector from '../components/phones/PhoneSelector';
+import TerminologyTicker from '../components/TerminologyTicker';
+import NextelPhone from '../components/NextelPhone';
 
 function Home() {
   const [dragActive, setDragActive] = useState(false);
@@ -11,6 +15,18 @@ function Home() {
   const [processingMessage, setProcessingMessage] = useState('');
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const { user } = useUser();
+
+  const handleVoiceMessage = async (message) => {
+    console.log('Voice message received:', message);
+    // Send to AI for processing
+    navigate('/editor', { state: { voicePrompt: message } });
+  };
+
+  const handleVoiceRecord = async (audioBlob) => {
+    console.log('Voice recording completed:', audioBlob);
+    // Handle voice recording
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -91,8 +107,8 @@ function Home() {
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl text-text mb-8 sm:mb-12 max-w-2xl mx-auto lg:mx-0">
                 Build powerful applications with modern tools and workflows. 
-                <span className="block mt-4 text-[#39FF14]">
-                  Upload screenshots, clone code, or generate videos with AI! ✨
+                <span className="block mt-4 text-[#E68961]">
+                  Talk to ACHEEVY • Voice-First Development ✨
                 </span>
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
@@ -102,27 +118,25 @@ function Home() {
                 <Link to="/pricing" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
                   View Pricing
                 </Link>
+                <Link to="/web3" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-[#D946EF] hover:bg-[#C740D9]">
+                  🔗 Web3 Platform
+                </Link>
               </div>
             </div>
 
-            {/* Right Column - Foster Develop Illustration */}
+            {/* Right Column - Nextel Phone */}
             <div className="flex flex-col items-center gap-8">
-              {/* Foster Develop Stack Illustration */}
-              <div className="relative w-full max-w-md mx-auto">
-                <img 
-                  src="/assets/illustrations/foster-develop-home.png" 
-                  alt="Foster, Develop, Home, SMART, PACT, STEAM"
-                  className="w-full h-auto drop-shadow-2xl"
-                  style={{ filter: 'drop-shadow(0 0 20px rgba(57, 255, 20, 0.3))' }}
-                />
+              {/* Nextel Phone - Primary Interaction */}
+              <div className="w-full max-w-md mx-auto">
+                <NextelPhone defaultOpen={false} />
               </div>
 
               {/* Upload Drop Zone */}
               <div
                 className={`relative w-full max-w-md mx-auto border-2 border-dashed rounded-2xl p-8 transition-all ${
                   dragActive
-                    ? 'border-[#39FF14] bg-[#39FF14]/10'
-                    : 'border-[#2a2a2a] bg-[#1a1a1a]/50 hover:border-[#39FF14]/50'
+                    ? 'border-[#E68961] bg-[#E68961]/10'
+                    : 'border-[#2a2a2a] bg-[#1a1a1a]/50 hover:border-[#E68961]/50'
                 }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
@@ -140,7 +154,7 @@ function Home() {
                 {!processing ? (
                   <div className="text-center">
                     <div className="flex justify-center gap-3 mb-4">
-                      <ImageIcon className="w-8 h-8 text-[#39FF14]" />
+                      <ImageIcon className="w-8 h-8 text-[#E68961]" />
                       <FileCode className="w-8 h-8 text-purple-400" />
                       <Video className="w-8 h-8 text-cyan-400" />
                     </div>
@@ -165,7 +179,7 @@ function Home() {
                   </div>
                 ) : (
                   <div className="text-center">
-                    <Sparkles className="w-12 h-12 text-[#39FF14] mx-auto mb-4 animate-spin" />
+                    <Sparkles className="w-12 h-12 text-[#E68961] mx-auto mb-4 animate-spin" />
                     <p className="text-text font-semibold">{processingMessage}</p>
                     {uploadedFile && (
                       <p className="text-sm text-text/60 mt-2">{uploadedFile.name}</p>
@@ -177,7 +191,7 @@ function Home() {
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-4 w-full max-w-md mx-auto text-center">
                 <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                  <div className="text-2xl font-bold text-[#39FF14]">OCR</div>
+                  <div className="text-2xl font-bold text-[#E68961]">OCR</div>
                   <div className="text-xs text-text/60">Code Extract</div>
                 </div>
                 <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
@@ -226,20 +240,17 @@ function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 text-text">
-            Ready to Start Your Journey?
-          </h2>
-          <p className="text-xl text-text mb-8">
-            Join developers building the future with Nurds Code
-          </p>
-          <Link to="/subscribe" className="btn-primary text-lg px-8 py-4">
-            Get Started for Free
-          </Link>
-        </div>
-      </section>
+      {/* Terminology Ticker - Fixed Bottom */}
+      <TerminologyTicker />
+
+      {/* Phone Selector - Voice Interface */}
+      {user && (
+        <PhoneSelector 
+          userId={user.id}
+          onMessageSend={handleVoiceMessage}
+          onVoiceRecord={handleVoiceRecord}
+        />
+      )}
     </div>
   );
 }

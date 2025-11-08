@@ -1,12 +1,7 @@
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { chatHandler } from '../src/server/chat.js';
-import {
-  handleTranscribe,
-  handleSynthesize,
-  handleListVoices,
-  handleVoiceConversation
-} from '../src/server/voiceAPI.js';
+// Removed legacy voiceAPI handlers to avoid duplicate routes; using unified VOICE ENDPOINTS below
 
 // JWT utility functions
 function generateToken(userId, secret) {
@@ -344,22 +339,7 @@ async function handleRequest(request, env) {
     }
   }
 
-  // Voice AI Routes
-  if (path === '/api/voice/transcribe' && request.method === 'POST') {
-    return handleTranscribe(request, env);
-  }
-
-  if (path === '/api/voice/synthesize' && request.method === 'POST') {
-    return handleSynthesize(request, env);
-  }
-
-  if (path === '/api/voice/voices' && request.method === 'GET') {
-    return handleListVoices(request, env);
-  }
-
-  if (path === '/api/voice/conversation' && request.method === 'POST') {
-    return handleVoiceConversation(request, env);
-  }
+  // Legacy voice routes removed; see VOICE ENDPOINTS section for current implementation
 
   // Route: Stripe webhook
   if (path === '/api/webhook' && request.method === 'POST') {
@@ -526,7 +506,7 @@ async function handleRequest(request, env) {
       // Generate naming ceremony certificate
       const certificate = `
 ╔════════════════════════════════════════════════════════════╗
-║           BOOMER_ANG NAMING CEREMONY CERTIFICATE           ║
+║           ACHEEVY AGENT NAMING CEREMONY CERTIFICATE        ║
 ╠════════════════════════════════════════════════════════════╣
 ║                                                            ║
 ║  Agent Name: ${agentName.padEnd(48)} ║
@@ -534,7 +514,7 @@ async function handleRequest(request, env) {
 ║  Owner:      ${userId.substring(0, 16).padEnd(48)} ║
 ║  Type:       ${(type || 'custom').padEnd(48)} ║
 ║  Framework:  ${(framework || 'boomer_angs').padEnd(48)} ║
-║  Ceremony:   Boomer_Ang Naming Convention v1.0             ║
+║  Ceremony:   ACHEEVY Agent Naming Convention v1.0          ║
 ║  Created:    ${new Date().toISOString().padEnd(48)} ║
 ║                                                            ║
 ║  Pattern:    [UserPrefix]_Ang                              ║
@@ -542,8 +522,8 @@ async function handleRequest(request, env) {
 ║                                                            ║
 ╚════════════════════════════════════════════════════════════╝
 
-This agent has been officially recognized under the Deploy Platform
-Boomer_Angs naming convention and is ready for deployment.
+This agent has been officially recognized under the ACHEEVY Platform
+Agent naming convention and is ready for deployment.
       `.trim();
 
       // In production, this would store agent in database
@@ -945,6 +925,459 @@ Boomer_Angs naming convention and is ready for deployment.
     }
   }
 
+  // AI Code Generation - Generate code from natural language
+  if (path === '/api/ai/generate-code' && request.method === 'POST') {
+    try {
+      const { prompt, language, context } = await request.json();
+
+      if (!prompt) {
+        return new Response(
+          JSON.stringify({ error: 'Prompt required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const systemPrompt = `You are ACHEEVY, an expert ${language || 'programming'} code generator. Generate clean, production-ready code based on the user's request. Include comments and follow best practices. Output ONLY the code, no explanations.`;
+
+      const userPrompt = context 
+        ? `Generate ${language} code for: ${prompt}\n\nExisting context:\n${context}`
+        : `Generate ${language} code for: ${prompt}`;
+
+      const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        max_tokens: 2048,
+        temperature: 0.3
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          code: aiResponse.response || aiResponse.result?.response || '',
+          model: '@cf/meta/llama-3.1-8b-instruct'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Code generation failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // AI Code Explanation - Explain code in natural language
+  if (path === '/api/ai/explain-code' && request.method === 'POST') {
+    try {
+      const { code, language } = await request.json();
+
+      if (!code) {
+        return new Response(
+          JSON.stringify({ error: 'Code required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const prompt = `Explain this ${language || 'code'} in simple terms. Break down what it does, how it works, and any important concepts:\n\n${code}`;
+
+      const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: 'You are ACHEEVY, a helpful coding assistant. Explain code clearly and concisely.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 1024
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          explanation: aiResponse.response || aiResponse.result?.response || '',
+          model: '@cf/meta/llama-3.1-8b-instruct'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Explanation failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // AI Code Optimization - Optimize and refactor code
+  if (path === '/api/ai/optimize-code' && request.method === 'POST') {
+    try {
+      const { code, language } = await request.json();
+
+      if (!code) {
+        return new Response(
+          JSON.stringify({ error: 'Code required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const prompt = `Optimize and refactor this ${language || 'code'}. Improve performance, readability, and follow best practices. Output ONLY the optimized code:\n\n${code}`;
+
+      const aiResponse = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', {
+        messages: [
+          { role: 'system', content: 'You are ACHEEVY, an expert code optimizer. Output only clean, optimized code without explanations.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 2048,
+        temperature: 0.2
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          optimized: aiResponse.response || aiResponse.result?.response || code,
+          model: '@cf/meta/llama-3.1-8b-instruct'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Optimization failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // =====================================================
+  // VERIFICATION ENDPOINTS (Shufti Pro Integration)
+  // =====================================================
+
+  // Initiate verification
+  if (path === '/api/verify/initiate' && request.method === 'POST') {
+    try {
+      const { user_id, verification_type, country, email } = await request.json();
+      
+      if (!user_id || !verification_type) {
+        return new Response(
+          JSON.stringify({ error: 'user_id and verification_type are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create verification payload for Shufti Pro
+      const verificationPayload = {
+        reference: user_id,
+        country: country || 'US',
+        language: 'en',
+        email: email || '',
+        callback_url: `${url.origin}/api/verify/callback`,
+        redirect_url: `${url.origin}/verification-complete`,
+        verification_mode: 'image_only',
+        show_consent: 1,
+        show_results: 1,
+        face: { proof: 'video' },
+        document: {
+          supported_types: ['passport', 'id_card', 'driving_license'],
+          name: true,
+          dob: true,
+          expiry_date: true
+        }
+      };
+
+      // Add business verification if needed
+      if (verification_type === 'business') {
+        verificationPayload.document.additional_proof = 'business_registration';
+      }
+
+      // Call Shufti Pro API
+      const shuftiClientId = env.SHUFTI_PRO_CLIENT_ID || 'ddf359e60538d3329cf817ef47008cdb65c877d659bce5a50ae0c0b33fdb10f6';
+      const shuftiSecretKey = env.SHUFTI_PRO_SECRET_KEY || 'PgJzfgF56J9ERzCX3ffkrtLvFsE7qr1j';
+      const authToken = btoa(`${shuftiClientId}:${shuftiSecretKey}`);
+
+      const shuftiResponse = await fetch('https://api.shuftipro.com/verification', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(verificationPayload)
+      });
+
+      const shuftiData = await shuftiResponse.json();
+
+      // Store verification initiation in Supabase
+      await supabase.from('verifications').insert({
+        user_id,
+        verification_type,
+        verification_id: shuftiData.reference || user_id,
+        status: 'pending',
+        verification_data: shuftiData
+      });
+
+      return new Response(
+        JSON.stringify({
+          reference: shuftiData.reference || user_id,
+          verification_url: shuftiData.verification_url,
+          status: 'pending'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Verification initiation failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Shufti Pro webhook callback
+  if (path === '/api/verify/callback' && request.method === 'POST') {
+    try {
+      const callbackData = await request.json();
+      
+      const userId = callbackData.reference;
+      const status = callbackData.event === 'verification.accepted' ? 'verified' : 
+                     callbackData.event === 'verification.declined' ? 'declined' : 'pending';
+
+      // Update verification in Supabase
+      await supabase.from('verifications').update({
+        status,
+        verified: status === 'verified',
+        document_data: callbackData.document || {},
+        face_match_score: callbackData.face?.confidence || null,
+        verification_data: callbackData,
+        callback_received_at: new Date().toISOString()
+      }).eq('user_id', userId);
+
+      // Calculate and update trust score
+      if (status === 'verified') {
+        const riskScoreResult = await supabase
+          .from('risk_scores')
+          .select('risk_score')
+          .eq('user_id', userId)
+          .order('timestamp', { ascending: false })
+          .limit(1);
+
+        const latestRiskScore = riskScoreResult.data?.[0]?.risk_score || 50;
+        const baseScore = 60;
+        const riskAdjustment = Math.max(0, 40 - latestRiskScore / 2);
+        const trustScore = baseScore + riskAdjustment;
+        const tier = trustScore >= 80 ? 'verified_trusted' : 
+                     trustScore >= 50 ? 'standard_verified' : 'unverified';
+
+        await supabase.from('trust_profiles').upsert({
+          user_id: userId,
+          trust_score: Math.round(trustScore),
+          tier,
+          seller_enabled: true,
+          marketplace_enabled: true,
+          collaboration_enabled: true,
+          last_updated: new Date().toISOString()
+        });
+      }
+
+      // Log audit
+      await supabase.from('verification_audit_log').insert({
+        user_id: userId,
+        action: status,
+        verification_id: callbackData.reference,
+        metadata: callbackData
+      });
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Callback processing failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Get verification status
+  if (path.startsWith('/api/verify/status/') && request.method === 'GET') {
+    try {
+      const userId = path.split('/').pop();
+
+      const [verificationResult, trustProfileResult] = await Promise.all([
+        supabase.from('verifications').select('*').eq('user_id', userId).single(),
+        supabase.from('trust_profiles').select('*').eq('user_id', userId).single()
+      ]);
+
+      return new Response(
+        JSON.stringify({
+          verification: verificationResult.data,
+          trust_profile: trustProfileResult.data
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ verification: null, trust_profile: null }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // =====================================================
+  // COLLABORATION ENDPOINTS
+  // =====================================================
+
+  // Create collaboration project
+  if (path === '/api/collaboration/projects' && request.method === 'POST') {
+    try {
+      const { name, description, owner_user_id } = await request.json();
+      
+      if (!name || !owner_user_id) {
+        return new Response(
+          JSON.stringify({ error: 'name and owner_user_id are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const projectResult = await supabase.from('collaboration_projects').insert({
+        name,
+        description,
+        owner_user_id
+      }).select().single();
+
+      // Add owner as admin member
+      await supabase.from('collaboration_members').insert({
+        project_id: projectResult.data.id,
+        user_id: owner_user_id,
+        role: 'owner',
+        status: 'active',
+        joined_at: new Date().toISOString()
+      });
+
+      return new Response(
+        JSON.stringify(projectResult.data),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Project creation failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Get project details
+  if (path.match(/^\/api\/collaboration\/projects\/[^/]+$/) && request.method === 'GET') {
+    try {
+      const projectId = path.split('/').pop();
+      const result = await supabase.from('collaboration_projects').select('*').eq('id', projectId).single();
+
+      return new Response(
+        JSON.stringify(result.data),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Project not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Get project members
+  if (path.match(/^\/api\/collaboration\/projects\/[^/]+\/members$/) && request.method === 'GET') {
+    try {
+      const projectId = path.split('/')[4];
+      const result = await supabase.from('project_members_with_trust').select('*').eq('project_id', projectId);
+
+      return new Response(
+        JSON.stringify(result.data || []),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch members' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Get project files
+  if (path.match(/^\/api\/collaboration\/projects\/[^/]+\/files$/) && request.method === 'GET') {
+    try {
+      const projectId = path.split('/')[4];
+      const result = await supabase.from('collaboration_files').select('*').eq('project_id', projectId);
+
+      return new Response(
+        JSON.stringify(result.data || []),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch files' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Update file content
+  if (path.match(/^\/api\/collaboration\/files\/[^/]+$/) && request.method === 'PUT') {
+    try {
+      const fileId = path.split('/').pop();
+      const { content, updated_by } = await request.json();
+
+      await supabase.from('collaboration_files').update({
+        content,
+        updated_by,
+        updated_at: new Date().toISOString()
+      }).eq('id', fileId);
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'File update failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Send collaboration invitation
+  if (path === '/api/collaboration/invite' && request.method === 'POST') {
+    try {
+      const { project_id, inviter_user_id, invitee_email, role, billing_type } = await request.json();
+      
+      if (!project_id || !inviter_user_id || !invitee_email) {
+        return new Response(
+          JSON.stringify({ error: 'project_id, inviter_user_id, and invitee_email are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Generate unique token
+      const token = crypto.randomUUID();
+
+      const inviteResult = await supabase.from('collaboration_invitations').insert({
+        project_id,
+        inviter_user_id,
+        invitee_email,
+        role: role || 'viewer',
+        billing_type: billing_type || 'daily',
+        token
+      }).select().single();
+
+      // TODO: Send email notification with invitation link
+
+      return new Response(
+        JSON.stringify({
+          invite_id: inviteResult.data.id,
+          invite_link: `${url.origin}/collaboration/join/${token}`,
+          status: 'sent'
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Invitation failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
   // Kie.ai proxy endpoints (avoid CORS issues)
   if (path.startsWith('/api/kieai/')) {
     const kieaiPath = path.replace('/api/kieai/', '');
@@ -977,6 +1410,1593 @@ Boomer_Angs naming convention and is ready for deployment.
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+  }
+
+  // =====================================================
+  // MICROSOFT FABRIC + TEAMS + ZOOM INTEGRATION
+  // =====================================================
+
+  // Get user tier
+  if (path.match(/^\/api\/user\/tier\/[^/]+$/) && request.method === 'GET') {
+    try {
+      const userId = path.split('/').pop();
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data: user, error } = await supabase
+        .from('users')
+        .select('tier')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        // Return free tier as default if user not found
+        return new Response(
+          JSON.stringify({ tier: 'free' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ tier: user?.tier || 'free' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ tier: 'free' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Generate Power BI Embed Token
+  if (path === '/api/analytics/embed-token' && request.method === 'POST') {
+    try {
+      const { userId } = await request.json();
+      
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'userId required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user tier
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      const { data: user } = await supabase
+        .from('users')
+        .select('tier')
+        .eq('id', userId)
+        .single();
+
+      const tier = user?.tier || 'free';
+
+      // Map tier to Fabric workspace
+      const workspaceMap = {
+        free: env.FABRIC_WORKSPACE_FREE || 'demo-workspace',
+        pro: env.FABRIC_WORKSPACE_PRO || 'pro-workspace',
+        enterprise: env.FABRIC_WORKSPACE_ENTERPRISE || 'enterprise-workspace'
+      };
+      const workspaceId = workspaceMap[tier];
+
+      // Get Azure AD token (for production - implement OAuth flow)
+      // For now, return mock data for development
+      const mockToken = btoa(`mock-powerbi-token-${userId}-${Date.now()}`);
+      const mockReportId = env.FABRIC_REPORT_ID || 'sample-report-id';
+      
+      // Store token in database
+      await supabase.from('powerbi_embed_tokens').insert({
+        user_id: userId,
+        token: mockToken,
+        expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() // 1 hour
+      });
+
+      return new Response(
+        JSON.stringify({
+          token: mockToken,
+          embedUrl: `https://app.powerbi.com/reportEmbed?reportId=${mockReportId}&groupId=${workspaceId}`,
+          reportId: mockReportId,
+          expiration: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          tier
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Power BI token error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate embed token: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Generate Zoom SDK Token
+  if (path === '/api/zoom/sdk-token' && request.method === 'POST') {
+    try {
+      const { userId, meetingNumber, role } = await request.json();
+      
+      if (!userId || !meetingNumber || !role) {
+        return new Response(
+          JSON.stringify({ error: 'userId, meetingNumber, and role required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user tier and verification status
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      const [userResult, verificationResult] = await Promise.all([
+        supabase.from('users').select('tier').eq('id', userId).single(),
+        supabase.from('verifications').select('verified').eq('user_id', userId).single()
+      ]);
+
+      const tier = userResult.data?.tier || 'free';
+      const verified = verificationResult.data?.verified || false;
+
+      // Check if user can host meetings
+      if (role === 'host' && (tier === 'free' || !verified)) {
+        return new Response(
+          JSON.stringify({ error: 'Pro tier and identity verification required to host meetings' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Generate Zoom SDK JWT (implement actual JWT signing in production)
+      const mockToken = btoa(`zoom-sdk-${userId}-${meetingNumber}-${role}-${Date.now()}`);
+
+      // Log meeting
+      await supabase.from('meeting_logs').insert({
+        user_id: userId,
+        meeting_number: meetingNumber,
+        platform: 'zoom',
+        role,
+        started_at: new Date().toISOString()
+      });
+
+      return new Response(
+        JSON.stringify({
+          token: mockToken,
+          meetingNumber,
+          userName: userId.substring(0, 16),
+          role,
+          expiration: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString() // 2 hours
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Zoom SDK token error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate Zoom token: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Create Zoom Meeting
+  if (path === '/api/zoom/create-meeting' && request.method === 'POST') {
+    try {
+      const { userId, topic, duration } = await request.json();
+      
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'userId required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user tier
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      const { data: user } = await supabase.from('users').select('tier').eq('id', userId).single();
+      const tier = user?.tier || 'free';
+
+      if (tier === 'free') {
+        return new Response(
+          JSON.stringify({ error: 'Pro or Enterprise tier required to create meetings' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Generate mock meeting (implement actual Zoom API call in production)
+      const meetingNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
+      const mockToken = btoa(`zoom-host-${userId}-${meetingNumber}-${Date.now()}`);
+
+      // Log meeting creation
+      await supabase.from('meeting_logs').insert({
+        user_id: userId,
+        meeting_number: meetingNumber,
+        platform: 'zoom',
+        role: 'host',
+        started_at: new Date().toISOString(),
+        duration_minutes: duration || 60
+      });
+
+      return new Response(
+        JSON.stringify({
+          meetingNumber,
+          token: mockToken,
+          topic: topic || 'NURDSCODE Collaboration Session',
+          duration: duration || 60,
+          joinUrl: `https://zoom.us/j/${meetingNumber}`
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Create Zoom meeting error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create meeting: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Create Microsoft Teams Meeting
+  if (path === '/api/teams/create-meeting' && request.method === 'POST') {
+    try {
+      const { userId, subject, startDateTime, endDateTime } = await request.json();
+      
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'userId required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Get user tier
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      const { data: user } = await supabase.from('users').select('tier').eq('id', userId).single();
+      const tier = user?.tier || 'free';
+
+      if (tier !== 'enterprise') {
+        return new Response(
+          JSON.stringify({ error: 'Enterprise tier required for Microsoft Teams integration' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Generate mock meeting ID (implement actual Graph API call in production)
+      const meetingId = crypto.randomUUID();
+      const joinUrl = `https://teams.microsoft.com/l/meetup-join/${meetingId}`;
+
+      // Log meeting creation
+      await supabase.from('meeting_logs').insert({
+        user_id: userId,
+        meeting_number: meetingId,
+        platform: 'teams',
+        role: 'organizer',
+        started_at: startDateTime || new Date().toISOString()
+      });
+
+      return new Response(
+        JSON.stringify({
+          meetingId,
+          joinUrl,
+          subject: subject || 'NURDSCODE Collaboration Session',
+          startDateTime: startDateTime || new Date().toISOString(),
+          endDateTime: endDateTime || new Date(Date.now() + 60 * 60 * 1000).toISOString()
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Create Teams meeting error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to create Teams meeting: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Get Meeting History
+  if (path.match(/^\/api\/meetings\/history\/[^/]+$/) && request.method === 'GET') {
+    try {
+      const userId = path.split('/').pop();
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data: meetings, error } = await supabase
+        .from('meeting_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .order('started_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ meetings: meetings || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Meeting history error:', error);
+      return new Response(
+        JSON.stringify({ meetings: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // =====================================================
+  // VOICE ENDPOINTS
+  // =====================================================
+
+  // Voice Transcribe (Groq Whisper v3 with fallbacks)
+  if (path === '/api/voice/transcribe' && request.method === 'POST') {
+    try {
+      const formData = await request.formData();
+      const audioFile = formData.get('audio');
+      const language = formData.get('language') || 'en';
+      const provider = formData.get('provider') || 'groq';
+      const duration = parseInt(formData.get('duration') || '0');
+
+      if (!audioFile) {
+        return new Response(
+          JSON.stringify({ error: 'Audio file is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Convert to buffer for API call
+      const audioBuffer = await audioFile.arrayBuffer();
+      const audioBlob = new Blob([audioBuffer], { type: audioFile.type });
+
+      let transcript = '';
+      let confidence = 0;
+      let cost = 0;
+      let usedProvider = provider;
+
+      // Groq Whisper v3 (Primary)
+      if (provider === 'groq') {
+        try {
+          const groqResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.GROQ_API_KEY}`
+            },
+            body: (() => {
+              const fd = new FormData();
+              fd.append('file', audioBlob, 'audio.webm');
+              fd.append('model', 'whisper-large-v3');
+              fd.append('language', language);
+              fd.append('response_format', 'verbose_json');
+              return fd;
+            })()
+          });
+
+          if (groqResponse.ok) {
+            const groqData = await groqResponse.json();
+            transcript = groqData.text;
+            confidence = groqData.confidence || 0.95;
+            
+            // Calculate cost: $0.04-$0.111/hour with 10-second minimum
+            const billableSeconds = Math.max(duration, 10);
+            const hours = billableSeconds / 3600;
+            cost = Math.ceil(hours * 4); // $0.04/hour = 4 cents/hour
+          } else {
+            throw new Error('Groq Whisper failed');
+          }
+        } catch (groqError) {
+          console.error('Groq Whisper error:', groqError);
+          // Fallback handled below
+        }
+      }
+
+      // Fallback to OpenAI Whisper if Groq fails
+      if (!transcript && (provider === 'openai' || provider === 'groq')) {
+        try {
+          const openaiResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.OPENAI_API_KEY}`
+            },
+            body: (() => {
+              const fd = new FormData();
+              fd.append('file', audioBlob, 'audio.webm');
+              fd.append('model', 'whisper-1');
+              fd.append('language', language);
+              return fd;
+            })()
+          });
+
+          if (openaiResponse.ok) {
+            const openaiData = await openaiResponse.json();
+            transcript = openaiData.text;
+            confidence = 0.9;
+            usedProvider = 'openai';
+            
+            // OpenAI pricing: $0.006/minute = $0.36/hour = 36 cents/hour
+            const billableSeconds = Math.max(duration, 10);
+            const hours = billableSeconds / 3600;
+            cost = Math.ceil(hours * 36);
+          }
+        } catch (openaiError) {
+          console.error('OpenAI Whisper error:', openaiError);
+          throw new Error('All transcription providers failed');
+        }
+      }
+
+      if (!transcript) {
+        return new Response(
+          JSON.stringify({ error: 'Transcription failed' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          transcript,
+          duration,
+          cost, // in cents
+          confidence,
+          provider: usedProvider
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice transcribe error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Transcription failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Voice TTS (Text-to-Speech)
+  if (path === '/api/voice/speak' && request.method === 'POST') {
+    try {
+      const { text, voiceId = 'alloy', personality = 'default' } = await request.json();
+
+      if (!text) {
+        return new Response(
+          JSON.stringify({ error: 'Text is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // OpenAI TTS (Groq-compatible)
+      const ttsResponse = await fetch('https://api.openai.com/v1/audio/speech', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'tts-1',
+          voice: voiceId,
+          input: text,
+          speed: 1.0
+        })
+      });
+
+      if (!ttsResponse.ok) {
+        throw new Error('TTS generation failed');
+      }
+
+      // Get audio buffer
+      const audioBuffer = await ttsResponse.arrayBuffer();
+      
+      // Store in R2 (optional)
+      const audioKey = `tts/${Date.now()}-${Math.random().toString(36).substring(7)}.mp3`;
+      // await env.ASSETS_BUCKET.put(audioKey, audioBuffer, { httpMetadata: { contentType: 'audio/mpeg' } });
+
+      // Calculate cost: $15/1M chars
+      const chars = text.length;
+      const cost = Math.ceil((chars / 1000000) * 1500); // cents
+
+      // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
+      const words = chars / 5;
+      const duration = Math.ceil((words / 150) * 60); // seconds
+
+      // Convert buffer to base64 for direct playback (or return R2 URL)
+      const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBuffer)));
+      const audioUrl = `data:audio/mpeg;base64,${base64Audio}`;
+
+      return new Response(
+        JSON.stringify({
+          audioUrl,
+          cost,
+          duration
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice TTS error:', error);
+      return new Response(
+        JSON.stringify({ error: 'TTS failed: ' + error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Voice NLP Router
+  if (path === '/api/voice/route' && request.method === 'POST') {
+    try {
+      const { transcript } = await request.json();
+
+      if (!transcript) {
+        return new Response(
+          JSON.stringify({ error: 'Transcript is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Use GPT-4o-mini for intent detection
+      const routerResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a voice command router for ACHEEVY agents. Analyze the user's voice command and extract:
+1. intent: one of [create_agent, execute_task, modify_agent, delete_agent, get_info, help, other]
+2. confidence: 0.0-1.0 (how confident you are)
+3. params: extracted parameters (agent_name, task_description, agent_type, etc.)
+
+Respond ONLY with valid JSON: {"intent": "...", "confidence": 0.9, "params": {...}}`
+            },
+            {
+              role: 'user',
+              content: transcript
+            }
+          ],
+          temperature: 0.3,
+          max_tokens: 200
+        })
+      });
+
+      if (!routerResponse.ok) {
+        throw new Error('Router failed');
+      }
+
+      const routerData = await routerResponse.json();
+      const result = JSON.parse(routerData.choices[0].message.content);
+
+      return new Response(
+        JSON.stringify(result),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice router error:', error);
+      return new Response(
+        JSON.stringify({ 
+          intent: 'other',
+          confidence: 0.0,
+          params: {},
+          error: error.message
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Custom Instructions - Save user profile
+  if (path === '/api/custom-instructions' && request.method === 'POST') {
+    try {
+      const { userId, career_goals, current_projects, interests, company, personality } = await request.json();
+
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'User ID is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data, error } = await supabase
+        .from('custom_instructions')
+        .upsert({
+          user_id: userId,
+          career_goals,
+          current_projects,
+          interests,
+          company,
+          personality,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Custom instructions error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Daily Insights - RAG-powered recommendations
+  if (path === '/api/insights' && request.method === 'GET') {
+    try {
+      const url = new URL(request.url);
+      const userId = url.searchParams.get('userId');
+
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'User ID is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      // Get user's custom instructions for context
+      const { data: instructions } = await supabase
+        .from('custom_instructions')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      // Get recent insights (last 7 days)
+      const { data: insights, error } = await supabase
+        .from('daily_insights')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // If no recent insights, generate new ones using GPT-4o-mini
+      if (!insights || insights.length === 0) {
+        const context = instructions ? `
+          Career Goals: ${instructions.career_goals || 'Not specified'}
+          Current Projects: ${instructions.current_projects || 'None'}
+          Interests: ${instructions.interests || 'Not specified'}
+          Company: ${instructions.company || 'Independent'}
+        ` : 'No custom instructions provided';
+
+        const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              {
+                role: 'system',
+                content: 'Generate 3-5 personalized development insights based on user context. Return as JSON array with: {category, title, description, confidence, reasoning, action}'
+              },
+              {
+                role: 'user',
+                content: `User context:\n${context}\n\nGenerate actionable insights.`
+              }
+            ],
+            temperature: 0.7,
+            max_tokens: 1000
+          })
+        });
+
+        const aiData = await aiResponse.json();
+        const generatedInsights = JSON.parse(aiData.choices[0].message.content);
+
+        // Store insights
+        const { data: stored } = await supabase
+          .from('daily_insights')
+          .insert(
+            generatedInsights.map(insight => ({
+              user_id: userId,
+              category: insight.category,
+              title: insight.title,
+              description: insight.description,
+              confidence: insight.confidence,
+              reasoning: insight.reasoning,
+              action: insight.action,
+              created_at: new Date().toISOString()
+            }))
+          )
+          .select();
+
+        return new Response(
+          JSON.stringify({ insights: stored || generatedInsights }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ insights }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Insights error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Tier credits + usage summary for header token indicator
+  if (path === '/api/tier-credits' && request.method === 'GET') {
+    try {
+      const session = await requireAuth(request, env);
+      const userId = session?.claims?.sub;
+
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+      const { data: credits, error: creditsError } = await supabase
+        .from('tier_credits')
+        .select('tier, current_balance_cents, total_spent_cents')
+        .eq('user_id', userId)
+        .single();
+
+      if (creditsError && creditsError.code !== 'PGRST116') {
+        throw creditsError;
+      }
+
+      const { data: usage, error: usageError } = await supabase
+        .from('usage_ledger')
+        .select('total_cost_cents')
+        .eq('user_id', userId);
+
+      if (usageError) {
+        throw usageError;
+      }
+
+      const usageCents = (usage || []).reduce((total, entry) => {
+        return total + (entry?.total_cost_cents || 0);
+      }, 0);
+
+      return new Response(
+        JSON.stringify({
+          tier: credits?.tier || 'free',
+          balanceCents: credits?.current_balance_cents ?? 0,
+          totalSpentCents: credits?.total_spent_cents ?? usageCents,
+          usageCents,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Tier credits error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Failed to load credits' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Collaboration Billing - Get subscription
+  if (path === '/api/collaboration/billing' && request.method === 'GET') {
+    try {
+      const url = new URL(request.url);
+      const userId = url.searchParams.get('userId');
+
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'User ID is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data: subscription, error } = await supabase
+        .from('collaboration_billing')
+        .select('*, collaborators:collaboration_projects(count)')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+
+      return new Response(
+        JSON.stringify({ subscription: subscription || null }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Billing get error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Collaboration Billing - Create/Update subscription
+  if (path === '/api/collaboration/billing' && request.method === 'POST') {
+    try {
+      const { userId, tier, collaborators } = await request.json();
+
+      if (!userId || !tier) {
+        return new Response(
+          JSON.stringify({ error: 'User ID and tier are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Calculate discount (0%, 20%, 30%, 40%, 50% for tiers 1-5)
+      const discounts = { 1: 0, 2: 20, 3: 30, 4: 40, 5: 50 };
+      const discount = discounts[tier] || 0;
+      const basePrice = 1; // $1 per collaborator per day
+      const dailyRate = basePrice * collaborators * (1 - discount / 100);
+      const monthlyRate = dailyRate * 30;
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data, error } = await supabase
+        .from('collaboration_billing')
+        .upsert({
+          user_id: userId,
+          tier,
+          collaborators,
+          discount,
+          daily_rate: dailyRate,
+          monthly_rate: monthlyRate,
+          status: 'active',
+          billing_cycle_start: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, subscription: data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Billing post error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Quote Engine - Cost estimation
+  if (path === '/api/quotes/estimate' && request.method === 'POST') {
+    try {
+      const { agentType, complexity, enableVoice, executionCount, tokenEstimate } = await request.json();
+
+      if (!agentType) {
+        return new Response(
+          JSON.stringify({ error: 'Agent type is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Base costs per execution
+      const baseCosts = {
+        code: 0.05,
+        data: 0.03,
+        workflow: 0.02,
+        research: 0.08,
+        content: 0.04,
+        analytics: 0.06
+      };
+
+      const complexityMultipliers = { low: 1, medium: 1.5, high: 2.5 };
+      const baseCost = baseCosts[agentType] || 0.05;
+      const multiplier = complexityMultipliers[complexity] || 1;
+      const voiceCost = enableVoice ? 0.02 : 0;
+      const tokenCost = (tokenEstimate || 1000) / 1000 * 0.01;
+
+      const costPerExecution = baseCost * multiplier + voiceCost + tokenCost;
+      const totalCost = costPerExecution * (executionCount || 1);
+
+      return new Response(
+        JSON.stringify({
+          agentType,
+          complexity,
+          enableVoice,
+          executionCount: executionCount || 1,
+          tokenEstimate: tokenEstimate || 1000,
+          costPerExecution: costPerExecution.toFixed(4),
+          totalCost: totalCost.toFixed(2),
+          breakdown: {
+            base: (baseCost * multiplier).toFixed(4),
+            voice: voiceCost.toFixed(4),
+            tokens: tokenCost.toFixed(4)
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Quote error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // OpenRouter Models - Get available models
+  if (path === '/api/models/openrouter' && request.method === 'GET') {
+    try {
+      const response = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: {
+          'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch OpenRouter models');
+      }
+
+      const data = await response.json();
+      
+      return new Response(
+        JSON.stringify({ models: data.data || [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('OpenRouter models error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Model Selection - Add model to available list
+  if (path === '/api/models/select' && request.method === 'POST') {
+    try {
+      const { modelId, modelName, provider, contextWindow, costPer1kTokens } = await request.json();
+
+      if (!modelId || !modelName) {
+        return new Response(
+          JSON.stringify({ error: 'Model ID and name are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data, error } = await supabase
+        .from('available_models')
+        .insert({
+          model_id: modelId,
+          model_name: modelName,
+          provider: provider || 'openrouter',
+          context_window: contextWindow || 8192,
+          cost_per_1k_tokens: costPer1kTokens || 0.01,
+          is_active: true,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ success: true, model: data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Model select error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Voice Profiles - Get user's voice profiles
+  if (path === '/api/voice/profiles' && request.method === 'GET') {
+    try {
+      // Prefer Clerk auth; fallback to explicit query param
+      let userId = null;
+      const session = await getClerkSession(request, env);
+      if (session?.claims?.sub) userId = session.claims.sub;
+      if (!userId) {
+        const url = new URL(request.url);
+        userId = url.searchParams.get('userId');
+      }
+
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+
+      // voice_profiles is a per-user settings row in migration 0006
+      const { data: vp, error } = await supabase
+        .from('voice_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      // Adapt response to UI shape (list of custom voices)
+      const profiles = [];
+      if (vp?.custom_voice_url) {
+        profiles.push({
+          voice_id: 'custom',
+          name: vp.custom_voice_name || 'Custom Voice',
+          url: vp.custom_voice_url,
+          created_at: vp.custom_voice_uploaded_at || vp.updated_at || vp.created_at
+        });
+      }
+
+      return new Response(
+        JSON.stringify({ profiles }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice profiles get error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Voice Profiles - Delete profile (clear custom voice)
+  if (path.startsWith('/api/voice/profiles/') && request.method === 'DELETE') {
+    try {
+      const profileId = path.split('/').pop();
+      const session = await getClerkSession(request, env);
+      const userId = session?.claims?.sub || null;
+
+      if (!profileId || !userId) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+
+      if (profileId === 'custom') {
+        // Clear custom voice fields on the user's settings row
+        const { error } = await supabase
+          .from('voice_profiles')
+          .update({
+            custom_voice_url: null,
+            custom_voice_name: null,
+            custom_voice_uploaded_at: null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        // Fallback: attempt delete by id if a row model ever exists
+        const { error } = await supabase
+          .from('voice_profiles')
+          .delete()
+          .eq('id', profileId);
+        if (error) throw error;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice profile delete error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Voice Profiles - Upload custom voice
+  if (path === '/api/voice/upload' && request.method === 'POST') {
+    try {
+      const session = await getClerkSession(request, env);
+      const userId = session?.claims?.sub || null;
+      if (!userId) {
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const contentType = request.headers.get('content-type') || '';
+      if (!contentType.includes('multipart/form-data')) {
+        return new Response(
+          JSON.stringify({ error: 'Expected multipart/form-data' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const formData = await request.formData();
+      const file = formData.get('voice');
+      const name = (formData.get('name') || 'Custom Voice').toString();
+      if (!file || !file.type?.startsWith('audio/')) {
+        return new Response(
+          JSON.stringify({ error: 'Audio file is required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Save to R2 bucket (if bound); otherwise, skip storage and return stub
+      const keyExt = file.name?.split('.').pop() || 'mp3';
+      const objectKey = `voices/${userId}/${crypto.randomUUID()}.${keyExt}`;
+
+      let publicUrl = null;
+      try {
+        if (env.ASSETS_BUCKET) {
+          const buffer = await file.arrayBuffer();
+          await env.ASSETS_BUCKET.put(objectKey, buffer, {
+            httpMetadata: { contentType: file.type || 'audio/mpeg' }
+          });
+          // If using public bucket with custom domain, you can construct the URL; else keep key
+          publicUrl = objectKey; // client can request signed URL later if needed
+        }
+      } catch (r2err) {
+        console.warn('R2 upload failed or not configured, continuing without storage:', r2err?.message);
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+
+      // Upsert per-user voice profile settings
+      const { data: existing } = await supabase
+        .from('voice_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existing?.id) {
+        const { error } = await supabase
+          .from('voice_profiles')
+          .update({
+            custom_voice_url: publicUrl,
+            custom_voice_name: name,
+            custom_voice_uploaded_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('voice_profiles')
+          .insert({
+            user_id: userId,
+            custom_voice_url: publicUrl,
+            custom_voice_name: name,
+            custom_voice_uploaded_at: new Date().toISOString(),
+            selected_voice_id: 'default-natural'
+          });
+        if (error) throw error;
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, voiceId: 'custom', url: publicUrl }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Voice upload error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Upload failed' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // Google Meet Integration - Create meeting
+  if (path === '/api/meetings/google-meet' && request.method === 'POST') {
+    try {
+      const { userId, title, startTime, duration, attendees } = await request.json();
+
+      if (!userId || !title) {
+        return new Response(
+          JSON.stringify({ error: 'User ID and title are required' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // This would integrate with Google Calendar API
+      // For now, return mock data
+      const meetingId = `meet-${Date.now()}`;
+      const meetingUrl = `https://meet.google.com/${meetingId}`;
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+      
+      const { data, error } = await supabase
+        .from('meetings')
+        .insert({
+          user_id: userId,
+          platform: 'google_meet',
+          meeting_id: meetingId,
+          title,
+          meeting_url: meetingUrl,
+          start_time: startTime || new Date().toISOString(),
+          duration: duration || 60,
+          attendees: attendees || [],
+          status: 'scheduled',
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          meeting: data,
+          joinUrl: meetingUrl
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (error) {
+      console.error('Google Meet error:', error);
+      return new Response(
+        JSON.stringify({ error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // ============================================
+  // APP IDEAS ENGINE ENDPOINTS
+  // ============================================
+
+  // Generate weekly ideas (cron job or manual trigger)
+  if (path === '/api/admin/generate-ideas' && request.method === 'POST') {
+    try {
+      // Verify SuperAdmin
+      const userId = await verifyAuth(request, env);
+      const user = await env.DB.prepare(
+        'SELECT role FROM users WHERE id = ?'
+      ).bind(userId).first();
+      
+      if (user?.role !== 'superadmin') {
+        return json({ error: 'Unauthorized' }, 403);
+      }
+
+      // Generate ideas using Groq or OpenAI
+      const ideas = await generateAppIdeas(env);
+      
+      // Store in database
+      for (const idea of ideas) {
+        await env.DB.prepare(`
+          INSERT INTO app_ideas (
+            id, title, description, category, complexity, 
+            keywords, generated_at, status
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          `idea_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          idea.title,
+          idea.description,
+          idea.category,
+          idea.complexity,
+          JSON.stringify(idea.keywords),
+          Date.now(),
+          'available'
+        ).run();
+      }
+      
+      return json({ success: true, count: ideas.length });
+    } catch (error) {
+      return json({ error: error.message }, 500);
+    }
+  }
+
+  // Get weekly ideas for SuperAdmin
+  if (path === '/api/admin/ideas' && request.method === 'GET') {
+    try {
+      const userId = await verifyAuth(request, env);
+      
+      // For now, return mock data if no real ideas exist
+      const mockIdeas = [
+        {
+          id: 'idea_1',
+          title: 'Slack Clone',
+          description: 'Real-time team communication platform with channels, DMs, and file sharing',
+          category: 'Communication',
+          complexity: 'medium',
+          keywords: JSON.stringify(['chat', 'teams', 'collaboration'])
+        },
+        {
+          id: 'idea_2',
+          title: 'Stripe Dashboard',
+          description: 'Payment analytics dashboard with subscription management and revenue tracking',
+          category: 'Fintech',
+          complexity: 'hard',
+          keywords: JSON.stringify(['payments', 'analytics', 'saas'])
+        },
+        {
+          id: 'idea_3',
+          title: 'Notion Workspace',
+          description: 'All-in-one workspace for notes, tasks, wikis, and databases',
+          category: 'Productivity',
+          complexity: 'hard',
+          keywords: JSON.stringify(['notes', 'productivity', 'database'])
+        },
+        {
+          id: 'idea_4',
+          title: 'Bitdefender Clone',
+          description: 'Cybersecurity dashboard with real-time threat detection and system scanning',
+          category: 'Security',
+          complexity: 'medium',
+          keywords: JSON.stringify(['security', 'antivirus', 'protection'])
+        },
+        {
+          id: 'idea_5',
+          title: 'Figma Lite',
+          description: 'Collaborative design tool for creating UI/UX mockups and prototypes',
+          category: 'Design',
+          complexity: 'hard',
+          keywords: JSON.stringify(['design', 'ui', 'collaboration'])
+        }
+      ];
+      
+      return json({ ideas: mockIdeas });
+    } catch (error) {
+      return json({ error: error.message }, 500);
+    }
+  }
+
+  // ============================================
+  // ACHEEVY INTENT ENDPOINTS
+  // ============================================
+
+  // Start ACHEEVY session
+  if (path === '/api/acheevy/start-session' && request.method === 'POST') {
+    try {
+      const userId = await verifyAuth(request, env);
+      const { appIdeaId, ideaTitle, ideaDescription, customIntent } = await request.json();
+      
+      const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const intent = customIntent || `Build a ${ideaTitle}: ${ideaDescription}`;
+      
+      const session = {
+        sessionId,
+        userId,
+        userIntent: intent,
+        conversationHistory: [],
+        questions: {
+          asked: [],
+          responses: {},
+          currentQuestion: 0
+        },
+        status: 'active'
+      };
+      
+      // Store session (in KV or D1)
+      await env.KV.put(`session_${sessionId}`, JSON.stringify(session), {
+        expirationTtl: 3600 // 1 hour
+      });
+      
+      return json({
+        sessionId,
+        firstMessage: `Hi! I'm ACHEEVY. I understand you want to build: "${intent}". Let me ask some questions to help me understand your vision better.`,
+        firstQuestion: "What's the primary use case or problem this app solves?"
+      });
+    } catch (error) {
+      return json({ error: error.message }, 500);
+    }
+  }
+
+  // ACHEEVY chat conversation
+  if (path === '/api/acheevy/chat' && request.method === 'POST') {
+    try {
+      const userId = await verifyAuth(request, env);
+      const { sessionId, userMessage } = await request.json();
+      
+      // Get session from KV
+      const sessionData = await env.KV.get(`session_${sessionId}`);
+      if (!sessionData) {
+        return json({ error: 'Session not found' }, 404);
+      }
+      
+      const session = JSON.parse(sessionData);
+      
+      // Questions sequence
+      const questions = [
+        "What's the primary use case or problem this app solves?",
+        "Who are your target users? (e.g., developers, enterprises, individuals)",
+        "What key features are essential for the MVP?",
+        "What integrations or APIs does this need? (Stripe, Auth, etc.)",
+        "What's the desired design style? (Modern, minimal, playful, enterprise)",
+        "Any specific technologies you prefer?",
+        "What's your timeline and launch priority?"
+      ];
+      
+      // Store user response
+      session.conversationHistory.push({
+        role: 'user',
+        content: userMessage,
+        timestamp: Date.now()
+      });
+      
+      const questionKeys = [
+        'primary_use_case',
+        'target_users',
+        'key_features',
+        'integrations',
+        'design_style',
+        'technologies',
+        'timeline'
+      ];
+      
+      session.questions.responses[questionKeys[session.questions.currentQuestion]] = userMessage;
+      session.questions.currentQuestion++;
+      
+      let acheevy_response;
+      let prdGenerated = false;
+      let prd = null;
+      
+      if (session.questions.currentQuestion < questions.length) {
+        // Ask next question
+        acheevy_response = questions[session.questions.currentQuestion];
+      } else {
+        // Generate PRD
+        acheevy_response = "Perfect! I have all the information I need. Let me generate your PRD...";
+        prd = await generatePRD(session, env);
+        prdGenerated = true;
+      }
+      
+      session.conversationHistory.push({
+        role: 'acheevy',
+        content: acheevy_response,
+        timestamp: Date.now()
+      });
+      
+      // Update session
+      await env.KV.put(`session_${sessionId}`, JSON.stringify(session), {
+        expirationTtl: 3600
+      });
+      
+      return json({
+        sessionId,
+        acheevy_response,
+        prdGenerated,
+        prd
+      });
+    } catch (error) {
+      return json({ error: error.message }, 500);
+    }
+  }
+
+  // Approve PRD and create project
+  if (path === '/api/acheevy/approve-prd' && request.method === 'POST') {
+    try {
+      const userId = await verifyAuth(request, env);
+      const { sessionId } = await request.json();
+      
+      const projectId = `proj_${Date.now()}`;
+      
+      // Get session
+      const sessionData = await env.KV.get(`session_${sessionId}`);
+      const session = JSON.parse(sessionData);
+      
+      // Create project (store in database)
+      // For now, just return success
+      
+      return json({
+        success: true,
+        projectId,
+        redirectTo: `/editor/${projectId}`
+      });
+    } catch (error) {
+      return json({ error: error.message }, 500);
+    }
+  }
+
+  // ============================================
+  // LIVE BUILD ENDPOINTS
+  // ============================================
+
+  // Live build SSE endpoint
+  if (path.startsWith('/api/build-live/') && request.method === 'GET') {
+    const projectId = path.split('/').pop();
+    
+    // Use Server-Sent Events for real-time updates
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const encoder = new TextEncoder();
+    
+    // Simulate build process
+    const buildProcess = async () => {
+      const agents = [
+        'ResearchAng', 'DataAng', 'CodeAng', 'SecurityAng',
+        'IntegrationAng', 'UIAng', 'TestAng', 'OptimizeAng',
+        'DocAng', 'AccessibilityAng', 'I18nAng', 'CacheAng',
+        'MonitorAng', 'BackupAng', 'CDNAng', 'CIAng', 'DeployAng'
+      ];
+      
+      for (let i = 0; i < agents.length; i++) {
+        const agent = agents[i];
+        
+        // Send progress update
+        await writer.write(encoder.encode(
+          `data: ${JSON.stringify({
+            agent,
+            status: 'in_progress',
+            log: `${agent} is working...`,
+            progress: Math.round((i / agents.length) * 100)
+          })}\n\n`
+        ));
+        
+        // Simulate work
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Send completion
+        await writer.write(encoder.encode(
+          `data: ${JSON.stringify({
+            agent,
+            status: 'completed',
+            log: `${agent} completed successfully`,
+            progress: Math.round(((i + 1) / agents.length) * 100)
+          })}\n\n`
+        ));
+      }
+      
+      // Send deployment complete
+      await writer.write(encoder.encode(
+        `data: ${JSON.stringify({
+          status: 'deployed',
+          url: `https://${projectId}.nurdscode.app`,
+          message: 'App deployed successfully!'
+        })}\n\n`
+      ));
+      
+      await writer.close();
+    };
+    
+    // Start build process
+    buildProcess();
+    
+    return new Response(readable, {
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+  }
+
+  // Helper function to generate PRD
+  async function generatePRD(session, env) {
+    const responses = session.questions.responses;
+    
+    // For now, return a mock PRD
+    return {
+      title: session.userIntent.split(':')[0].replace('Build a ', ''),
+      overview: `A comprehensive solution for ${responses.primary_use_case}`,
+      goals: [
+        'Deliver MVP within timeline',
+        'Ensure scalability',
+        'Maintain high performance'
+      ],
+      targetUsers: responses.target_users,
+      coreFeatures: [
+        { name: 'User Authentication', priority: 'P0' },
+        { name: 'Core Functionality', priority: 'P0' },
+        { name: 'Admin Dashboard', priority: 'P1' }
+      ],
+      technicalStack: {
+        frontend: ['React', 'Tailwind CSS'],
+        backend: ['Cloudflare Workers'],
+        database: ['D1'],
+        integrations: responses.integrations?.split(',') || []
+      },
+      designStyle: responses.design_style,
+      timeline: responses.timeline
+    };
   }
 
   // Default 404

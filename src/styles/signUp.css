@@ -1,0 +1,425 @@
+/* ============================================
+   SIGN UP PAGE - Nothing Brand Inspired
+   ============================================ */
+
+.signup-container {
+  display: flex;
+  min-height: 100vh;
+  background: #0F0F0F;
+  color: #FFFFFF;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Mobile: Stack vertically */
+@media (max-width: 768px) {
+  .signup-container {
+    flex-direction: column;
+  }
+}
+
+/* ============================================
+   LEFT PANEL - ILLUSTRATION
+   ============================================ */
+
+.signup-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0F0F0F 100%);
+  padding: 2rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.illustration {
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 2/3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tech-illustration {
+  width: 100%;
+  height: 100%;
+  opacity: 0.8;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile: Hide illustration */
+@media (max-width: 768px) {
+  .signup-left {
+    display: none;
+  }
+}
+
+/* ============================================
+   RIGHT PANEL - FORM
+   ============================================ */
+
+.signup-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #0F0F0F;
+}
+
+.signup-form {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ============================================
+   HEADER SECTION
+   ============================================ */
+
+.signup-header {
+  margin-bottom: 1rem;
+}
+
+.logo-text {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem 0;
+  background: linear-gradient(135deg, #FFFFFF 0%, #E8E8E8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.signup-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0.5rem 0;
+  color: #FFFFFF;
+}
+
+.signup-subtitle {
+  font-size: 0.95rem;
+  color: #B3B3B3;
+  margin: 0.5rem 0 0 0;
+  line-height: 1.4;
+}
+
+/* ============================================
+   FORM GROUPS
+   ============================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #E8E8E8;
+  display: block;
+}
+
+.form-input {
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input::placeholder {
+  color: #666666;
+}
+
+.form-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #E68961;
+  box-shadow: 0 0 0 3px rgba(230, 137, 97, 0.1);
+}
+
+.form-input.valid {
+  border-color: #4CAF50;
+}
+
+.form-input.error {
+  border-color: #FF6B6B;
+}
+
+.error-text {
+  font-size: 0.8rem;
+  color: #FF6B6B;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* ============================================
+   CTA BUTTON
+   ============================================ */
+
+.cta-button {
+  padding: 1rem;
+  background: linear-gradient(135deg, #E68961 0%, #D4A05F 100%);
+  border: none;
+  border-radius: 8px;
+  color: #0F0F0F;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  text-transform: uppercase;
+}
+
+.cta-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(230, 137, 97, 0.4);
+}
+
+.cta-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cta-button:focus-visible {
+  outline: 3px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+.cta-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   LINK BUTTON
+   ============================================ */
+
+.link-button {
+  background: none;
+  border: none;
+  color: #E68961;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.link-button:hover {
+  color: #D4A05F;
+  text-decoration: underline;
+}
+
+.link-button:focus-visible {
+  outline: 2px solid #E68961;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   FOOTER TEXT
+   ============================================ */
+
+.signup-footer-text {
+  font-size: 0.9rem;
+  color: #B3B3B3;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.signup-footer-text .link-button {
+  font-size: inherit;
+}
+
+.signup-legal-text {
+  font-size: 0.8rem;
+  color: #666666;
+  margin: 0;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ============================================
+   VERIFICATION MESSAGE
+   ============================================ */
+
+.verification-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: 2rem 1rem;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+}
+
+.checkmark {
+  font-size: 3rem;
+  color: #4CAF50;
+  line-height: 1;
+}
+
+.verification-message p {
+  color: #E8E8E8;
+  font-size: 0.95rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.email-display {
+  color: #E68961;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.small-text {
+  color: #B3B3B3 !important;
+  font-size: 0.85rem !important;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .signup-container {
+    padding: 0;
+  }
+
+  .signup-right {
+    min-height: 100vh;
+    padding: 1.5rem;
+  }
+
+  .signup-form {
+    max-width: 100%;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  .signup-title {
+    font-size: 1.25rem;
+  }
+
+  .form-input {
+    padding: 0.75rem 0.875rem;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .cta-button {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .signup-right {
+    padding: 1rem;
+  }
+
+  .signup-form {
+    gap: 1rem;
+  }
+
+  .signup-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .logo-text {
+    font-size: 1.25rem;
+  }
+
+  .signup-title {
+    font-size: 1.1rem;
+  }
+
+  .signup-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .signup-footer-text,
+  .signup-legal-text {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .form-input {
+    border-width: 2px;
+  }
+
+  .cta-button {
+    border: 2px solid #0F0F0F;
+  }
+
+  .link-button {
+    text-decoration: underline;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .tech-illustration {
+    animation: none;
+  }
+}
+
+/* Dark mode (explicit) */
+@media (prefers-color-scheme: dark) {
+  .signup-container {
+    background: #0F0F0F;
+    color: #FFFFFF;
+  }
+
+  .signup-left {
+    background: linear-gradient(135deg, #1a1a1a 0%, #0F0F0F 100%);
+    border-right-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .form-input {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+  }
+}

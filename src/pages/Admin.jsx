@@ -61,7 +61,7 @@ function Admin() {
             onClick={() => setActiveTab('circuit-box')}
             className={`px-4 py-2 font-semibold transition-colors ${
               activeTab === 'circuit-box'
-                ? 'text-[#39FF14] border-b-2 border-[#39FF14]'
+                ? 'text-[#E68961] border-b-2 border-[#E68961]'
                 : 'text-text/60 hover:text-text'
             }`}
           >
@@ -71,7 +71,7 @@ function Admin() {
             onClick={() => setActiveTab('session')}
             className={`px-4 py-2 font-semibold transition-colors ${
               activeTab === 'session'
-                ? 'text-[#39FF14] border-b-2 border-[#39FF14]'
+                ? 'text-[#E68961] border-b-2 border-[#E68961]'
                 : 'text-text/60 hover:text-text'
             }`}
           >
@@ -81,7 +81,7 @@ function Admin() {
             onClick={() => setActiveTab('health')}
             className={`px-4 py-2 font-semibold transition-colors ${
               activeTab === 'health'
-                ? 'text-[#39FF14] border-b-2 border-[#39FF14]'
+                ? 'text-[#E68961] border-b-2 border-[#E68961]'
                 : 'text-text/60 hover:text-text'
             }`}
           >

@@ -1,9 +1,21 @@
-import { useAuth } from '@clerk/clerk-react';
+﻿import { useAuth } from '@clerk/clerk-react';
+
+export const fetchAuthed = async (path, options = {}) => {
+  const { getToken } = useAuth();
+  const token = await getToken();
+  return fetch(path, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`
+    }
+  });
+};
 
 export function useFetchAuthed() {
   const { getToken } = useAuth();
   
-  const fetchAuthed = async (path, options = {}) => {
+  const fetchAuthedInternal = async (path, options = {}) => {
     const token = await getToken();
     return fetch(path, {
       ...options,
@@ -14,5 +26,5 @@ export function useFetchAuthed() {
     });
   };
 
-  return fetchAuthed;
+  return fetchAuthedInternal;
 }
