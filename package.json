@@ -1,42 +1,111 @@
-{
-  "name": "nurds_code_dot_com",
-  "version": "1.0.0",
-  "description": "ACHIEVEMOR CODING PLATFORM",
+﻿{
+  "name": "nurdscode-deploy-platform",
+  "version": "2.0.0",
+  "description": "Unified Nurds Code + Deploy Platform - AI-Native Development Ecosystem",
   "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "next dev",
+    "dev:vite": "vite",
+    "build": "next build",
+    "build:vite": "vite build",
+    "start": "next start",
     "preview": "vite preview",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
     "worker:dev": "wrangler dev workers/api.js",
     "worker:deploy": "wrangler deploy workers/api.js",
-    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql"
+    "worker:dev:edge": "cd backend/cloudflare-workers && wrangler dev",
+    "worker:deploy:edge": "cd backend/cloudflare-workers && wrangler deploy",
+    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "docker:dev": "docker-compose -f docker-compose.dev.yml up",
+    "docker:dev:build": "docker-compose -f docker-compose.dev.yml up --build",
+    "docker:down": "docker-compose -f docker-compose.dev.yml down",
+    "docker:logs": "docker-compose -f docker-compose.dev.yml logs -f",
+    "backend:acheevy": "cd backend/acheevy-orchestrator && uvicorn main:app --reload --port 8000",
+    "backend:boomer-angs": "cd backend/boomer-angs && uvicorn main:app --reload --port 8001"
   },
   "keywords": [
     "cloudflare",
     "workers",
     "react",
+    "next",
     "vite",
     "tailwind",
-    "stripe"
+    "stripe",
+    "ai",
+    "deploy",
+    "acheevy",
+    "fastapi",
+    "typescript"
   ],
-  "author": "Nurdscode",
+  "author": "ACHVMR",
   "license": "MIT",
   "dependencies": {
+    "@cloudflare/ai": "^1.0.60",
     "@stripe/stripe-js": "^8.2.0",
     "jsonwebtoken": "^9.0.2",
+    "next": "^15.5.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.5",
-    "stripe": "^19.2.0"
+    "stripe": "^19.2.0",
+    "@clerk/nextjs": "^5.0.0",
+    "@supabase/supabase-js": "^2.38.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.0",
+    "@vercel/analytics": "^1.1.1",
+    "ai": "^3.0.0",
+    "clsx": "^2.0.0",
+    "framer-motion": "^10.16.0",
+    "lucide-react": "^0.294.0",
+    "openai": "^4.20.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251014.0",
     "@tailwindcss/postcss": "^4.1.16",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
     "@vitejs/plugin-react": "^5.1.0",
+    "@playwright/test": "^1.40.0",
     "autoprefixer": "^10.4.21",
+    "eslint": "^8.55.0",
+    "eslint-config-next": "^15.5.4",
     "postcss": "^8.5.6",
+    "prettier": "^3.1.0",
+    "prisma": "^5.7.0",
     "tailwindcss": "^4.1.16",
+    "typescript": "^5.3.3",
     "vite": "^7.1.12",
+    "vitest": "^1.0.4",
     "wrangler": "^4.45.3"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "^15.5.4"
+  },
+  "prettier": {
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "printWidth": 80
+  },
+  "eslintConfig": {
+    "extends": [
+      "next/core-web-vitals"
+    ]
   }
 }

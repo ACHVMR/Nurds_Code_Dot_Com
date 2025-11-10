@@ -42,3 +42,74 @@ wrangler.toml.backup
 # Temporary files
 /tmp
 *.tmp
+
+# ============================================
+# DEPLOY PLATFORM INTEGRATION (Sprint 12)
+# ============================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Next.js
+.next/
+out/
+
+# Docker
+docker-compose.override.yml
+.dockerignore.local
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Secrets & Keys
+*.pem
+*.key
+*.cert
+.secrets/
+secrets.json
+
+# Testing
+playwright-report/
+test-results/
+*.spec.ts.snap
+
+# AI Model Caches
+.cache/
+.transformers/
+.huggingface/
+
+# Backend specific
+backend/**/*.log
+backend/**/__pycache__/
+backend/**/venv/
+backend/**/.pytest_cache/
+
+# Cloudflare Workers
+backend/cloudflare-workers/.wrangler/
+backend/cloudflare-workers/dist/
+
+# IDE
+*.swp
+*.swo
+*~
+.vscode/settings.json
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Environment backups
+.env.*.backup

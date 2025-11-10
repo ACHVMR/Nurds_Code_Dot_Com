@@ -1,0 +1,29 @@
+# Boomer_Angs Microservices Dependencies
+# Specialized Agent Workforce | Phase 1 Core Dependency
+
+# Core Framework
+fastapi[all]==0.104.1
+uvicorn[standard]==0.24.0
+
+# Claude Agent SDK (Superior successor to claude-code-sdk)
+anthropic==0.8.1
+
+# Agent Communication & Orchestration
+aiohttp==3.9.1
+websockets==12.0
+pydantic==2.5.0
+
+# Specialized Agent Tools
+# numpy==1.26.2  # Removed - requires C compiler, not needed for core functionality
+# pandas==2.1.4  # Removed - requires numpy
+requests==2.31.0
+
+# Logging & Monitoring
+structlog==23.2.0
+
+# Environment
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1

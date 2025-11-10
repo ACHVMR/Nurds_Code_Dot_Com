@@ -1,0 +1,106 @@
+# ACHEEVY Orchestrator Dependencies
+# Backend-Driven Architecture | Phase 1 Critical Path
+# Deploy Platform Guide v6.1-WIP-ENHANCED Compliant
+
+# Core FastAPI Framework
+fastapi[all]==0.104.1
+uvicorn[standard]==0.24.0
+
+# Claude AI Integration (Upgraded for messages.create() API)
+anthropic==0.69.0
+
+# Voice AI Providers
+deepgram-sdk==5.0.0  # STT (Deepgram Nova-3)
+elevenlabs==0.2.27   # TTS with custom voices (JJR default)
+
+# Database & ORM
+asyncpg==0.29.0
+psycopg2-binary==2.9.9  # Sprint 6A: HITL API endpoints
+sqlalchemy[asyncio]==2.0.23
+alembic==1.12.1
+
+# Redis & Caching
+redis[hiredis]==5.0.1
+aioredis==2.0.1
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Environment & Configuration
+python-dotenv==1.0.0
+pydantic==2.10.6
+pydantic-settings==2.1.0
+
+# HTTP Client & External APIs
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Logging & Monitoring (Foundry-style)
+structlog==23.2.0
+rich==13.7.0
+
+# Charter/Ledger Dual System
+pytz==2023.3
+uuid==1.30
+
+# V.I.B.E. Threshold Enforcement (≥99.7%)
+jsonschema==4.20.0
+
+# Testing (Development)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+playwright==1.40.0  # Sprint 8: Community Testing Lab backend support
+
+# Development Tools
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+
+# ========================================
+# INTELLIGENT INTERNET INTEGRATIONS
+# ========================================
+# PRD: Deploy Platform Workflow Orchestration
+# Primary agent framework (replaces CrewAI as primary)
+
+# ii-agent: Primary orchestration framework (Shelf 1)
+# git+https://github.com/intelligent-internet/ii-agent.git@main
+
+# ii-commons v3: Shared utilities (Shelf 8 - upgraded from v2)
+# git+https://github.com/intelligent-internet/ii-commons.git@v3.0.0
+
+# ii-researcher: Research automation (Shelf 5)
+# git+https://github.com/intelligent-internet/ii-researcher.git@main
+
+# ========================================
+# MULTI-AGENT FRAMEWORKS (ENABLED)
+# ========================================
+# CrewAI: Multi-agent coordination (Shelf 11 - not primary)
+crewai==0.1.0
+
+# Deerflow: Advanced agent workflows (Shelf 5)
+# Note: Add when available on PyPI or GitHub
+# deerflow>=0.1.0
+
+# LangChain: LLM application framework (Shelf 11)
+langchain==0.0.335  # Fixed: Compatible with crewai==0.1.0 (requires <0.0.336)
+langchain-community==0.0.10
+
+# ========================================
+# ADDITIONAL TOOL WAREHOUSE
+# ========================================
+# Tavily API: Real-time search (Shelf 5)
+tavily-python==0.3.0
+
+# Plandex: Task planning (Shelf 3)
+# Note: CLI tool - install separately via npm/binary
+
+# ChromaDB: Vector database (Shelf 8)
+chromadb==0.4.22
+
+# Circuit Pattern Support
+tenacity==8.2.3  # Retry logic
+circuitbreaker==2.0.0  # Circuit breaker pattern (fixed: using correct package name)

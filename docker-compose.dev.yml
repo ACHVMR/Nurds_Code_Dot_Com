@@ -1,0 +1,198 @@
+# Docker Compose Development Environment
+# Nurds Code + Deploy Platform Integration
+# Sprint 12 Foundation - Phase 1
+
+version: '3.8'
+
+services:
+  # ============================================
+  # FRONTEND: Next.js Application
+  # ============================================
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: nurdscode-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/api
+      - NEXT_PUBLIC_ACHEEVY_URL=http://acheevy:8000
+      - NEXT_PUBLIC_CLOUDFLARE_WORKER_URL=${CLOUDFLARE_WORKER_URL}
+    env_file:
+      - .env.local
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - postgres
+      - redis
+      - acheevy
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3000/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # BACKEND: ACHEEVY Orchestrator (FastAPI)
+  # ============================================
+  acheevy:
+    build:
+      context: ./backend/acheevy-orchestrator
+      dockerfile: Dockerfile
+    container_name: acheevy-orchestrator
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    env_file:
+      - .env.local
+    volumes:
+      - ./backend/acheevy-orchestrator:/app
+      - ./backend/shared:/app/shared
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # BACKEND: Boomer_Angs Specialists (FastAPI)
+  # ============================================
+  boomer-angs:
+    build:
+      context: ./backend/boomer-angs
+      dockerfile: Dockerfile
+    container_name: boomer-angs
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - ACHEEVY_URL=http://acheevy:8000
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    env_file:
+      - .env.local
+    volumes:
+      - ./backend/boomer-angs:/app
+      - ./backend/shared:/app/shared
+    depends_on:
+      - postgres
+      - redis
+      - acheevy
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ============================================
+  # DATABASE: PostgreSQL
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: nurdscode-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-nurdscode}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_password_change_in_prod}
+      - POSTGRES_DB=${POSTGRES_DB:-nurdscode_db}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nurdscode}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # CACHE: Redis
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: nurdscode-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # TESTING LAB: Playwright E2E Tests
+  # ============================================
+  testing-lab:
+    build:
+      context: ./backend/testing-lab
+      dockerfile: Dockerfile
+    container_name: testing-lab
+    ports:
+      - "8002:8002"
+    environment:
+      - ENVIRONMENT=development
+      - FRONTEND_URL=http://frontend:3000
+      - ACHEEVY_URL=http://acheevy:8000
+    volumes:
+      - ./backend/testing-lab:/app
+      - ./backend/testing-lab/test-results:/app/test-results
+    depends_on:
+      - frontend
+      - acheevy
+    networks:
+      - nurdscode-network
+    restart: unless-stopped
+
+# ============================================
+# VOLUMES
+# ============================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+# ============================================
+# NETWORKS
+# ============================================
+networks:
+  nurdscode-network:
+    driver: bridge

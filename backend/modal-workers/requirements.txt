@@ -1,0 +1,27 @@
+# Modal GPU Workers - Python Dependencies
+# These are installed in the Modal container image
+
+# AI/LLM SDKs
+openai>=1.0.0
+anthropic>=0.25.0
+
+# HTTP clients
+httpx>=0.27.0
+requests>=2.31.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Database (async)
+asyncpg>=0.29.0
+psycopg2-binary>=2.9.9
+
+# Cache
+redis>=5.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+tenacity>=8.0.0
+
+# Modal SDK
+modal>=1.2.0

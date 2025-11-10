@@ -1,0 +1,64 @@
+# Cloudflare Workers Configuration
+# Sprint 12A: Avatar Upload System with R2 Storage + Workers AI
+
+name = "deploy-avatars"
+main = "src/index.ts"
+compatibility_date = "2025-11-09"
+compatibility_flags = ["nodejs_compat"]
+
+# Account Configuration
+account_id = "49d710612f9fc6359ac0f067482b5684"
+
+# ============================================
+# R2 Storage Binding (Avatar Images)
+# ============================================
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "user-avatars"
+
+# ============================================
+# KV Namespace Binding (Session Cache)
+# ============================================
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "3226b1e471e94da29bc9931995d0f34d"  # Update after running: wrangler kv namespace create "SESSIONS"
+
+# ============================================
+# Workers AI Binding (Content Moderation)
+# ============================================
+[ai]
+binding = "AI"
+
+# ============================================
+# Environment Variables (Secrets)
+# ============================================
+[vars]
+ENVIRONMENT = "development"
+R2_PUBLIC_URL = "https://cdn.nurdescode.com/avatars"
+SUPABASE_URL = "https://vmjaqaqeldomfozauhvm.supabase.co"
+
+# ============================================
+# Development Environment
+# ============================================
+[env.development]
+name = "deploy-avatars-dev"
+vars = { ENVIRONMENT = "development" }
+
+# ============================================
+# Production Environment (Future)
+# ============================================
+[env.production]
+name = "deploy-avatars-prod"
+vars = { ENVIRONMENT = "production" }
+
+# Custom domain routing (uncomment after domain setup)
+# [[routes]]
+# pattern = "trydeploy.nurdescode.com/api/avatars/*"
+# zone_name = "nurdescode.com"
+
+# ============================================
+# Observability
+# ============================================
+[observability]
+enabled = true
+head_sampling_rate = 1

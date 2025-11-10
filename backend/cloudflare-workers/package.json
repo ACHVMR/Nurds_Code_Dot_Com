@@ -1,0 +1,36 @@
+{
+  "name": "deploy-edge-avatars",
+  "version": "1.0.0",
+  "description": "Cloudflare Workers + R2 Avatar Upload System for Deploy Platform",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
+    "deploy:prod": "wrangler deploy --env production",
+    "tail": "wrangler tail",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "r2",
+    "avatar",
+    "ai",
+    "moderation"
+  ],
+  "author": "ACHVMR",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241106.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.0.4",
+    "wrangler": "^3.78.12"
+  },
+  "dependencies": {
+    "@cloudflare/ai": "^1.0.60"
+  }
+}
