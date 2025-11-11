@@ -128,3 +128,52 @@
   outline: none;
   border-color: var(--accent);
 }
+
+/* Quick Access card theme overrides */
+.qa-deploy-card {
+  --qa-accent: #39FF14; /* neon green */
+}
+.qa-nurds-card {
+  --qa-accent: #FFC83B; /* golden yellow (existing) */
+}
+.qa-testing-card {
+  --qa-accent: #FF6A00; /* neon orange */
+}
+
+.qa-card-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+.qa-card {
+  background: #111;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid transparent;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.qa-card:hover {
+  transform: translateY(-6px) scale(1.01);
+}
+
+.qa-deploy-card .qa-card-title,
+.qa-deploy-card .qa-cta {
+  color: var(--qa-accent);
+}
+.qa-deploy-card { border-color: rgba(57,255,20,0.08); box-shadow: 0 6px 30px rgba(57,255,20,0.08); }
+
+.qa-nurds-card .qa-card-title,
+.qa-nurds-card .qa-cta {
+  color: var(--qa-accent);
+}
+.qa-nurds-card { border-color: rgba(255,200,59,0.06); box-shadow: 0 6px 30px rgba(255,200,59,0.06); }
+
+.qa-testing-card .qa-card-title,
+.qa-testing-card .qa-cta {
+  color: var(--qa-accent);
+}
+.qa-testing-card { border-color: rgba(255,106,0,0.06); box-shadow: 0 6px 30px rgba(255,106,0,0.06); }
+
+.qa-cta { font-weight: 700; }
+
