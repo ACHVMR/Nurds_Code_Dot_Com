@@ -1,0 +1,273 @@
+/* Intent Modals Styling */
+
+.intent-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.intent-modal {
+  background: #0A0A0A;
+  border: 2px solid #1F1F1F;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.intent-modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #1F1F1F;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.intent-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-family: 'Permanent Marker', cursive;
+  color: #fff;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 2rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.modal-close:hover {
+  color: #fff;
+}
+
+.intent-modal-body {
+  padding: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  background: #0F0F0F;
+  border: 1px solid #1F1F1F;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.875rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #E68961;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.competitor-input {
+  margin-bottom: 0.5rem;
+}
+
+.btn-secondary {
+  background: #1F1F1F;
+  border: 1px solid #2F2F2F;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: #2F2F2F;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #E68961, #FF6A00);
+  border: none;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(230, 137, 97, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.intent-modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1.5rem;
+  border-top: 1px solid #1F1F1F;
+  margin-top: 1.5rem;
+}
+
+/* Import Modal Specific */
+.import-info {
+  background: #0F0F0F;
+  border: 1px solid #1F1F1F;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.import-info p {
+  margin: 0.25rem 0;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+/* Lab Modal Specific */
+.scenario-list {
+  background: #0F0F0F;
+  border: 1px solid #1F1F1F;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.scenario-checkbox {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.scenario-checkbox:hover {
+  background: #1F1F1F;
+}
+
+.scenario-checkbox input[type="checkbox"] {
+  width: auto;
+  margin-right: 0.75rem;
+  cursor: pointer;
+}
+
+.scenario-checkbox span {
+  color: #fff;
+  font-size: 0.875rem;
+}
+
+/* Agents Modal Specific */
+.agent-preview {
+  background: #0F0F0F;
+  border: 1px solid #1F1F1F;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.agent-preview h4 {
+  margin: 0 0 0.75rem 0;
+  color: #FFC83B;
+  font-size: 0.875rem;
+  font-family: 'Permanent Marker', cursive;
+}
+
+.agent-preview p {
+  margin: 0.5rem 0;
+  color: #999;
+  font-size: 0.875rem;
+}
+
+.agent-preview strong {
+  color: #fff;
+}
+
+/* Scrollbar styling for modal */
+.intent-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.intent-modal::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+
+.intent-modal::-webkit-scrollbar-thumb {
+  background: #1F1F1F;
+  border-radius: 4px;
+}
+
+.intent-modal::-webkit-scrollbar-thumb:hover {
+  background: #2F2F2F;
+}

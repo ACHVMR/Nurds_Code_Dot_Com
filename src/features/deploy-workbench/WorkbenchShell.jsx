@@ -4,7 +4,14 @@ import { DeployErrorBoundary } from './ErrorBoundary';
 import Editor from '@monaco-editor/react';
 import { Save, Download, Play } from 'lucide-react';
 import { IntentButtons } from '../../acp-integration/ui/components/IntentButtons';
+import { 
+  ReimagineModal, 
+  ImportModal, 
+  LabModal, 
+  AgentsModal 
+} from '../../acp-integration/ui/components/IntentModals';
 import '../../acp-integration/ui/components/IntentButtons.css';
+import '../../acp-integration/ui/components/IntentModals.css';
 
 /**
  * WorkbenchShell
@@ -16,25 +23,102 @@ export function WorkbenchShell({ onExport }) {
   const [exportStatus, setExportStatus] = useState('');
   const [error, setError] = useState(null);
   const [activeIntent, setActiveIntent] = useState(null);
+  
+  // Modal states
+  const [showReimagineModal, setShowReimagineModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [showAgentsModal, setShowAgentsModal] = useState(false);
 
   const handleIntent = async (intent) => {
     console.log(`[Workbench] Intent selected: ${intent}`);
     setActiveIntent(intent);
     
-    // Route to appropriate modal/flow based on intent
+    // Open appropriate modal based on intent
     switch (intent) {
       case 're-imagine':
-        // TODO: Open RE-IMAGINE modal (competitor analysis)
+        setShowReimagineModal(true);
         break;
       case 'import':
-        // TODO: Open IMPORT modal (repo selection)
+        setShowImportModal(true);
         break;
       case 'lab':
-        // TODO: Open LAB modal (testing scenarios)
+        setShowLabModal(true);
         break;
       case 'agents':
-        // TODO: Open AGENTS modal (agent creation)
+        setShowAgentsModal(true);
         break;
+    }
+  };
+
+  // Backend API calls
+  const handleReimagineSubmit = async (data) => {
+    console.log('[ACP] RE-IMAGINE request:', data);
+    
+    const response = await fetch('/api/acheevy/reimagine', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.workbench) {
+      setExportStatus(`✨ Superior version generated! Opening workbench...`);
+      // TODO: Navigate to workbench URL or update editor with scaffold
+      console.log('[ACP] Workbench URL:', result.workbench);
+    }
+  };
+
+  const handleImportSubmit = async (data) => {
+    console.log('[ACP] IMPORT request:', data);
+    
+    const response = await fetch('/api/workbench/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repositoryUrl: data.repoUrl, platform: data.platform })
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'imported') {
+      setExportStatus(`📥 Repository imported successfully!`);
+      // TODO: Load files into Monaco editor
+      console.log('[ACP] Files:', result.files);
+    }
+  };
+
+  const handleLabSubmit = async (data) => {
+    console.log('[ACP] LAB request:', data);
+    
+    const response = await fetch('/api/testing-lab/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'testing-complete') {
+      setExportStatus(`🧪 Tests complete: ${result.results.passed} passed, ${result.results.failed} failed`);
+      console.log('[ACP] Test results:', result.results);
+    }
+  };
+
+  const handleAgentsSubmit = async (data) => {
+    console.log('[ACP] AGENTS request:', data);
+    
+    const response = await fetch('/api/agents/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 'agent-deployed') {
+      setExportStatus(`🤖 ${result.agentName} deployed to ${result.circuitBox}!`);
+      console.log('[ACP] Agent deployed:', result);
     }
   };
 
@@ -84,6 +168,28 @@ export function WorkbenchShell({ onExport }) {
   return (
     <DeployErrorBoundary>
       <NothingBrandProvider>
+        {/* Intent Modals */}
+        <ReimagineModal 
+          isOpen={showReimagineModal}
+          onClose={() => setShowReimagineModal(false)}
+          onSubmit={handleReimagineSubmit}
+        />
+        <ImportModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onSubmit={handleImportSubmit}
+        />
+        <LabModal
+          isOpen={showLabModal}
+          onClose={() => setShowLabModal(false)}
+          onSubmit={handleLabSubmit}
+        />
+        <AgentsModal
+          isOpen={showAgentsModal}
+          onClose={() => setShowAgentsModal(false)}
+          onSubmit={handleAgentsSubmit}
+        />
+        
         <div className="workbench-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           <header className="workbench-header nb-card" style={{ padding: '1rem', borderBottom: '1px solid #1F1F1F' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
