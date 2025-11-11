@@ -3,6 +3,8 @@ import { NothingBrandProvider } from './NothingBrandProvider';
 import { DeployErrorBoundary } from './ErrorBoundary';
 import Editor from '@monaco-editor/react';
 import { Save, Download, Play } from 'lucide-react';
+import { IntentButtons } from '../../acp-integration/ui/components/IntentButtons';
+import '../../acp-integration/ui/components/IntentButtons.css';
 
 /**
  * WorkbenchShell
@@ -13,6 +15,28 @@ export function WorkbenchShell({ onExport }) {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState('');
   const [error, setError] = useState(null);
+  const [activeIntent, setActiveIntent] = useState(null);
+
+  const handleIntent = async (intent) => {
+    console.log(`[Workbench] Intent selected: ${intent}`);
+    setActiveIntent(intent);
+    
+    // Route to appropriate modal/flow based on intent
+    switch (intent) {
+      case 're-imagine':
+        // TODO: Open RE-IMAGINE modal (competitor analysis)
+        break;
+      case 'import':
+        // TODO: Open IMPORT modal (repo selection)
+        break;
+      case 'lab':
+        // TODO: Open LAB modal (testing scenarios)
+        break;
+      case 'agents':
+        // TODO: Open AGENTS modal (agent creation)
+        break;
+    }
+  };
 
   const handleExport = async () => {
     // Validate before exporting
@@ -62,10 +86,15 @@ export function WorkbenchShell({ onExport }) {
       <NothingBrandProvider>
         <div className="workbench-container" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
           <header className="workbench-header nb-card" style={{ padding: '1rem', borderBottom: '1px solid #1F1F1F' }}>
-            <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Deploy Workbench</h1>
-            <p style={{ margin: '0.5rem 0 0', color: '#999', fontSize: '0.875rem' }}>
-              Build, test, and export your plug code
-            </p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h1 style={{ margin: 0, fontSize: '1.5rem' }}>Deploy Workbench</h1>
+                <p style={{ margin: '0.5rem 0 0', color: '#999', fontSize: '0.875rem' }}>
+                  Build, test, and export your plug code
+                </p>
+              </div>
+              <IntentButtons onIntent={handleIntent} />
+            </div>
           </header>
           
           <div className="workbench-body" style={{ flex: 1, display: 'flex' }}>
