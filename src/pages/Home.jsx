@@ -208,6 +208,73 @@ function Home() {
         </div>
       </section>
 
+      {/* Quick Access Navigation */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a]">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12 text-text">
+            Quick Access
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* DEPLOY Card */}
+            <Link 
+              to="/deploy/workbench" 
+              className="group relative overflow-hidden bg-[#1a1a1a] border-2 border-[#E68961] rounded-xl p-8 hover:bg-[#1a1a1a]/80 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(230,137,97,0.3)]"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#E68961]/10 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <div className="text-5xl mb-4">🚀</div>
+                <h3 className="text-2xl font-bold mb-3 text-[#E68961]">DEPLOY</h3>
+                <p className="text-text/80 mb-4">
+                  Launch your code with Monaco editor, file management, and one-click export to production.
+                </p>
+                <div className="flex items-center gap-2 text-[#E68961] font-semibold">
+                  <span>Open Workbench</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Nurds Code Card */}
+            <Link 
+              to="/editor" 
+              className="group relative overflow-hidden bg-[#1a1a1a] border-2 border-purple-400 rounded-xl p-8 hover:bg-[#1a1a1a]/80 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-400/10 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <div className="text-5xl mb-4">💻</div>
+                <h3 className="text-2xl font-bold mb-3 text-purple-400">Nurds Code</h3>
+                <p className="text-text/80 mb-4">
+                  Build full-stack applications with AI-powered code generation and live preview.
+                </p>
+                <div className="flex items-center gap-2 text-purple-400 font-semibold">
+                  <span>Start Coding</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+
+            {/* Testing Lab Card */}
+            <Link 
+              to="/deploy/testing-lab" 
+              className="group relative overflow-hidden bg-[#1a1a1a] border-2 border-cyan-400 rounded-xl p-8 hover:bg-[#1a1a1a]/80 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(34,211,238,0.3)]"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-400/10 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <div className="text-5xl mb-4">🧪</div>
+                <h3 className="text-2xl font-bold mb-3 text-cyan-400">Testing Lab</h3>
+                <p className="text-text/80 mb-4">
+                  Run automated tests with Playwright, monitor results, and ensure code quality.
+                </p>
+                <div className="flex items-center gap-2 text-cyan-400 font-semibold">
+                  <span>Run Tests</span>
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
