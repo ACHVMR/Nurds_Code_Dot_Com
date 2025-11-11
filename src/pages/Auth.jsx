@@ -7,7 +7,7 @@ function Auth() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-black via-gray-900 to-black">
+      <section className="relative py-16 px-4 sm:px-6 lg:px-8 bg-linear-to-br from-black via-gray-900 to-black">
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* Left Column - Hero Content */}
@@ -30,7 +30,7 @@ function Auth() {
               {/* Features Grid */}
               <div className="grid grid-cols-2 gap-4 mb-8">
                 <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <Code className="w-5 h-5 text-[#E68961] flex-shrink-0 mt-1" />
+                  <Code className="w-5 h-5 text-[#E68961] shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold text-white text-sm mb-1">Code Generation</h3>
                     <p className="text-xs text-gray-400">AI-powered development</p>
@@ -38,7 +38,7 @@ function Auth() {
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <Zap className="w-5 h-5 text-[#E68961] flex-shrink-0 mt-1" />
+                  <Zap className="w-5 h-5 text-[#E68961] shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold text-white text-sm mb-1">Lightning Fast</h3>
                     <p className="text-xs text-gray-400">Cloudflare powered</p>
@@ -46,7 +46,7 @@ function Auth() {
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <Shield className="w-5 h-5 text-[#E68961] flex-shrink-0 mt-1" />
+                  <Shield className="w-5 h-5 text-[#E68961] shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold text-white text-sm mb-1">Secure</h3>
                     <p className="text-xs text-gray-400">Enterprise-grade</p>
@@ -54,7 +54,7 @@ function Auth() {
                 </div>
                 
                 <div className="flex items-start gap-3 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                  <Sparkles className="w-5 h-5 text-[#E68961] flex-shrink-0 mt-1" />
+                  <Sparkles className="w-5 h-5 text-[#E68961] shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold text-white text-sm mb-1">Voice First</h3>
                     <p className="text-xs text-gray-400">Talk to build</p>

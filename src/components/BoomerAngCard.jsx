@@ -63,14 +63,14 @@ export function BoomerAngCard({
 
   return (
     <div
-      className={`boomer-ang-card relative bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border-2 transition-all duration-300 overflow-hidden ${
+      className={`boomer-ang-card relative bg-linear-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border-2 transition-all duration-300 overflow-hidden ${
         isHovered ? 'border-[#E68961] shadow-[0_0_30px_rgba(230,137,97,0.3)]' : 'border-gray-700'
       } ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header Image */}
-      <div className="relative h-48 overflow-hidden bg-gradient-to-br from-[#0F0F0F] to-[#1a1a1a]">
+      <div className="relative h-48 overflow-hidden bg-linear-to-br from-[#0F0F0F] to-[#1a1a1a]">
         {image ? (
           <img
             src={image}
@@ -313,7 +313,7 @@ export function BoomerAngCard({
 
       {/* Hover Overlay - Quick Actions */}
       {isHovered && mode === 'view' && (
-        <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/80 to-transparent flex justify-end gap-2 transition-opacity duration-300">
+        <div className="absolute top-0 left-0 right-0 p-3 bg-linear-to-b from-black/80 to-transparent flex justify-end gap-2 transition-opacity duration-300">
           <button
             onClick={() => onEdit?.(boomerAng)}
             className="p-2 bg-[#E68961] hover:bg-[#D4A05F] text-black rounded-lg transition-all"

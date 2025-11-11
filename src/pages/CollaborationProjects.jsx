@@ -157,7 +157,7 @@ export default function CollaborationProjects() {
         </div>
 
         {/* Plus One Pricing Banner */}
-        <div className="bg-gradient-to-r from-[#E68961]/10 to-[#D4A05F]/10 rounded-xl p-6 border border-[#E68961]/30 mb-8">
+        <div className="bg-linear-to-r from-[#E68961]/10 to-[#D4A05F]/10 rounded-xl p-6 border border-[#E68961]/30 mb-8">
           <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
             <Shield className="w-5 h-5 text-[#E68961]" />
             Plus One Collaboration - $1/day per member

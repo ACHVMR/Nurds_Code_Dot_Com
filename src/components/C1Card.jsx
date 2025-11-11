@@ -30,7 +30,7 @@ export function C1Card({ prompt, data, type, className = '' }) {
   if (loading) {
     return (
       <div className={`c1-card-loading ${className}`}>
-        <div className="animate-pulse bg-gradient-to-r from-[#E68961] to-[#D4A05F] h-48 rounded-lg" />
+        <div className="animate-pulse bg-linear-to-r from-[#E68961] to-[#D4A05F] h-48 rounded-lg" />
       </div>
     );
   }

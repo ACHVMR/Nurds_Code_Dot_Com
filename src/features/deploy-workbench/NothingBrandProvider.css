@@ -1,0 +1,85 @@
+/* Nothing Brand scoped styles - only active within .nothing-brand-scope */
+.nothing-brand-scope {
+  --nb-black: #000000;
+  --nb-white: #FFFFFF;
+  --nb-red: #FF0000;
+  --nb-gray-50: #F9F9F9;
+  --nb-gray-100: #E8E8E8;
+  --nb-gray-800: #1F1F1F;
+  --nb-gray-900: #0F0F0F;
+  
+  background: var(--nb-black);
+  color: var(--nb-white);
+  min-height: 100vh;
+}
+
+.nothing-brand-scope .nb-button {
+  background: var(--nb-white);
+  color: var(--nb-black);
+  border: 2px solid var(--nb-black);
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nothing-brand-scope .nb-button:hover {
+  background: var(--nb-red);
+  color: var(--nb-white);
+  border-color: var(--nb-red);
+}
+
+.nothing-brand-scope .nb-card {
+  background: var(--nb-gray-900);
+  border: 1px solid var(--nb-gray-800);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.nothing-brand-scope .nb-card-glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+/* Diagonal stripe pattern */
+.nothing-brand-scope .nb-stripe {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 10px,
+    rgba(255, 255, 255, 0.03) 10px,
+    rgba(255, 255, 255, 0.03) 20px
+  );
+}
+
+/* Dot matrix pattern */
+.nothing-brand-scope .nb-dots {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.nothing-brand-scope .nb-input {
+  background: var(--nb-gray-900);
+  border: 1px solid var(--nb-gray-800);
+  color: var(--nb-white);
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+.nothing-brand-scope .nb-input:focus {
+  outline: none;
+  border-color: var(--nb-red);
+}
+
+.nothing-brand-scope h1,
+.nothing-brand-scope h2,
+.nothing-brand-scope h3 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

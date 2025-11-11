@@ -160,7 +160,7 @@ function PlusOnePricing() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {features.map((feature, index) => (
               <div key={index} className="flex items-center gap-3">
-                <Check className="w-5 h-5 text-[#E68961] flex-shrink-0" />
+                <Check className="w-5 h-5 text-[#E68961] shrink-0" />
                 <span className="text-gray-300">{feature}</span>
               </div>
             ))}

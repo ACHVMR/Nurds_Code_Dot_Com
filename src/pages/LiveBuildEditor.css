@@ -103,7 +103,7 @@
 }
 
 .logs-container {
-  flex-grow: 1;
+  flex: 1;
   overflow-y: auto;
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.875rem;

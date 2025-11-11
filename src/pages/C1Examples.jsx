@@ -157,7 +157,7 @@ export default function C1Examples() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-[#E68961] to-[#D4A05F] text-transparent bg-clip-text">
+          <h1 className="text-4xl font-bold mb-4 bg-linear-to-r from-[#E68961] to-[#D4A05F] text-transparent bg-clip-text">
             C1 Thesys Integration
           </h1>
           <p className="text-gray-400">

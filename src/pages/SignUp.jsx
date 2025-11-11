@@ -78,13 +78,12 @@ export default function SignUp() {
 
   const handleOAuth = async (provider) => {
     try {
-      await signUp.authenticateWithRedirect({
-        strategy: oauth_,
-        redirectUrl: '/auth/onboarding',
-        redirectUrlComplete: '/auth/onboarding',
-      });
+      // Use a safe redirect with provider; Clerk supports authenticateWithRedirect on the
+      // signUp/signIn objects in many setups. We pass provider and a redirect URL.
+      await signUp.authenticateWithRedirect?.({ provider, redirectUrl: '/auth/onboarding' })
+        || await signIn.authenticateWithRedirect?.({ provider, redirectUrl: '/auth/onboarding' });
     } catch (err) {
-      setError(OAuth failed);
+      setError('OAuth failed');
     }
   };
 
@@ -137,6 +136,7 @@ export default function SignUp() {
               </div>
               <div className="divider-section"><span className="divider-text">or</span></div>
               <input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} className={orm-input } disabled={isLoading} autoFocus />
+              <input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} className="form-input" disabled={isLoading} autoFocus />
               {error && <p className="error-text">{error}</p>}
               <button type="submit" className="cta-button" disabled={isLoading || !email}>{isLoading ? 'Sending...' : 'Continue'}</button>
             </>

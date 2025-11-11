@@ -234,7 +234,7 @@ export default function Verification() {
 
         {/* Initiate Verification */}
         {(!verification || verification.status === 'declined' || verification.status === 'expired') && (
-          <div className="bg-gradient-to-r from-[#E68961]/10 to-[#D4A05F]/10 rounded-xl p-6 border border-[#E68961]/30">
+          <div className="bg-linear-to-r from-[#E68961]/10 to-[#D4A05F]/10 rounded-xl p-6 border border-[#E68961]/30">
             <h2 className="text-xl font-semibold mb-4">Start Verification Process</h2>
             
             <div className="mb-6">

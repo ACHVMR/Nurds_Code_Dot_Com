@@ -152,7 +152,7 @@ function Pricing() {
               <div className="text-xl mb-1 text-text">{tier.name}</div>
               <div className="text-3xl mb-4 text-text">{tier.price}</div>
               
-              <ul className="space-y-2 mb-6 flex-grow">
+              <ul className="space-y-2 mb-6 grow">
                 {tier.bullets.map((bullet) => (
                   <li key={bullet} className="text-sm text-text">
                     • {bullet}

@@ -49,7 +49,7 @@ function Web3Wallet() {
             </p>
             <button
               onClick={handleConnectWallet}
-              className="px-8 py-4 bg-gradient-to-r from-[#39FF14] to-[#D946EF] text-black font-bold rounded-lg hover:opacity-90 transition-all shadow-lg text-lg"
+              className="px-8 py-4 bg-linear-to-r from-[#39FF14] to-[#D946EF] text-black font-bold rounded-lg hover:opacity-90 transition-all shadow-lg text-lg"
             >
               🔗 Connect Wallet
             </button>
@@ -142,7 +142,7 @@ function Web3Wallet() {
                     className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 flex items-center justify-between hover:border-[#39FF14]/50 transition-all"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center text-white font-bold">
+                      <div className="w-12 h-12 rounded-full bg-linear-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center text-white font-bold">
                         {asset.symbol[0]}
                       </div>
                       <div>

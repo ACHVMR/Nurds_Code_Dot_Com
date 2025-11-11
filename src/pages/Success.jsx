@@ -54,7 +54,7 @@ function Success() {
             <ul className="text-left space-y-4">
               <li className="flex items-start">
                 <svg
-                  className="w-6 h-6 text-accent mr-3 flex-shrink-0 mt-1"
+                  className="w-6 h-6 text-accent mr-3 shrink-0 mt-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -75,7 +75,7 @@ function Success() {
               </li>
               <li className="flex items-start">
                 <svg
-                  className="w-6 h-6 text-accent mr-3 flex-shrink-0 mt-1"
+                  className="w-6 h-6 text-accent mr-3 shrink-0 mt-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -96,7 +96,7 @@ function Success() {
               </li>
               <li className="flex items-start">
                 <svg
-                  className="w-6 h-6 text-accent mr-3 flex-shrink-0 mt-1"
+                  className="w-6 h-6 text-accent mr-3 shrink-0 mt-1"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

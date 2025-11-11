@@ -259,7 +259,7 @@ export function BoomerAngDashboard() {
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#E68961] to-[#D4A05F] bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-[#E68961] to-[#D4A05F] bg-clip-text text-transparent mb-2">
               Boomer_Ang Dashboard
             </h1>
             <p className="text-gray-400">Manage, create, and deploy your AI Boomer_Angs</p>

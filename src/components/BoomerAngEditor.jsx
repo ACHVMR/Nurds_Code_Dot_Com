@@ -173,7 +173,7 @@ export function BoomerAngEditor({
   };
 
   return (
-    <div className="boomer-ang-editor max-w-4xl mx-auto p-6 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border-2 border-gray-700">
+    <div className="boomer-ang-editor max-w-4xl mx-auto p-6 bg-linear-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-xl border-2 border-gray-700">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-white mb-2">
           {boomerAng ? 'Edit Boomer_Ang' : 'Create New Boomer_Ang'}

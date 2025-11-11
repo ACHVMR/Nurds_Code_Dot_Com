@@ -447,7 +447,7 @@ VITE_TREASURY_ADDRESS=your_algorand_address`}
 
         {/* Success Message */}
         {allStepsComplete && (
-          <div className="mt-8 bg-gradient-to-r from-green-900 to-[#E68961]/20 rounded-lg p-8 border-2 border-[#E68961] text-center">
+          <div className="mt-8 bg-linear-to-r from-green-900 to-[#E68961]/20 rounded-lg p-8 border-2 border-[#E68961] text-center">
             <div className="text-6xl mb-4">🎉</div>
             <h2 className="text-3xl font-bold text-[#E68961] mb-4">
               Phase 1 Setup Complete!

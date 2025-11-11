@@ -23,7 +23,7 @@ function Web3Home() {
               <h1 className="text-6xl sm:text-7xl font-bold mb-6 text-white leading-tight">
                 ACHEEVY
                 <br />
-                <span className="bg-gradient-to-r from-[#39FF14] to-[#D946EF] text-transparent bg-clip-text">
+                <span className="bg-linear-to-r from-[#39FF14] to-[#D946EF] text-transparent bg-clip-text">
                   Web3 AI Agent
                 </span>
               </h1>
@@ -168,7 +168,7 @@ function Web3Home() {
               { name: 'Optimism', symbol: 'OP', color: 'from-red-600' },
             ].map((network) => (
               <div key={network.name} className="text-center">
-                <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${network.color} to-transparent mx-auto mb-4 flex items-center justify-center`}>
+                <div className={`w-20 h-20 rounded-full bg-linear-to-br ${network.color} to-transparent mx-auto mb-4 flex items-center justify-center`}>
                   <span className="text-2xl font-bold text-white">{network.symbol[0]}</span>
                 </div>
                 <h3 className="text-xl font-bold text-white">{network.name}</h3>

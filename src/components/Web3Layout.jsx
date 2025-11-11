@@ -11,7 +11,7 @@ function Web3Layout({ children }) {
           <div className="flex justify-between items-center h-16">
             {/* Left - Logo */}
             <Link to="/web3" className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center">
                 <span className="text-black font-bold text-lg">B</span>
               </div>
               <div>

@@ -162,12 +162,12 @@ function DailyInsights() {
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#E68961]/10 flex items-center justify-center text-[#E68961]">
+                  <div className="shrink-0 w-12 h-12 rounded-lg bg-[#E68961]/10 flex items-center justify-center text-[#E68961]">
                     {getInsightIcon(insight.category)}
                   </div>
 
                   {/* Content */}
-                  <div className="flex-grow">
+                  <div className="grow">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-xl font-semibold">{insight.title}</h3>
                       <span className={`text-sm font-mono ${getConfidenceColor(insight.confidence)}`}>

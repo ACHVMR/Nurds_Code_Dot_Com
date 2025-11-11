@@ -50,7 +50,7 @@ function Web3Dashboard() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center">
+              <div className="w-12 h-12 rounded-lg bg-linear-to-br from-[#39FF14] to-[#D946EF] flex items-center justify-center">
                 <span className="text-black font-bold text-lg">B</span>
               </div>
               <div>

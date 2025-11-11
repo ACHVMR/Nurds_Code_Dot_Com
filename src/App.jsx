@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import Layout from './components/Layout';
@@ -32,12 +32,19 @@ import BoomerAngDashboard from './pages/BoomerAngDashboard';
 // Audio Settings
 import AudioSettings from './pages/AudioSettings';
 
+// Deploy Features (lazy-loaded for performance)
+const DeployWorkbench = lazy(() => import('./pages/DeployWorkbench'));
+const DeployTestingLab = lazy(() => import('./pages/DeployTestingLab'));
+
 
 function App() {
   const { isSignedIn, user } = useAuth();
   
   // Check if user is SuperAdmin
   const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
+  
+  // Feature flag for Deploy features (can be controlled via env var or user role)
+  const deployEnabled = process.env.REACT_APP_DEPLOY_ENABLED === 'true' || isSuperAdmin;
 
   return (
     <Layout>
@@ -109,6 +116,27 @@ function App() {
         <Route path="/audio-settings" element={
           isSignedIn ? <AudioSettings /> : <Navigate to="/" />
         } />
+        
+        {/* Deploy Features - Lazy-loaded, feature-flagged */}
+        {deployEnabled && (
+          <>
+            <Route path="/deploy/workbench" element={
+              isSignedIn ? (
+                <Suspense fallback={<div style={{ padding: '2rem', color: '#fff' }}>Loading Workbench...</div>}>
+                  <DeployWorkbench />
+                </Suspense>
+              ) : <Navigate to="/auth/signup" />
+            } />
+            
+            <Route path="/deploy/testing-lab" element={
+              isSignedIn ? (
+                <Suspense fallback={<div style={{ padding: '2rem', color: '#fff' }}>Loading Testing Lab...</div>}>
+                  <DeployTestingLab />
+                </Suspense>
+              ) : <Navigate to="/auth/signup" />
+            } />
+          </>
+        )}
         
         {/* SuperAdmin Only */}
         <Route path="/admin" element={

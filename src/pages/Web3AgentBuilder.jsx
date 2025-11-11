@@ -70,7 +70,7 @@ function Web3AgentBuilder() {
         <div className="mb-8">
           <button
             onClick={() => setShowNewAgent(!showNewAgent)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#39FF14] to-[#D946EF] text-black font-bold rounded-lg hover:opacity-90 transition-all shadow-lg"
+            className="flex items-center gap-2 px-6 py-3 bg-linear-to-r from-[#39FF14] to-[#D946EF] text-black font-bold rounded-lg hover:opacity-90 transition-all shadow-lg"
           >
             <Plus className="w-5 h-5" />
             Create New Agent

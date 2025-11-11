@@ -232,12 +232,12 @@ function VoiceProfileSettings() {
                 onClick={() => setSelectedVoice(voice.id)}
               >
                 <div className="flex items-start justify-between">
-                  <div className="flex-grow">
+                  <div className="grow">
                     <h3 className="text-lg font-semibold mb-1">{voice.name}</h3>
                     <p className="text-sm text-gray-400 mb-4">{voice.description}</p>
                   </div>
                   {selectedVoice === voice.id && (
-                    <Check className="w-6 h-6 text-[#E68961] flex-shrink-0" />
+                    <Check className="w-6 h-6 text-[#E68961] shrink-0" />
                   )}
                 </div>
                 <button
@@ -281,14 +281,14 @@ function VoiceProfileSettings() {
                   onClick={() => setSelectedVoice(voice.voice_id)}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="flex-grow">
+                    <div className="grow">
                       <h3 className="text-lg font-semibold mb-1">{voice.name || 'Custom Voice'}</h3>
                       <p className="text-sm text-gray-400">
                         Uploaded {new Date(voice.created_at).toLocaleDateString()}
                       </p>
                     </div>
                     {selectedVoice === voice.voice_id && (
-                      <Check className="w-6 h-6 text-[#E68961] flex-shrink-0" />
+                      <Check className="w-6 h-6 text-[#E68961] shrink-0" />
                     )}
                   </div>
                   <div className="flex gap-2">
