@@ -135,8 +135,7 @@ export default function SignUp() {
                 <button type="button" className="oauth-button oauth-linkedin" onClick={() => handleOAuth('linkedin')} disabled={isLoading}><span>LinkedIn</span></button>
               </div>
               <div className="divider-section"><span className="divider-text">or</span></div>
-              <input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} className={orm-input } disabled={isLoading} autoFocus />
-              <input id="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} className="form-input" disabled={isLoading} autoFocus />
+              <input id="email" name="email" type="email" placeholder="your@email.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} className="form-input" disabled={isLoading} autoFocus />
               {error && <p className="error-text">{error}</p>}
               <button type="submit" className="cta-button" disabled={isLoading || !email}>{isLoading ? 'Sending...' : 'Continue'}</button>
             </>

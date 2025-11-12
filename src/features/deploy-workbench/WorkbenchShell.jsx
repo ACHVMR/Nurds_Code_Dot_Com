@@ -55,7 +55,7 @@ export function WorkbenchShell({ onExport }) {
   const handleReimagineSubmit = async (data) => {
     console.log('[ACP] RE-IMAGINE request:', data);
     
-    const response = await fetch('/api/acheevy/reimagine', {
+    const response = await fetch('/api/acp/reimagine', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -63,35 +63,33 @@ export function WorkbenchShell({ onExport }) {
     
     const result = await response.json();
     
-    if (result.workbench) {
-      setExportStatus(`✨ Superior version generated! Opening workbench...`);
-      // TODO: Navigate to workbench URL or update editor with scaffold
-      console.log('[ACP] Workbench URL:', result.workbench);
-    }
+    // TODO: Handle response
+    console.log('[ACP] Reimagine response:', result);
+    setExportStatus(`✨ Analysis complete for ${result.competitorUrl}.`);
   };
 
   const handleImportSubmit = async (data) => {
     console.log('[ACP] IMPORT request:', data);
     
-    const response = await fetch('/api/workbench/import', {
+    const response = await fetch('/api/acp/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ repositoryUrl: data.repoUrl, platform: data.platform })
+      body: JSON.stringify(data)
     });
     
     const result = await response.json();
     
-    if (result.status === 'imported') {
-      setExportStatus(`📥 Repository imported successfully!`);
-      // TODO: Load files into Monaco editor
-      console.log('[ACP] Files:', result.files);
+    if (result.status === 'pending') {
+      setExportStatus(`📥 Repository import queued for ${result.repoUrl}.`);
+      // TODO: Update UI based on import status
+      console.log('[ACP] Import status:', result.message);
     }
   };
 
   const handleLabSubmit = async (data) => {
     console.log('[ACP] LAB request:', data);
     
-    const response = await fetch('/api/testing-lab/submit', {
+    const response = await fetch('/api/acp/lab', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -99,16 +97,16 @@ export function WorkbenchShell({ onExport }) {
     
     const result = await response.json();
     
-    if (result.status === 'testing-complete') {
-      setExportStatus(`🧪 Tests complete: ${result.results.passed} passed, ${result.results.failed} failed`);
-      console.log('[ACP] Test results:', result.results);
+    if (result.status === 'submitted') {
+      setExportStatus(`🧪 Submission ${result.submissionId} received by the lab.`);
+      console.log('[ACP] Lab submission result:', result);
     }
   };
 
   const handleAgentsSubmit = async (data) => {
     console.log('[ACP] AGENTS request:', data);
     
-    const response = await fetch('/api/agents/create', {
+    const response = await fetch('/api/acp/agents', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -116,9 +114,9 @@ export function WorkbenchShell({ onExport }) {
     
     const result = await response.json();
     
-    if (result.status === 'agent-deployed') {
-      setExportStatus(`🤖 ${result.agentName} deployed to ${result.circuitBox}!`);
-      console.log('[ACP] Agent deployed:', result);
+    if (result.status === 'provisioning') {
+      setExportStatus(`🤖 Agent '${result.agentName}' is being provisioned.`);
+      console.log('[ACP] Agent provisioned:', result);
     }
   };
 

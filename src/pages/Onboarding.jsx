@@ -62,7 +62,7 @@ const PATHS = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useAuth() || {};
   const [currentStep, setCurrentStep] = useState(1);
   const [path, setPath] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(TEMPLATES[0].id);

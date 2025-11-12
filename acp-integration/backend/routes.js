@@ -143,27 +143,27 @@ export const acpRoutes = {
 
 
 // Helper functions (to be implemented)
-async function analyzeCompetitors(competitors) { /* TODO */ }
-async function selectPatterns(analysis) { /* TODO */ }
-async function generateScaffold(patterns) { /* TODO */ }
-async function deployToWorkbench(scaffold) { /* TODO */ }
+// async function analyzeCompetitors(competitors) { /* TODO */ }
+// async function selectPatterns(analysis) { /* TODO */ }
+// async function generateScaffold(patterns) { /* TODO */ }
+// async function deployToWorkbench(scaffold) { /* TODO */ }
 
-function detectPlatform(url) {
+/* function detectPlatform(url) {
   if (url.includes('github.com')) return 'github';
   if (url.includes('gitlab.com')) return 'gitlab';
   if (url.includes('bitbucket.org')) return 'bitbucket';
   if (url.includes('huggingface.co')) return 'huggingface';
   return 'unknown';
-}
+} */
 
-async function cloneRepository(url, platform) { /* TODO */ }
-async function loadInEditor(path) { /* TODO */ }
-async function createLabSession(config) { /* TODO */ }
-async function generateDefaultScenarios(apiSpec) { /* TODO */ }
-async function runPlaywrightTests(scenarios) { /* TODO */ }
-async function namingCeremony(prefix, role) { /* TODO */ }
-async function selectFramework(role) { /* TODO */ }
-async function buildAgent(name, role, framework) { /* TODO */ }
-async function deployToCircuitBox(code, name) { /* TODO */ }
+// async function cloneRepository(url, platform) { /* TODO */ }
+// async function loadInEditor(path) { /* TODO */ }
+// async function createLabSession(config) { /* TODO */ }
+// async function generateDefaultScenarios(apiSpec) { /* TODO */ }
+// async function runPlaywrightTests(scenarios) { /* TODO */ }
+// async function namingCeremony(prefix, role) { /* TODO */ }
+// async function selectFramework(role) { /* TODO */ }
+// async function buildAgent(name, role, framework) { /* TODO */ }
+// async function deployToCircuitBox(code, name) { /* TODO */ }
 
 export default acpRoutes;

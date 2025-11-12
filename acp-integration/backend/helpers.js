@@ -3,7 +3,7 @@
  * Implements business logic for 4 primary intents
  */
 
-import { ACPRouterInstance, ACPRouter, ACHEEVY, PickerAng, BuildsmithAng } from '../protocol/acp-router.js';
+import { ACPRouterInstance, ACPRouter, ACHEEVY, PickerAng, BuildsmithAng } from '../protocol/acp-router.ts';
 import simpleGit from 'simple-git';
 import { exec } from 'child_process';
 import { promisify } from 'util';

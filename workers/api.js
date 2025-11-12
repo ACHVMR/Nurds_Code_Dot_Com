@@ -323,6 +323,105 @@ async function handleRequest(request, env) {
     });
   }
 
+  // OAuth starter endpoints (redirect to provider)
+  if (path === '/api/auth/google' && request.method === 'GET') {
+    try {
+      const params = new URLSearchParams({
+        client_id: env.GOOGLE_CLIENT_ID || '',
+        redirect_uri: `${url.origin}/auth/callback/google`,
+        response_type: 'code',
+        scope: 'openid email profile',
+        access_type: 'offline',
+        prompt: 'consent'
+      });
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
+      return Response.redirect(authUrl, 302);
+    } catch (err) {
+      console.error('Google OAuth redirect error:', err);
+      return new Response(JSON.stringify({ error: 'OAuth redirect failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+  }
+
+  if (path === '/api/auth/github' && request.method === 'GET') {
+    try {
+      const params = new URLSearchParams({
+        client_id: env.GITHUB_CLIENT_ID || '',
+        redirect_uri: `${url.origin}/auth/callback/github`,
+        scope: 'read:user user:email'
+      });
+      const authUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+      return Response.redirect(authUrl, 302);
+    } catch (err) {
+      console.error('GitHub OAuth redirect error:', err);
+      return new Response(JSON.stringify({ error: 'OAuth redirect failed' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+  }
+
+  // OAuth callback endpoints (exchange code for token and create session)
+  if (path === '/auth/callback/google' && request.method === 'GET') {
+    try {
+      const code = url.searchParams.get('code');
+      if (!code) return new Response('Missing code', { status: 400 });
+
+      // Exchange code for tokens
+      const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          code,
+          client_id: env.GOOGLE_CLIENT_ID || '',
+          client_secret: env.GOOGLE_CLIENT_SECRET || '',
+          redirect_uri: `${url.origin}/auth/callback/google`,
+          grant_type: 'authorization_code'
+        })
+      });
+
+      const tokenJson = await tokenRes.json();
+      // Fetch user info
+      const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenJson.access_token}` }
+      });
+      const userJson = await userRes.json();
+
+      // Create a simple session token (in production, mint a secure cookie/session)
+      const sessionToken = generateToken(userJson.sub || userJson.email, env.JWT_SECRET || 'jwtsecret');
+      const redirectTo = `${url.origin}/auth/onboarding?token=${encodeURIComponent(sessionToken)}`;
+      return Response.redirect(redirectTo, 302);
+    } catch (err) {
+      console.error('Google callback error:', err);
+      return new Response('OAuth callback failed', { status: 500 });
+    }
+  }
+
+  if (path === '/auth/callback/github' && request.method === 'GET') {
+    try {
+      const code = url.searchParams.get('code');
+      if (!code) return new Response('Missing code', { status: 400 });
+
+      const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          client_id: env.GITHUB_CLIENT_ID || '',
+          client_secret: env.GITHUB_CLIENT_SECRET || '',
+          code,
+          redirect_uri: `${url.origin}/auth/callback/github`
+        })
+      });
+
+      const tokenJson = await tokenRes.json();
+      const userRes = await fetch('https://api.github.com/user', { headers: { Authorization: `token ${tokenJson.access_token}` } });
+      const userJson = await userRes.json();
+
+      const sessionToken = generateToken(String(userJson.id || userJson.login), env.JWT_SECRET || 'jwtsecret');
+      const redirectTo = `${url.origin}/auth/onboarding?token=${encodeURIComponent(sessionToken)}`;
+      return Response.redirect(redirectTo, 302);
+    } catch (err) {
+      console.error('GitHub callback error:', err);
+      return new Response('OAuth callback failed', { status: 500 });
+    }
+  }
+
   // Admin: health check (superadmin only)
   if (path === '/api/admin/health' && request.method === 'GET') {
     try {
@@ -1038,6 +1137,150 @@ Agent naming convention and is ready for deployment.
       return new Response(
         JSON.stringify({ error: 'Optimization failed: ' + error.message }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // =====================================================
+  // ACP (Agentic Communication Protocol) ENDPOINTS
+  // =====================================================
+
+  // ACP: Reimagine - Analyze a competitor or idea
+  if (path === '/api/acp/reimagine' && request.method === 'POST') {
+    try {
+      await requireAuth(request, env);
+      const { url, analysisType } = await request.json();
+
+      if (!url) {
+        return new Response(JSON.stringify({ error: 'URL is required for analysis' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Placeholder: In a real implementation, this would fetch the URL content
+      // and run a detailed analysis using an AI model.
+      const analysisReport = {
+        competitorUrl: url,
+        analysisType,
+        summary: `This is a placeholder analysis for ${url}. The '${analysisType}' strategy would involve a deep dive into its market positioning, feature set, and user experience.`,
+        actionableInsights: [
+          "Identify key value propositions.",
+          "Analyze customer reviews and feedback.",
+          "Reverse-engineer marketing strategies."
+        ],
+      };
+
+      return new Response(JSON.stringify(analysisReport), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch (error) {
+      const status = error.message === 'Unauthorized' ? 401 : 500;
+      return new Response(
+        JSON.stringify({ error: error.message || 'Reimagine analysis failed' }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // ACP: Import - Clone a repository for analysis
+  if (path === '/api/acp/import' && request.method === 'POST') {
+    try {
+      await requireAuth(request, env);
+      const { repoUrl, cloneMethod } = await request.json();
+
+      if (!repoUrl) {
+        return new Response(JSON.stringify({ error: 'Repository URL is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // Placeholder: Serverless environments can't run 'git clone'.
+      // This would use the GitHub API to fetch repository details and structure.
+      console.log(`[ACP Import]: Received request to import ${repoUrl} using ${cloneMethod}.`);
+
+      const importSummary = {
+        repoUrl,
+        status: 'pending',
+        message: 'Repository import has been queued. The contents will be analyzed for structure, dependencies, and key logic.',
+        nextSteps: [
+          "Analyze package.json or requirements.txt for dependencies.",
+          "Map out the directory structure.",
+          "Identify core application logic and entry points."
+        ]
+      };
+
+      return new Response(JSON.stringify(importSummary), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch (error) {
+      const status = error.message === 'Unauthorized' ? 401 : 500;
+      return new Response(
+        JSON.stringify({ error: error.message || 'Import failed' }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // ACP: Lab - Submit code or an idea to the lab
+  if (path === '/api/acp/lab' && request.method === 'POST') {
+    try {
+      const session = await requireAuth(request, env);
+      const { code, description, labType } = await request.json();
+
+      if (!code && !description) {
+        return new Response(JSON.stringify({ error: 'Either code or a description is required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+      const { data, error } = await supabase
+        .from('lab_submissions')
+        .insert({
+          user_id: session.claims.sub,
+          lab_type: labType,
+          description,
+          code_snippet: code,
+          status: 'submitted',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ submissionId: data.id, status: 'submitted', message: 'Your submission has been received by the lab.' }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch (error) {
+      const status = error.message === 'Unauthorized' ? 401 : 500;
+      return new Response(
+        JSON.stringify({ error: error.message || 'Lab submission failed' }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+  }
+
+  // ACP: Agents - Create a new agent from context
+  if (path === '/api/acp/agents' && request.method === 'POST') {
+    try {
+      const session = await requireAuth(request, env);
+      const { name, goal, agentType } = await request.json();
+
+      if (!name || !goal) {
+        return new Response(JSON.stringify({ error: 'Agent name and goal are required' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+
+      // This reuses the existing agent creation logic pattern.
+      const agentData = {
+        id: crypto.randomUUID(),
+        agentName: name,
+        prefix: name.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+        type: agentType,
+        framework: 'boomer_angs_acp',
+        description: goal,
+        userId: session.claims.sub,
+        createdAt: new Date().toISOString(),
+        status: 'provisioning',
+        certificate: `ACP-CERT-${Date.now()}`
+      };
+
+      // In a real implementation, this would be saved to the 'agents' table.
+      console.log(`[ACP Agents]: Provisioning new agent '${name}' for user ${session.claims.sub}`);
+
+      return new Response(JSON.stringify(agentData), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch (error) {
+      const status = error.message === 'Unauthorized' ? 401 : 500;
+      return new Response(
+        JSON.stringify({ error: error.message || 'Agent creation failed' }),
+        { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
   }

@@ -46,11 +46,14 @@
     "@supabase/supabase-js": "^2.78.0",
     "@zoom/videosdk": "^2.3.0",
     "algosdk": "^3.5.2",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.548.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.5",
+    "simple-git": "^3.30.0",
     "stripe": "^19.2.0"
   },
   "devDependencies": {

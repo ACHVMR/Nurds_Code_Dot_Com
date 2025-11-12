@@ -6,6 +6,8 @@ import Home from './pages/Home';
 import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import SignUp from './pages/SignUp';
+import Auth from './pages/Auth';
+import PricingPlusOne from './pages/PricingPlusOne';
 import Onboarding from './pages/Onboarding';
 import Editor from './pages/Editor';
 import DailyInsights from './pages/DailyInsights';
@@ -44,15 +46,17 @@ function App() {
   const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
   
   // Feature flag for Deploy features (can be controlled via env var or user role)
-  const deployEnabled = process.env.REACT_APP_DEPLOY_ENABLED === 'true' || isSuperAdmin;
+  const deployEnabled = import.meta.env.VITE_DEPLOY_ENABLED === 'true' || isSuperAdmin;
 
   return (
     <Layout>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
-        <Route path="/pricing" element={<Pricing />} />
-        <Route path="/auth/signup" element={<SignUp />} />
+  <Route path="/pricing" element={<Pricing />} />
+  <Route path="/pricing/plus-one" element={<PricingPlusOne />} />
+  <Route path="/auth" element={<Auth />} />
+  <Route path="/auth/signup" element={<Navigate to="/auth" />} />
         
         {/* Auth Routes */}
         <Route path="/auth/onboarding" element={
@@ -61,7 +65,7 @@ function App() {
         
         {/* Protected Routes */}
         <Route path="/subscribe" element={
-          isSignedIn ? <Subscribe /> : <Navigate to="/" />
+          isSignedIn ? <Subscribe /> : <Navigate to="/auth" />
         } />
         
         <Route path="/editor" element={
