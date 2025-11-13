@@ -62,21 +62,6 @@ export default function NextelPhone({ messages = [], onSendMessage }) {
               <div className="mt-2 px-3 py-1 bg-[#E68961]/10 rounded-full">
                 <span className="text-[#E68961] text-[10px] font-mono">VOICE FIRST</span>
               </div>
-              <style jsx>{`
-                @keyframes pulse-golden {
-                  0%, 100% {
-                    box-shadow: 0 0 0 0 rgba(230, 137, 97, 0.7);
-                    transform: scale(1);
-                  }
-                  50% {
-                    box-shadow: 0 0 0 10px rgba(230, 137, 97, 0);
-                    transform: scale(1.05);
-                  }
-                }
-                .animate-pulse-golden {
-                  animation: pulse-golden 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                }
-              `}</style>
             </div>
           </div>
 

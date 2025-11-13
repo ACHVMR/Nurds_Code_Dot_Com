@@ -7,7 +7,17 @@ import { useAuth } from '@clerk/clerk-react';
  * Shows warning badge in development mode only
  */
 const ClerkVersionMonitor = () => {
-  const { isSignedIn } = useAuth();
+  // Safely handle useAuth when Clerk might not be available
+  let isSignedIn = false;
+  
+  try {
+    const auth = useAuth();
+    isSignedIn = auth.isSignedIn;
+  } catch (error) {
+    // Clerk not available, use defaults
+    console.log('Clerk not available in ClerkVersionMonitor, using defaults');
+  }
+  
   const [versionInfo, setVersionInfo] = useState(null);
   
   useEffect(() => {

@@ -3,12 +3,10 @@ import { Link } from 'react-router-dom';
 import { useAuth, UserButton } from '@clerk/clerk-react';
 import TokenBalance from './TokenBalance';
 import VoiceRecorder from './VoiceRecorder';
-import './Navbar.css';
+// import './Navbar.css';
 
-const Navbar = () => {
-  const { isSignedIn, user } = useAuth();
+const Navbar = ({ isSignedIn = false, user = null }) => {
   const [showVoiceModal, setShowVoiceModal] = useState(false);
-  
   const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
 
   return (
@@ -50,7 +48,7 @@ const Navbar = () => {
                   🎤
                 </button>
                 
-                <TokenBalance />
+                {/* <TokenBalance /> */}
                 
                 {isSuperAdmin && (
                   <Link to="/admin" className="admin-link">
@@ -58,7 +56,14 @@ const Navbar = () => {
                   </Link>
                 )}
                 
-                <UserButton afterSignOutUrl="/" />
+                {/* Only show UserButton if Clerk is available */}
+                {typeof UserButton !== 'undefined' ? (
+                  <UserButton afterSignOutUrl="/" />
+                ) : (
+                  <button className="nav-cta" onClick={() => console.log('Sign out clicked')}>
+                    Sign Out
+                  </button>
+                )}
               </>
             ) : (
               <Link to="/auth" className="nav-cta">
@@ -80,15 +85,15 @@ const Navbar = () => {
               ✕
             </button>
             <h2>🎤 What would you like to build?</h2>
-            <VoiceRecorder 
+            {/* <VoiceRecorder 
               autoStart={true}
               onTranscript={(transcript) => {
                 console.log('Voice command:', transcript);
                 setShowVoiceModal(false);
                 // Navigate to ACHEEVY with custom intent
                 window.location.href = `/acheevy?intent=${encodeURIComponent(transcript)}`;
-              }}
-            />
+              }} */}
+            <div>Voice Recorder Disabled</div>
           </div>
         </div>
       )}

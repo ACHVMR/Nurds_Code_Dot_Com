@@ -1,21 +1,23 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, FileCode, Video, Sparkles } from 'lucide-react';
-import { extractCodeFromImage, cloneProjectFromScreenshot } from '../services/ocr.js';
-import { generateVideoFromMedia } from '../services/kieai.js';
-import { useUser } from '@clerk/clerk-react';
-import PhoneSelector from '../components/phones/PhoneSelector';
-import TerminologyTicker from '../components/TerminologyTicker';
-import NextelPhone from '../components/NextelPhone';
+// import { Upload, Image as ImageIcon, FileCode, Video, Sparkles } from 'lucide-react';
+// import { extractCodeFromImage, cloneProjectFromScreenshot } from '../services/ocr.js';
+// import { generateVideoFromMedia } from '../services/kieai.js';
+// import { useUser } from '@clerk/clerk-react';
+// import PhoneSelector from '../components/phones/PhoneSelector';
+// import TerminologyTicker from '../components/TerminologyTicker';
+// import NextelPhone from '../components/NextelPhone';
 
-function Home() {
+function Home({ user = null }) {
+  console.log('🔍 Home component rendering with user:', user);
+  
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
-  const { user } = useUser();
+  // const { user } = useUser(); // Disabled for working version
 
   const handleVoiceMessage = async (message) => {
     console.log('Voice message received:', message);
@@ -308,16 +310,16 @@ function Home() {
       </section>
 
       {/* Terminology Ticker - Fixed Bottom */}
-      <TerminologyTicker />
+      {/* <TerminologyTicker /> */}
 
       {/* Phone Selector - Voice Interface */}
-      {user && (
+      {/* {user && (
         <PhoneSelector 
           userId={user.id}
           onMessageSend={handleVoiceMessage}
           onVoiceRecord={handleVoiceRecord}
         />
-      )}
+      )} */}
     </div>
   );
 }

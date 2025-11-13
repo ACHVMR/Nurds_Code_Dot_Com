@@ -383,10 +383,22 @@ async function handleRequest(request, env) {
       });
       const userJson = await userRes.json();
 
-      // Create a simple session token (in production, mint a secure cookie/session)
+      // Create enhanced session token with user info
       const sessionToken = generateToken(userJson.sub || userJson.email, env.JWT_SECRET || 'jwtsecret');
-      const redirectTo = `${url.origin}/auth/onboarding?token=${encodeURIComponent(sessionToken)}`;
-      return Response.redirect(redirectTo, 302);
+      
+      // Create secure cookie
+      const cookieOptions = [
+        'HttpOnly',
+        'Secure',
+        'SameSite=Lax',
+        `Max-Age=${60 * 60 * 24 * 7}`, // 7 days
+        `Path=/`
+      ];
+      
+      const response = Response.redirect(`${url.origin}/auth/callback/google?token=${encodeURIComponent(sessionToken)}`, 302);
+      response.headers.set('Set-Cookie', `nurds_session=${sessionToken}; ${cookieOptions.join('; ')}`);
+      
+      return response;
     } catch (err) {
       console.error('Google callback error:', err);
       return new Response('OAuth callback failed', { status: 500 });
@@ -414,8 +426,20 @@ async function handleRequest(request, env) {
       const userJson = await userRes.json();
 
       const sessionToken = generateToken(String(userJson.id || userJson.login), env.JWT_SECRET || 'jwtsecret');
-      const redirectTo = `${url.origin}/auth/onboarding?token=${encodeURIComponent(sessionToken)}`;
-      return Response.redirect(redirectTo, 302);
+      
+      // Create secure cookie
+      const cookieOptions = [
+        'HttpOnly',
+        'Secure',
+        'SameSite=Lax',
+        `Max-Age=${60 * 60 * 24 * 7}`, // 7 days
+        `Path=/`
+      ];
+      
+      const response = Response.redirect(`${url.origin}/auth/callback/github?token=${encodeURIComponent(sessionToken)}`, 302);
+      response.headers.set('Set-Cookie', `nurds_session=${sessionToken}; ${cookieOptions.join('; ')}`);
+      
+      return response;
     } catch (err) {
       console.error('GitHub callback error:', err);
       return new Response('OAuth callback failed', { status: 500 });
