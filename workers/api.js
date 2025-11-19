@@ -58,6 +58,11 @@ async function handleRequest(request, env) {
     apiVersion: '2023-10-16',
   });
 
+  // Route: Health check
+  if (path === '/api/health' && request.method === 'GET') {
+    return new Response('OK', { status: 200, headers: corsHeaders });
+  }
+
   // Route: Create checkout session
   if (path === '/api/create-checkout-session' && request.method === 'POST') {
     try {

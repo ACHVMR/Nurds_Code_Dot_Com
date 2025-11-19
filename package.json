@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "worker:dev": "wrangler dev workers/api.js",
     "worker:deploy": "wrangler deploy workers/api.js",
-    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql"
+    "db:migrate": "wrangler d1 execute nurdscode_db --file=./schema.sql",
+    "test:stability": "node scripts/stability_check.js"
   },
   "keywords": [
     "cloudflare",
