@@ -7,15 +7,18 @@ function Subscribe() {
   const [selectedPlan, setSelectedPlan] = useState(searchParams.get('plan') || 'free');
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
 
   const plans = {
     free: { name: 'Free', price: 0 },
+    price_coffee: { name: 'Buy Me a Coffee ☕', price: 7 },
     price_pro: { name: 'Pro', price: 29 },
     price_enterprise: { name: 'Enterprise', price: 99 },
   };
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
+    setError('');
     
     if (selectedPlan === 'free') {
       // For free plan, just show success
@@ -42,11 +45,11 @@ function Subscribe() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error('No checkout URL received');
+        throw new Error(data.error || 'No checkout URL received');
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Failed to create checkout session. Please try again.');
+      setError(error.message || 'Failed to create checkout session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -87,6 +90,7 @@ function Subscribe() {
                 className="input-field w-full"
               >
                 <option value="free">Free - $0/month</option>
+                <option value="price_coffee">Buy Me a Coffee ☕ - $7/month</option>
                 <option value="price_pro">Pro - $29/month</option>
                 <option value="price_enterprise">Enterprise - $99/month</option>
               </select>
@@ -117,6 +121,12 @@ function Subscribe() {
             >
               {loading ? 'Processing...' : 'Continue to Payment'}
             </button>
+            
+            {error && (
+              <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
           </form>
 
           <p className="text-sm text-text/60 text-center mt-6">

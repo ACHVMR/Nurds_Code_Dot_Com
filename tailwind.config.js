@@ -7,16 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0E0E0E',
-        surface: '#151515',
-        text: '#EAEAEA',
-        mute: '#9A9A9A',
-        accent: '#C9A449',
-        neon: '#39FF14',
-        border: '#222222',
+        background: '#050505', // Matte Black from index.css
+        surface: '#0E0E0E',
+        text: '#E0E0E0',
+        mute: '#888888',
+        accent: '#FFC000', // Honey Gold
+        neon: '#00FF88', // Newon Green
+        'neon-orange': '#FF5E00',
+        border: 'rgba(255, 255, 255, 0.1)',
       },
       fontFamily: {
-        sans: ['"Doto"', 'ui-sans-serif', 'system-ui'],
+        sans: ['"Inter"', 'ui-sans-serif', 'system-ui'],
+        doto: ['"Doto"', 'sans-serif'],
         marker: ['"Permanent Marker"', 'cursive'],
       },
       borderRadius: {

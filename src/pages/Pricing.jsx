@@ -16,9 +16,9 @@ function Pricing() {
       priceId: 'free',
     },
     {
-      name: 'Coffee',
+      name: 'Buy Me a Coffee ☕',
       price: '$7 / mo',
-      cta: 'Join Coffee Tier',
+      cta: 'Support with Coffee',
       bullets: [
         'GROQ 70B default • 150K tokens/mo',
         'Priority tutorial tracks',

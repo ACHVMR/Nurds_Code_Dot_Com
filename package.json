@@ -23,6 +23,7 @@
   "author": "Nurdscode",
   "license": "MIT",
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@stripe/stripe-js": "^8.2.0",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.2.0",

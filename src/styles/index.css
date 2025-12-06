@@ -1,13 +1,44 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600&family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;500;600;700;800&family=Permanent+Marker&display=swap');
 
 :root {
+  /* Nqno Banana Design Tokens */
+  --nqno-banana-accent: #FFD700;
+  --nqno-banana-accent-light: #FFED4E;
+  --nqno-banana-accent-dark: #FFC700;
+  --nqno-banana-accent-rgb: 255, 215, 0;
+  
+  --nqno-banana-bg-primary: #FAFAFA;
+  --nqno-banana-bg-secondary: #F0F0F0;
+  --nqno-banana-bg-tertiary: #E8E8E8;
+  
+  --nqno-banana-text-primary: #1A1A1A;
+  --nqno-banana-text-secondary: #666666;
+  
+  --nqno-banana-font-display: 'Playfair Display', serif;
+  --nqno-banana-font-body: 'Inter', sans-serif;
+  
+  --nqno-banana-space-lg: 24px;
+  --nqno-banana-space-md: 16px;
+  --nqno-banana-space-sm: 8px;
+  
+  --nqno-banana-radius-lg: 16px;
+  --nqno-banana-radius-md: 12px;
+  --nqno-banana-radius-sm: 8px;
+  
+  --nqno-banana-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --nqno-banana-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+  
+  --nqno-banana-duration-normal: 300ms;
+
+
   --bg: #0E0E0E;
   --surface: #151515;
-  --text: #EAEAEA;
-  --mute: #9A9A9A;
+  --text: #F2F7FF;
+  --mute: #A8B2C0;
   --accent: #C9A449;
   --neon: #39FF14;
+  --honey-gold: #FFC83B;
   --border: #222222;
 }
 
@@ -34,7 +65,7 @@
 
 .tagline {
   font-family: 'Permanent Marker', cursive;
-  color: var(--neon);
+  color: var(--honey-gold);
   text-align: center;
   letter-spacing: 0.5px;
   font-size: clamp(2rem, 5vw, 4rem);
@@ -126,3 +157,125 @@
   outline: none;
   border-color: var(--accent);
 }
+
+/* Acheevy Bezel Animations */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 20px rgba(var(--nqno-banana-accent-rgb), 0.5); }
+  50% { opacity: 0.8; box-shadow: 0 0 30px rgba(var(--nqno-banana-accent-rgb), 0.8); }
+}
+
+.acheevy-bezel[data-state="listening"] {
+  background: linear-gradient(
+    135deg,
+    var(--nqno-banana-accent-light),
+    var(--nqno-banana-accent-dark)
+  );
+  animation: pulse-glow 2s infinite;
+}
+
+.voice-meter-bar {
+  transition: height 100ms ease-in-out;
+  min-height: 4px;
+  background-color: currentColor;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+}
+
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Line Clamp Utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Circuit Box Animations */
+@keyframes circuit-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.circuit-breaker-on {
+  animation: circuit-pulse 2s ease-in-out infinite;
+}
+
+/* Card Hover Effects */
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(201, 164, 73, 0.2);
+}
+
+/* Animate fade in up */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+/* Tool Catalog Star Rating */
+.star-rating {
+  display: inline-flex;
+  gap: 2px;
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+/* Gradient Text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--accent), var(--honey-gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Agent Builder Progress Steps */
+.step-connector {
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--honey-gold));
+}
+
+/* Circuit Box Tier Colors */
+.tier-orchestration { border-color: #FF5E00; }
+.tier-plug-factory { border-color: #00A651; }
+.tier-voice { border-color: #5B7FFF; }
+.tier-build-tools { border-color: #FF3366; }
+.tier-research { border-color: #9B59B6; }
+.tier-foundry { border-color: #E67E22; }
+.tier-persistence { border-color: #3498DB; }
+.tier-security { border-color: #E74C3C; }
+
