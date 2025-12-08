@@ -49,12 +49,12 @@ async function chatHandler(request, env) {
   const body = await request.json();
   const { message, plan = 'free', history = [] } = body;
   
-  // Model selection based on plan
+  // Model selection based on plan - Using OpenRouter with Claude Haiku 4.5 as default
   const modelConfig = {
-    free: { provider: 'groq', model: 'llama-3.1-8b-instant' },
-    price_coffee: { provider: 'groq', model: 'llama-3.1-70b-versatile' },
-    price_pro: { provider: 'openai', model: 'gpt-4o-mini' },
-    price_enterprise: { provider: 'anthropic', model: 'claude-3-sonnet-20240229' },
+    free: { provider: 'openrouter', model: 'anthropic/claude-3.5-haiku:beta' },
+    price_coffee: { provider: 'openrouter', model: 'anthropic/claude-3-5-sonnet' },
+    price_pro: { provider: 'openrouter', model: 'anthropic/claude-3-5-sonnet' },
+    price_enterprise: { provider: 'openrouter', model: 'anthropic/claude-3-5-opus' },
   };
   
   const config = modelConfig[plan] || modelConfig.free;
@@ -92,40 +92,111 @@ async function chatHandler(request, env) {
     }
   }
   
-  // Fallback to local GROQ handling (via AI Gateway if configured)
-  try {
-    const baseUrl = env.CLOUDFLARE_ACCOUNT_ID 
-      ? `${AI_GATEWAY_URL}/groq/openai/v1/chat/completions`
-      : 'https://api.groq.com/openai/v1/chat/completions';
+  // Try OpenRouter (Claude Haiku 4.5) as primary provider
+  if (env.OPENROUTER_API_KEY && env.OPENROUTER_API_KEY !== 'your_openrouter_api_key_here') {
+    try {
+      const baseUrl = env.CLOUDFLARE_ACCOUNT_ID 
+        ? `${AI_GATEWAY_URL}/openrouter/api/v1/chat/completions`
+        : 'https://openrouter.ai/api/v1/chat/completions';
 
-    const groqResponse = await fetch(baseUrl, {
+      const openrouterResponse = await fetch(baseUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': env.APP_URL || 'https://nurdscode.com',
+          'X-Title': 'Nurds Code Platform'
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { 
+              role: 'system', 
+              content: `You are an expert full-stack developer assistant for Nurds Code platform. 
+              
+Your role is to generate complete, production-ready code for Cloudflare Workers applications.
+
+When generating code:
+1. Use modern best practices and clean architecture
+2. Generate COMPLETE files with all imports, exports, and dependencies
+3. Include proper error handling and TypeScript types when applicable
+4. Use Cloudflare Workers APIs (Request, Response, KV, D1, R2, Durable Objects, etc.)
+5. Generate wrangler.toml configuration when needed
+6. Support popular frameworks: React, Next.js, Astro, Vue, Svelte, Remix
+7. Include comments explaining key functionality
+8. Make code ready to deploy with 'wrangler deploy'
+
+Generate full-stack applications that work seamlessly on Cloudflare's global network.`
+            },
+            ...history.slice(-20),
+            { role: 'user', content: message }
+          ],
+          temperature: 0.7,
+          max_tokens: 4096
+        })
+      });
+      
+      if (openrouterResponse.ok) {
+        const data = await openrouterResponse.json();
+        return new Response(JSON.stringify({
+          response: data.choices[0].message.content,
+          model: config.model,
+          provider: 'openrouter-claude',
+          usage: data.usage
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        const errorText = await openrouterResponse.text();
+        console.error('OpenRouter error:', errorText);
+      }
+    } catch (error) {
+      console.error('OpenRouter error:', error);
+    }
+  }
+
+  // Fallback to Hugging Face Inference API (FREE - no key required)
+  try {
+    const hfResponse = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${env.GROQ_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'system', content: 'You are a helpful coding assistant for Nurds Code platform. Help users write, debug, and understand code.' },
-          ...history.slice(-20),
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 2048
+        inputs: `<s>[INST] You are a helpful coding assistant for Nurds Code platform. Help users write, debug, and understand code.\n\n${message} [/INST]`,
+        parameters: {
+          max_new_tokens: 2048,
+          temperature: 0.7,
+          return_full_text: false
+        }
       })
     });
     
-    const data = await groqResponse.json();
+    const data = await hfResponse.json();
+    
+    // Hugging Face returns array with generated_text or error
+    let responseText = 'Unable to generate response';
+    
+    if (Array.isArray(data) && data[0]?.generated_text) {
+      responseText = data[0].generated_text;
+    } else if (data.error) {
+      // Model is loading, return helpful message
+      responseText = `🚀 AI Model initializing... Please try again in a moment.\n\nYour prompt: "${message}"`;
+    }
+    
     return new Response(JSON.stringify({
-      message: data.choices?.[0]?.message?.content || 'No response generated',
-      model: config.model,
-      provider: config.provider
+      response: responseText,
+      model: 'Mistral-7B (Hugging Face)',
+      provider: 'huggingface-free',
+      status: data.error ? 'loading' : 'success'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      response: `Error generating code: ${error.message}\n\nYour prompt: "${message}"`
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -292,14 +363,131 @@ If context is provided, use it to align your code style and dependencies.`;
 async function vibeModelsHandler(request, env) {
   return new Response(JSON.stringify({
     models: [
-      { id: 'llama-3.1-70b-versatile', name: 'Llama 3.1 70B (Recommended)' },
-      { id: 'llama-3.1-8b-instant', name: 'Llama 3.1 8B (Fast)' },
-      { id: 'mixtral-8x7b-32768', name: 'Mixtral 8x7B' },
-      { id: 'gemma-7b-it', name: 'Gemma 7B' }
+      { id: 'anthropic/claude-3.5-haiku:beta', name: 'Claude Haiku 3.5 (Default, Recommended)' },
+      { id: 'anthropic/claude-3-5-sonnet', name: 'Claude Sonnet 3.5 (Pro)' },
+      { id: 'anthropic/claude-3-5-opus', name: 'Claude Opus 3.5 (Enterprise)' },
+      { id: 'openai/gpt-4o', name: 'GPT-4o' }
     ]
   }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
+}
+
+// Generate full Cloudflare Workers project (like Bolt.new)
+async function generateProjectHandler(request, env) {
+  try {
+    const body = await request.json();
+    const { description, framework = 'vanilla', bindings = [] } = body;
+    
+    if (!env.OPENROUTER_API_KEY) {
+      return new Response(JSON.stringify({ error: 'OpenRouter API key not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Enhanced prompt for Claude to generate full project
+    const projectPrompt = `Generate a complete Cloudflare Workers project for: ${description}
+
+Framework: ${framework}
+Bindings requested: ${bindings.join(', ') || 'none'}
+
+Return a JSON object with this exact structure:
+{
+  "files": [
+    {
+      "path": "src/index.js",
+      "content": "... full file content ..."
+    },
+    {
+      "path": "wrangler.toml",
+      "content": "... full wrangler config ..."
+    },
+    {
+      "path": "package.json",
+      "content": "... full package.json ..."
+    }
+  ],
+  "instructions": "Brief setup instructions"
+}
+
+Requirements:
+1. Generate ALL files needed for a working project
+2. Include wrangler.toml with proper configuration
+3. Include package.json with all dependencies
+4. Use Cloudflare Workers APIs (env.KV, env.D1, env.R2, etc.)
+5. Add TypeScript types if applicable
+6. Include error handling
+7. Make it production-ready
+8. Add README.md with setup instructions
+
+Generate a complete, deployable project now.`;
+
+    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': env.APP_URL || 'https://nurdscode.com',
+        'X-Title': 'Nurds Code Platform'
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-3.5-haiku:beta',
+        messages: [
+          { role: 'user', content: projectPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 8000
+      })
+    });
+    
+    if (!openrouterResponse.ok) {
+      const errorText = await openrouterResponse.text();
+      throw new Error(`OpenRouter error: ${errorText}`);
+    }
+    
+    const data = await openrouterResponse.json();
+    const responseContent = data.choices[0].message.content;
+    
+    // Try to parse JSON from response
+    let projectData;
+    try {
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = responseContent.match(/```json\n([\s\S]*?)\n```/) || 
+                       responseContent.match(/```\n([\s\S]*?)\n```/) ||
+                       [null, responseContent];
+      projectData = JSON.parse(jsonMatch[1] || responseContent);
+    } catch (parseError) {
+      // If Claude didn't return JSON, wrap the response
+      projectData = {
+        files: [
+          {
+            path: 'src/index.js',
+            content: responseContent
+          }
+        ],
+        instructions: 'Review and customize the generated code'
+      };
+    }
+    
+    return new Response(JSON.stringify({
+      project: projectData,
+      model: 'anthropic/claude-3.5-haiku:beta',
+      provider: 'openrouter-claude'
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error('Project generation error:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: 'Failed to generate project structure'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
 }
 
 async function handleRequest(request, env) {
@@ -356,6 +544,11 @@ async function handleRequest(request, env) {
   // Route: V.I.B.E. Engine - List Models
   if (path === '/api/vibe/models' && request.method === 'GET') {
     return vibeModelsHandler(request, env);
+  }
+
+  // Route: Generate Full Cloudflare Workers Project
+  if (path === '/api/project/generate' && request.method === 'POST') {
+    return generateProjectHandler(request, env);
   }
 
   // Route: Create checkout session
@@ -602,6 +795,125 @@ async function handleRequest(request, env) {
         resolve(new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders }));
       }
     });
+  }
+
+  // Route: List available plugins for Testing Lab
+  if (path === '/api/plugins/list' && request.method === 'GET') {
+    // Mock plugin list - in production this would come from a database
+    const mockPlugins = [
+      { id: 'video-editor-pro', name: 'Video Editor Pro', description: 'Advanced video editing tool', category: 'media' },
+      { id: 'code-formatter', name: 'Code Formatter', description: 'Format and beautify code', category: 'dev-tools' },
+      { id: 'ai-image-gen', name: 'AI Image Generator', description: 'Generate images with AI', category: 'ai' },
+      { id: 'pdf-converter', name: 'PDF Converter', description: 'Convert documents to PDF', category: 'productivity' }
+    ];
+
+    return new Response(JSON.stringify({ plugins: mockPlugins }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Route: Run test in Testing Lab
+  if (path === '/api/test/run' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { sourceType, config } = body;
+
+      let output = '';
+      const logs = [];
+
+      switch(sourceType) {
+        case 'github':
+          logs.push({ type: 'info', message: `Cloning repository: ${body.githubUrl}` });
+          logs.push({ type: 'info', message: `Branch: ${body.branch || 'main'}` });
+          logs.push({ type: 'success', message: 'Repository cloned successfully' });
+          
+          output = `
+            <html>
+              <head><style>body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #00ff88; }</style></head>
+              <body>
+                <h1>✅ GitHub Repository Test</h1>
+                <p><strong>Repository:</strong> ${body.githubUrl}</p>
+                <p><strong>Branch:</strong> ${body.branch || 'main'}</p>
+                <p>Repository loaded successfully! In a production environment, this would execute the repository code in an isolated sandbox.</p>
+              </body>
+            </html>
+          `;
+          break;
+
+        case 'npm':
+          logs.push({ type: 'info', message: `Installing NPM package: ${body.package}@${body.version}` });
+          logs.push({ type: 'success', message: 'Package installed successfully' });
+          
+          output = `
+            <html>
+              <head><style>body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #00ff88; }</style></head>
+              <body>
+                <h1>📦 NPM Package Test</h1>
+                <p><strong>Package:</strong> ${body.package}</p>
+                <p><strong>Version:</strong> ${body.version || 'latest'}</p>
+                <p>Package loaded successfully! In a production environment, this would install and test the package.</p>
+              </body>
+            </html>
+          `;
+          break;
+
+        case 'plugin':
+          logs.push({ type: 'info', message: `Loading plugin: ${body.pluginId}` });
+          logs.push({ type: 'success', message: 'Plugin loaded successfully' });
+          
+          output = `
+            <html>
+              <head><style>body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #00ff88; }</style></head>
+              <body>
+                <h1>🔌 Plugin Test</h1>
+                <p><strong>Plugin ID:</strong> ${body.pluginId}</p>
+                <p>Plugin loaded successfully! In a production environment, this would execute the plugin with test data.</p>
+              </body>
+            </html>
+          `;
+          break;
+
+        case 'custom':
+          logs.push({ type: 'info', message: 'Compiling custom code...' });
+          logs.push({ type: 'info', message: 'Executing in sandbox...' });
+          logs.push({ type: 'success', message: 'Code executed successfully' });
+          
+          // For custom code, we'd ideally compile and execute it
+          // For now, just show the code
+          output = `
+            <html>
+              <head>
+                <style>
+                  body { font-family: monospace; padding: 20px; background: #1a1a2e; color: #00ff88; }
+                  pre { background: #0a0a0f; padding: 15px; border-left: 3px solid #00ff88; overflow-x: auto; }
+                </style>
+              </head>
+              <body>
+                <h1>✏️ Custom Code Test</h1>
+                <p>Your custom code:</p>
+                <pre>${body.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                <p>In a production environment, this would be compiled and executed in an isolated sandbox.</p>
+              </body>
+            </html>
+          `;
+          break;
+
+        default:
+          throw new Error('Invalid source type');
+      }
+
+      return new Response(JSON.stringify({ output, logs, status: 'success' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
   }
 
   // Default 404

@@ -25,7 +25,7 @@ function Navbar() {
   // Navigation items for Nurds Code IDE
   const navItems = [
     { path: '/', label: 'Hub', icon: '🏠' },
-    { path: '/editor', label: 'Vibe Editor', icon: '</>', highlight: true },
+    { path: '/editor', label: 'The V.I.B.E.', icon: '</>', highlight: true },
     { path: '/workbench', label: 'Testing Lab', icon: '🧪' },
     { path: '/agents', label: 'Boomer_Angs', icon: '🤖' },
     { path: '/tools', label: 'Tool Catalog', icon: '🧰' },
@@ -56,7 +56,7 @@ function Navbar() {
                   textShadow: '0 0 20px rgba(0, 255, 136, 0.5)'
                 }}
               >
-                NurdsCode
+                Nurds Code
               </div>
               <div 
                 className="text-[10px] px-2 py-0.5 rounded tracking-wider uppercase"
