@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -8,7 +8,7 @@ import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
 import Editor from './pages/Editor';
 import CircuitBox from './pages/CircuitBox';
-import TestingLab from './pages/TestingLab';
+import TestingLab from './pages/TestingLabV2';
 import Workbench from './pages/Workbench';
 import AgentBuilderV2 from './pages/AgentBuilderV2';
 import ToolCatalog from './pages/ToolCatalog';
@@ -16,6 +16,7 @@ import NURD from './pages/NURD';
 import { RoleProvider } from './context/RoleContext';
 import SmartSidePanel from './components/SmartSidePanel';
 import ProtectedRoute from './components/ProtectedRoute';
+import LoadingScreen from './components/LoadingScreen';
 
 /**
  * Nurds Code - The IDE Platform
@@ -33,6 +34,21 @@ import ProtectedRoute from './components/ProtectedRoute';
  */
 
 function App() {
+  const [appLoading, setAppLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial app load time
+    const timer = setTimeout(() => {
+      setAppLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (appLoading) {
+    return <LoadingScreen message="Loading Nurds Code Platform" />;
+  }
+
   return (
     <RoleProvider>
       <div className="min-h-screen flex flex-col">
@@ -62,7 +78,7 @@ function App() {
             <Route path="/nurd" element={<NURD />} />
             
             {/* Testing Lab / Workbench */}
-            <Route path="/workbench" element={<Workbench />} />
+            <Route path="/workbench" element={<TestingLab />} />
             <Route path="/testing-lab" element={<TestingLab />} />
             
             {/* Boomer_Angs - Agent Builder */}

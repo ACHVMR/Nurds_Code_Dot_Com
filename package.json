@@ -23,8 +23,10 @@
   "author": "Nurdscode",
   "license": "MIT",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.27.0",
     "@monaco-editor/react": "^4.7.0",
     "@stripe/stripe-js": "^8.2.0",
+    "axios": "^1.7.7",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
