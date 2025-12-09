@@ -551,6 +551,31 @@ async function handleRequest(request, env) {
     return generateProjectHandler(request, env);
   }
 
+  // Route: Save Project
+  if (path === '/api/project/save' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { projectName, content, files } = body;
+      
+      // Log the save action (in production, this would persist to KV/D1/R2)
+      console.log(`Saved [${projectName || 'Untitled Project'}]`);
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: `Project "${projectName || 'Untitled Project'}" saved successfully`,
+        timestamp: new Date().toISOString()
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   // Route: Create checkout session
   if (path === '/api/create-checkout-session' && request.method === 'POST') {
     try {

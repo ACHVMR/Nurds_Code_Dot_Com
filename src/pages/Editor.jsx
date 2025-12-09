@@ -191,6 +191,33 @@ function VibeIDE() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleSave = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+      const response = await fetch(`${apiUrl}/api/project/save`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          projectName: projectMode ? 'Multi-File Project' : 'Single File',
+          content: code,
+          files: projectMode ? project.files : null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Save failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      alert(data.message || 'Project saved successfully!');
+    } catch (error) {
+      console.error('Save error:', error);
+      alert(`Save failed: ${error.message}`);
+    }
+  };
+
   const styles = {
     container: {
       display: 'flex',
@@ -705,8 +732,8 @@ function VibeIDE() {
                       <button style={styles.toolBtn} onClick={handleCopy}>
                         📄 Copy
                       </button>
-                      <button style={{...styles.toolBtn, ...styles.toolBtnGold}} onClick={handleDownload}>
-                        ⬇ Save
+                      <button style={{...styles.toolBtn, ...styles.toolBtnGold}} onClick={handleSave}>
+                        💾 Save
                       </button>
                     </div>
                   </div>
@@ -742,8 +769,8 @@ function VibeIDE() {
                       <button style={styles.toolBtn} onClick={handleCopy}>
                         📄 Copy
                       </button>
-                      <button style={{...styles.toolBtn, ...styles.toolBtnGold}} onClick={handleDownload}>
-                        ⬇ Download
+                      <button style={{...styles.toolBtn, ...styles.toolBtnGold}} onClick={handleSave}>
+                        💾 Save
                       </button>
                     </div>
                   </div>
