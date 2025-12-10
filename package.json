@@ -24,9 +24,12 @@
   "license": "MIT",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
+    "@fontsource-variable/doto": "^5.2.10",
+    "@fontsource/inter": "^5.2.8",
     "@monaco-editor/react": "^4.7.0",
     "@stripe/stripe-js": "^8.2.0",
     "axios": "^1.7.7",
+    "framer-motion": "^12.23.25",
     "jsonwebtoken": "^9.0.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

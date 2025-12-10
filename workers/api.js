@@ -788,12 +788,424 @@ async function handleRequest(request, env) {
       services: [
         { id: 'groq', name: 'GROQ LLM', status: env.GROQ_API_KEY ? 'online' : 'offline' },
         { id: 'openai', name: 'OpenAI', status: env.OPENAI_API_KEY ? 'online' : 'offline' },
+        { id: 'openrouter', name: 'OpenRouter', status: env.OPENROUTER_API_KEY ? 'online' : 'offline' },
         { id: 'stripe', name: 'Stripe', status: env.STRIPE_SECRET_KEY ? 'online' : 'offline' },
         { id: 'supabase', name: 'Supabase', status: env.SUPABASE_URL ? 'online' : 'offline' },
         { id: 'd1', name: 'D1 Database', status: env.DB ? 'online' : 'offline' },
+        { id: 'ai', name: 'Workers AI', status: env.AI ? 'online' : 'offline' },
+        { id: 'kv', name: 'KV Cache', status: env.CACHE ? 'online' : 'offline' },
+        { id: 'r2', name: 'R2 Storage', status: env.STORAGE ? 'online' : 'offline' },
       ]
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Route: ACHEEVY Chat - Main AI chat endpoint with Circuit Box orchestration
+  if (path === '/api/acheevy/chat' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { message, history = [], plan = 'free', angId, context = {} } = body;
+
+      // Get the appropriate Ang (agent) based on task
+      const angKeywords = {
+        Code_Ang: ['code', 'function', 'api', 'backend', 'frontend', 'component', 'debug', 'fix', 'implement', 'build'],
+        Paint_Ang: ['style', 'css', 'design', 'ui', 'ux', 'color', 'animation', 'layout', 'responsive', 'theme'],
+        Ops_Ang: ['deploy', 'ci', 'cd', 'docker', 'pipeline', 'infrastructure', 'monitor', 'log', 'wrangler'],
+        Data_Ang: ['database', 'sql', 'query', 'schema', 'table', 'index', 'data', 'migration', 'd1'],
+        Doc_Ang: ['document', 'readme', 'explain', 'guide', 'tutorial', 'comment', 'help'],
+      };
+
+      let selectedAng = angId || 'Code_Ang';
+      const lowerMessage = message.toLowerCase();
+      for (const [ang, keywords] of Object.entries(angKeywords)) {
+        if (keywords.some(kw => lowerMessage.includes(kw))) {
+          selectedAng = ang;
+          break;
+        }
+      }
+
+      // Ang-specific system prompts
+      const angPrompts = {
+        Code_Ang: `You are Code_Ang, the elite coding specialist for Nurds Code. Generate complete, runnable code with all imports and error handling. Be direct and efficient.`,
+        Paint_Ang: `You are Paint_Ang, the visual design specialist. Focus on the "Nurd OS" aesthetic: Industrial meets Graffiti, dark themes with electric accents (Slime #00ffcc, Electric #ffaa00).`,
+        Ops_Ang: `You are Ops_Ang, the DevOps specialist. Focus on Cloudflare Workers deployment, CI/CD, and infrastructure. Always use environment variables for secrets.`,
+        Data_Ang: `You are Data_Ang, the data specialist. Focus on D1, KV, and R2 for Cloudflare. Design for scalability with proper indexing.`,
+        Doc_Ang: `You are Doc_Ang, the documentation specialist. Write clear, concise documentation with working code examples.`,
+      };
+
+      const systemPrompt = `${angPrompts[selectedAng] || angPrompts.Code_Ang}
+
+You are ACHEEVY, the AI assistant for Nurds Code platform.
+- Be confident, playful, and technically sharp
+- Use occasional catchphrases like "Let's build something dope." or "Code is art. Ship it."
+- Generate complete, production-ready code
+- End with actionable next steps`;
+
+      // Try OpenRouter first (Claude Haiku)
+      if (env.OPENROUTER_API_KEY) {
+        const modelConfig = {
+          free: 'anthropic/claude-3.5-haiku:beta',
+          coffee: 'anthropic/claude-3-5-sonnet',
+          pro: 'anthropic/claude-3-5-sonnet',
+          enterprise: 'anthropic/claude-3-5-opus',
+        };
+
+        const model = modelConfig[plan] || modelConfig.free;
+        const gatewayUrl = env.CLOUDFLARE_ACCOUNT_ID
+          ? `https://gateway.ai.cloudflare.com/v1/${env.CLOUDFLARE_ACCOUNT_ID}/${env.AI_GATEWAY_SLUG || 'nurdscode-gateway'}/openrouter/api/v1/chat/completions`
+          : 'https://openrouter.ai/api/v1/chat/completions';
+
+        const response = await fetch(gatewayUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': env.APP_URL || 'https://nurdscode.com',
+            'X-Title': 'Nurds Code Platform',
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...history.slice(-20),
+              { role: 'user', content: message },
+            ],
+            temperature: 0.7,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return new Response(JSON.stringify({
+            response: data.choices[0].message.content,
+            model,
+            provider: 'openrouter',
+            ang: selectedAng,
+            usage: data.usage,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Fallback to Groq
+      if (env.GROQ_API_KEY) {
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.GROQ_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-70b-versatile',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...history.slice(-20),
+              { role: 'user', content: message },
+            ],
+            temperature: 0.7,
+            max_tokens: 4096,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return new Response(JSON.stringify({
+            response: data.choices[0].message.content,
+            model: 'llama-3.1-70b-versatile',
+            provider: 'groq',
+            ang: selectedAng,
+            usage: data.usage,
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+
+      // Final fallback - helpful message
+      return new Response(JSON.stringify({
+        response: `⚡ Hey Nurd! I'm ACHEEVY, but my AI providers are currently offline. Make sure OPENROUTER_API_KEY or GROQ_API_KEY is configured.\n\nYour message: "${message}"\n\nLet's build something dope once I'm connected! 🚀`,
+        model: 'fallback',
+        provider: 'none',
+        ang: selectedAng,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // Route: Project Deploy - Deploy to Cloudflare Pages via GitHub
+  if (path === '/api/project/deploy' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { projectId, files, repoName, branch = 'main' } = body;
+
+      // Verify auth
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: 'Authorization required' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const token = authHeader.replace('Bearer ', '');
+      const user = verifyToken(token, env.JWT_SECRET);
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Invalid token' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Get user's GitHub token from DB
+      let githubToken = null;
+      if (env.DB) {
+        const userRecord = await env.DB.prepare(
+          'SELECT github_token FROM users WHERE id = ?'
+        ).bind(user.userId).first();
+        githubToken = userRecord?.github_token;
+      }
+
+      if (!githubToken) {
+        return new Response(JSON.stringify({
+          error: 'GitHub not connected',
+          action: 'connect_github',
+          message: 'Please connect your GitHub account to deploy projects.',
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Create or update GitHub repo
+      const repoResponse = await fetch(`https://api.github.com/user/repos`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${githubToken}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'NurdsCode-Platform',
+        },
+        body: JSON.stringify({
+          name: repoName || `nurdscode-${projectId}`,
+          description: 'Deployed from Nurds Code Platform',
+          private: false,
+          auto_init: true,
+        }),
+      });
+
+      let repo;
+      if (repoResponse.status === 422) {
+        // Repo exists, get it
+        const userResponse = await fetch('https://api.github.com/user', {
+          headers: {
+            'Authorization': `Bearer ${githubToken}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'NurdsCode-Platform',
+          },
+        });
+        const userData = await userResponse.json();
+        
+        const existingRepoResponse = await fetch(
+          `https://api.github.com/repos/${userData.login}/${repoName || `nurdscode-${projectId}`}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'NurdsCode-Platform',
+            },
+          }
+        );
+        repo = await existingRepoResponse.json();
+      } else {
+        repo = await repoResponse.json();
+      }
+
+      // Push files to repo (simplified - in production use Git tree API)
+      for (const file of files || []) {
+        await fetch(`https://api.github.com/repos/${repo.full_name}/contents/${file.path}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${githubToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'NurdsCode-Platform',
+          },
+          body: JSON.stringify({
+            message: `Deploy from Nurds Code: ${file.path}`,
+            content: btoa(file.content),
+            branch,
+          }),
+        });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        repoUrl: repo.html_url,
+        deployUrl: `https://${repo.name}.pages.dev`,
+        message: `🚀 Deployed to GitHub! Your project is live at ${repo.html_url}`,
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // Route: Connect GitHub - OAuth flow initiation
+  if (path === '/api/user/connect-github' && request.method === 'GET') {
+    const clientId = env.GITHUB_CLIENT_ID;
+    if (!clientId) {
+      return new Response(JSON.stringify({
+        error: 'GitHub OAuth not configured',
+        message: 'GITHUB_CLIENT_ID is not set in environment variables.',
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const redirectUri = `${env.APP_URL || 'https://nurdscode.com'}/api/auth/github/callback`;
+    const scope = 'repo,user:email';
+    const state = crypto.randomUUID();
+
+    // Store state in KV for verification
+    if (env.CACHE) {
+      await env.CACHE.put(`github_oauth_state:${state}`, 'valid', { expirationTtl: 600 });
+    }
+
+    const authUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scope}&state=${state}`;
+
+    return new Response(JSON.stringify({
+      authUrl,
+      state,
+      message: 'Redirect user to authUrl to connect GitHub',
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  // Route: GitHub OAuth Callback
+  if (path === '/api/auth/github/callback' && request.method === 'GET') {
+    try {
+      const code = url.searchParams.get('code');
+      const state = url.searchParams.get('state');
+
+      if (!code || !state) {
+        return new Response('Missing code or state', { status: 400, headers: corsHeaders });
+      }
+
+      // Verify state
+      if (env.CACHE) {
+        const validState = await env.CACHE.get(`github_oauth_state:${state}`);
+        if (!validState) {
+          return new Response('Invalid state', { status: 400, headers: corsHeaders });
+        }
+        await env.CACHE.delete(`github_oauth_state:${state}`);
+      }
+
+      // Exchange code for token
+      const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: env.GITHUB_CLIENT_ID,
+          client_secret: env.GITHUB_CLIENT_SECRET,
+          code,
+        }),
+      });
+
+      const tokenData = await tokenResponse.json();
+      const accessToken = tokenData.access_token;
+
+      if (!accessToken) {
+        return new Response('Failed to get access token', { status: 400, headers: corsHeaders });
+      }
+
+      // Get user info
+      const userResponse = await fetch('https://api.github.com/user', {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'NurdsCode-Platform',
+        },
+      });
+      const githubUser = await userResponse.json();
+
+      // Store token in DB (in production, encrypt this)
+      if (env.DB) {
+        await env.DB.prepare(
+          'UPDATE users SET github_token = ?, github_username = ? WHERE id = ?'
+        ).bind(accessToken, githubUser.login, state).run();
+      }
+
+      // Redirect to success page
+      return Response.redirect(`${env.APP_URL || 'https://nurdscode.com'}/settings?github=connected`, 302);
+
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // Route: Circuit Box Toggle - Toggle service modules
+  if (path === '/api/circuit-box/toggle' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { moduleId, enabled } = body;
+
+      // In production, this would update actual service states
+      // For now, return mock response
+      return new Response(JSON.stringify({
+        success: true,
+        moduleId,
+        enabled,
+        message: `Module ${moduleId} is now ${enabled ? 'ONLINE' : 'OFFLINE'}`,
+        timestamp: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
+  // Route: Circuit Box Modules - Get all module statuses
+  if (path === '/api/circuit-box/modules' && request.method === 'GET') {
+    return new Response(JSON.stringify({
+      modules: [
+        { id: 'voice-agent', name: 'Voice Agent', status: 'online', load: 45, latency: 120 },
+        { id: 'code-gen', name: 'Code Generation', status: 'online', load: 78, latency: 50 },
+        { id: 'database', name: 'D1 Database', status: env.DB ? 'online' : 'offline', load: 23, latency: 15 },
+        { id: 'storage', name: 'R2 Storage', status: env.STORAGE ? 'online' : 'offline', load: 12, latency: 25 },
+        { id: 'cache', name: 'KV Cache', status: env.CACHE ? 'online' : 'offline', load: 67, latency: 5 },
+        { id: 'ai-gateway', name: 'AI Gateway', status: env.CLOUDFLARE_ACCOUNT_ID ? 'online' : 'offline', load: 89, latency: 200 },
+      ],
+      timestamp: new Date().toISOString(),
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
