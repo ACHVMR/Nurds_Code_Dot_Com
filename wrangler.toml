@@ -6,15 +6,33 @@ compatibility_flags = ["nodejs_compat"]
 [env.production]
 name = "nurdscode-api-prod"
 
+# AI Binding for Workers AI
+[ai]
+binding = "AI"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "nurdscode_db"
 database_id = "your-d1-database-id"
 
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id"
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "nurdscode-storage"
+
 [vars]
 STRIPE_PUBLISHABLE_KEY = ""
 JWT_SECRET = ""
+APP_URL = "https://nurdscode.com"
+AI_GATEWAY_SLUG = "nurdscode-gateway"
 
 [secrets]
 STRIPE_SECRET_KEY = ""
 STRIPE_WEBHOOK_SECRET = ""
+OPENROUTER_API_KEY = ""
+GROQ_API_KEY = ""
+GITHUB_CLIENT_ID = ""
+GITHUB_CLIENT_SECRET = ""

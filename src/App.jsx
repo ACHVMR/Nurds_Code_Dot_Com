@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import Landing from './pages/Landing';
+import Dashboard from './pages/Dashboard';
 import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
@@ -17,6 +19,12 @@ import { RoleProvider } from './context/RoleContext';
 import SmartSidePanel from './components/SmartSidePanel';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
+
+// Import fonts for NURD OS theme
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource-variable/doto';
 
 /**
  * Nurds Code - The IDE Platform
@@ -56,8 +64,14 @@ function App() {
         <Navbar />
         <main className="flex-grow">
           <Routes>
+            {/* Landing Page - New NURD OS styled landing */}
+            <Route path="/landing" element={<Landing />} />
+            
             {/* Hub - Main Dashboard */}
             <Route path="/" element={<Home />} />
+            
+            {/* Circuit Box Dashboard - System Management */}
+            <Route path="/dashboard" element={<Dashboard />} />
             
             {/* Vibe Coding - IDE */}
             <Route path="/editor" element={<Editor />} />
