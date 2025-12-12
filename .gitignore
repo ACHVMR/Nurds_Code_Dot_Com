@@ -46,3 +46,6 @@ wrangler.toml.backup
 # Temporary files
 /tmp
 *.tmp
+
+# Intelligent Internet repos (cloned separately)
+services/intelligent-internet/

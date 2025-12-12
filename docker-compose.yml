@@ -1,0 +1,183 @@
+version: '3.8'
+
+# NurdsCode Integrated Docker Stack
+# Combines the Nurds Code platform with Intelligent Internet services
+
+services:
+  # ===========================================
+  # INFRASTRUCTURE
+  # ===========================================
+  
+  postgres:
+    image: postgres:16
+    container_name: nurdscode-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-nurdscode}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nurdscode}
+      POSTGRES_DB: ${POSTGRES_DB:-nurdscode_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/intelligent-internet/ii-agent/docker/postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nurdscode}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nurdscode-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: nurdscode-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # II-AGENT BACKEND (Core Agent Runtime)
+  # ===========================================
+  
+  ii-agent-backend:
+    build:
+      context: ./services/intelligent-internet/ii-agent
+      dockerfile: docker/backend/Dockerfile
+    container_name: ii-agent-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-nurdscode}:${POSTGRES_PASSWORD:-nurdscode}@postgres:5432/${POSTGRES_DB:-nurdscode_dev}
+      - REDIS_URL=redis://redis:6379
+      - LLM_CONFIGS=${LLM_CONFIGS}
+      - RESEARCHER_AGENT_CONFIG=${RESEARCHER_AGENT_CONFIG}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # II-AGENT SANDBOX SERVER
+  # ===========================================
+  
+  ii-sandbox-server:
+    build:
+      context: ./services/intelligent-internet/ii-agent
+      dockerfile: docker/sandbox/Dockerfile
+    container_name: ii-sandbox-server
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-nurdscode}:${POSTGRES_PASSWORD:-nurdscode}@postgres:5432/ii_sandbox
+      - E2B_API_KEY=${E2B_API_KEY}
+      - SANDBOX_TEMPLATE_ID=${SANDBOX_TEMPLATE_ID}
+    ports:
+      - "${SANDBOX_SERVER_PORT:-8100}:8100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # II-AGENT TOOL SERVER
+  # ===========================================
+  
+  ii-tool-server:
+    build:
+      context: ./services/intelligent-internet/ii-agent
+      dockerfile: docker/sandbox/tool-server.Dockerfile
+    container_name: ii-tool-server
+    environment:
+      - STORAGE_CONFIG__GCS_BUCKET_NAME=${STORAGE_CONFIG__GCS_BUCKET_NAME}
+      - STORAGE_CONFIG__GCS_PROJECT_ID=${STORAGE_CONFIG__GCS_PROJECT_ID}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
+    ports:
+      - "${TOOL_SERVER_PORT:-1236}:1236"
+    volumes:
+      - ./credentials:/app/credentials:ro
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # NURDSCODE FRONTEND (Vite + React)
+  # ===========================================
+  
+  nurdscode-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: nurdscode-frontend
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      - ii-agent-backend
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # CLOUDFLARE WORKERS (API Gateway)
+  # ===========================================
+  
+  nurdscode-api:
+    image: node:20-alpine
+    container_name: nurdscode-api
+    working_dir: /app
+    command: npx wrangler dev --local --port 8787
+    environment:
+      - II_BACKEND_URL=http://ii-agent-backend:8000
+      - II_SANDBOX_URL=http://ii-sandbox-server:8100
+      - II_TOOLS_URL=http://ii-tool-server:1236
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./workers:/app/workers:ro
+      - ./wrangler.toml:/app/wrangler.toml:ro
+    depends_on:
+      - ii-agent-backend
+    networks:
+      - nurdscode-net
+
+  # ===========================================
+  # NGROK TUNNEL (Optional for external access)
+  # ===========================================
+  
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: nurdscode-ngrok
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    command: http nurdscode-frontend:80 --region ${NGROK_REGION:-us}
+    ports:
+      - "${NGROK_METRICS_PORT:-4040}:4040"
+    depends_on:
+      - nurdscode-frontend
+    networks:
+      - nurdscode-net
+    profiles:
+      - tunnel
+
+networks:
+  nurdscode-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
