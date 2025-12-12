@@ -36,7 +36,6 @@ function verifyToken(token, secret) {
     }
 
     return decodedPayload;
-    return decodedPayload;
   } catch (error) {
     return null;
   }

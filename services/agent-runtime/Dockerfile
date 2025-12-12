@@ -5,8 +5,8 @@ FROM node:18-slim
 WORKDIR /app
 
 # Install dependencies
-# (Assumes functionality will be added later, for now just express for the server)
-RUN npm init -y && npm install express
+COPY package*.json ./
+RUN npm install --omit=dev
 
 # Copy source code
 COPY . .
