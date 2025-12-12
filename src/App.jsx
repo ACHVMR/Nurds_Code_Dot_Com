@@ -24,6 +24,7 @@ import Settings from './pages/Settings';
 import Deploy from './pages/Deploy';
 import Vibe from './pages/Vibe';
 import Build from './pages/Build';
+import PlugStore from './pages/PlugStore';
 
 function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -81,6 +82,9 @@ function App() {
                     
                     {/* 🔨 BUILD */}
                     <Route path="/build/*" element={<Build />} />
+                    
+                    {/* 🔌 PLUG STORE */}
+                    <Route path="/plugstore/*" element={<PlugStore />} />
 
                     {/* Legacy / Shared Routes (mapped to departments later) */}
                     <Route path="/editor" element={<Editor />} />
