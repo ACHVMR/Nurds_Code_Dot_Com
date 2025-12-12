@@ -1,14 +1,20 @@
 name: Build and Push Docker Image
 
+# Temporarily disabled until Cloudflare Registry secrets are configured.
+# See: Settings > Secrets and variables > Actions
+# Required secrets:
+#   - CLOUDFLARE_REGISTRY_USERNAME
+#   - CLOUDFLARE_REGISTRY_TOKEN
+
 on:
-  push:
-    branches:
-      - main
-      - develop
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #     - develop
+  # pull_request:
+  #   branches:
+  #     - main
+  workflow_dispatch: # Only manual trigger for now
 
 env:
   REGISTRY: registry.cloudflare.com
