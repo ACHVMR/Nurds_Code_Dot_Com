@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
-import Navbar from './components/Navbar'; // Keeping Navbar for top header if needed, or might be redundant? Let's keep for now as Header.
+import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import PromptToCode from './pages/PromptToCode';
 import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
@@ -14,9 +15,9 @@ import AgentBuilder from './pages/AgentBuilder';
 import ToolCatalog from './pages/ToolCatalog';
 import NURD from './pages/NURD';
 import { RoleProvider } from './context/RoleContext';
-import { DepartmentProvider } from './context/DepartmentContext'; // New Context
-import DepartmentSidebar from './components/DepartmentSidebar'; // New Sidebar
-import ACHEEVYPanel from './components/ACHEEVYPanel'; // DeepMind Chat Panel
+import { DepartmentProvider } from './context/DepartmentContext';
+import DepartmentSidebar from './components/DepartmentSidebar';
+import ACHEEVYPanel from './components/ACHEEVYPanel';
 import VibeIdeShell from './components/ide/VibeIdeShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
@@ -31,81 +32,91 @@ function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Simulate initial app load time
+    // Fast load - reduced from 2000ms to 500ms
     const timer = setTimeout(() => {
       setAppLoading(false);
-    }, 2000);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, []);
 
   if (appLoading) {
-    return <LoadingScreen message="Loading Nurds Code Platform" />;
+    return <LoadingScreen message="Loading Nurds Code" />;
   }
 
-  // Fullscreen IDE Mode check
-  const isIdeMode = location.pathname.startsWith('/vibe-ide');
+  // Full-screen pages (no sidebar)
+  const isFullscreen = 
+    location.pathname.startsWith('/vibe-ide') ||
+    location.pathname === '/code';
+
+  if (isFullscreen) {
+    return (
+      <RoleProvider>
+        <DepartmentProvider>
+          <Routes location={location}>
+            <Route path="/vibe-ide" element={<VibeIdeShell />} />
+            <Route path="/code" element={<PromptToCode />} />
+          </Routes>
+        </DepartmentProvider>
+      </RoleProvider>
+    );
+  }
 
   return (
     <RoleProvider>
       <DepartmentProvider>
-        {isIdeMode ? (
-          <Routes location={location}>
-            <Route path="/vibe-ide" element={<VibeIdeShell />} />
-          </Routes>
-        ) : (
-          <div className="min-h-screen flex bg-black text-white">
-            {/* New Fixed Sidebar */}
-            <DepartmentSidebar />
+        <div className="min-h-screen flex bg-[#0A0A0A] text-white">
+          {/* Sidebar */}
+          <DepartmentSidebar />
+          
+          {/* Main Content */}
+          <main className="grow flex flex-col" style={{ marginLeft: '240px', width: 'calc(100% - 240px)' }}>
+            <Navbar />
             
-            {/* Main Content Area - Pushed to right by 240px */}
-            <main className="grow flex flex-col" style={{ marginLeft: '240px', width: 'calc(100% - 240px)' }}>
-              <Navbar /> {/* Optional: Keep top navbar for global search/actions if desired, or remove if Sidebar handles all */}
-              
-              <div className="grow p-4">
-                <div key={location.pathname} className="animate-fade-in-up h-full">
-                  <Routes location={location}>
-                    {/* 🏠 HOME */}
-                    <Route path="/" element={<Home />} />
-                    
-                    {/* ⚙️ SETTINGS */}
-                    <Route path="/settings/*" element={<Settings />} />
-                    
-                    {/* 🚀 DEPLOY */}
-                    <Route path="/deploy/*" element={<Deploy />} />
-                    
-                    {/* 🧪 TESTING LAB */}
-                    <Route path="/testing-lab/*" element={<TestingLab />} />
-                    
-                    {/* 💻 V.I.B.E. */}
-                    <Route path="/vibe/*" element={<Vibe />} />
-                    
-                    {/* 🔨 BUILD */}
-                    <Route path="/build/*" element={<Build />} />
-                    
-                    {/* 🔌 PLUG STORE */}
-                    <Route path="/plugstore/*" element={<PlugStore />} />
+            <div className="grow">
+              <Routes location={location}>
+                {/* 🏠 HOME */}
+                <Route path="/" element={<Home />} />
+                
+                {/* ⌨️ PROMPT TO CODE (main product) */}
+                <Route path="/code" element={<PromptToCode />} />
+                
+                {/* ⚙️ SETTINGS */}
+                <Route path="/settings/*" element={<Settings />} />
+                
+                {/* 🚀 DEPLOY */}
+                <Route path="/deploy/*" element={<Deploy />} />
+                
+                {/* 🧪 TESTING LAB */}
+                <Route path="/testing-lab/*" element={<TestingLab />} />
+                
+                {/* 💻 V.I.B.E. */}
+                <Route path="/vibe/*" element={<Vibe />} />
+                
+                {/* 🔨 BUILD */}
+                <Route path="/build/*" element={<Build />} />
+                
+                {/* 🔌 PLUG STORE */}
+                <Route path="/plugstore/*" element={<PlugStore />} />
 
-                    {/* Legacy / Shared Routes (mapped to departments later) */}
-                    <Route path="/editor" element={<Editor />} />
-                    <Route path="/admin" element={<ProtectedRoute requiredRole="owner"><CircuitBox /></ProtectedRoute>} />
-                    <Route path="/nurd" element={<NURD />} />
-                    <Route path="/agents" element={<AgentBuilder />} />
-                    <Route path="/tools" element={<ToolCatalog />} />
-                    <Route path="/pricing" element={<Pricing />} />
-                    <Route path="/subscribe" element={<Subscribe />} />
-                    <Route path="/success" element={<Success />} />
-                  </Routes>
-                </div>
-              </div>
-              
-              <Footer />
-            </main>
+                {/* Other Routes */}
+                <Route path="/editor" element={<Editor />} />
+                <Route path="/admin" element={<ProtectedRoute requiredRole="owner"><CircuitBox /></ProtectedRoute>} />
+                <Route path="/nurd" element={<NURD />} />
+                <Route path="/agents" element={<AgentBuilder />} />
+                <Route path="/tools" element={<ToolCatalog />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/subscribe" element={<Subscribe />} />
+                <Route path="/success" element={<Success />} />
+              </Routes>
+            </div>
             
-            {/* Floating ACHEEVY Chat Panel */}
-            <ACHEEVYPanel />
-          </div>
-        )}
+            <Footer />
+          </main>
+          
+          {/* Floating Chat */}
+          <ACHEEVYPanel />
+        </div>
       </DepartmentProvider>
     </RoleProvider>
   );
