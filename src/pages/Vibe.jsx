@@ -1,197 +1,170 @@
-import React, { useState, useContext } from 'react';
-import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
-import { DepartmentContext } from '../context/DepartmentContext';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import Editor from '@monaco-editor/react';
+import './Vibe.css';
 
-// Sub-page: Editor
-function VibeEditor() {
-  const [code, setCode] = useState(`// Welcome to V.I.B.E. Editor
-// Start coding your next project!
-
-export default {
-  async fetch(request, env) {
-    return new Response("Hello from Nurds Code!");
-  }
-};`);
-
-  return (
-    <div className="h-[calc(100vh-200px)] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">💻 Code Editor</h2>
-        <div className="flex gap-2">
-          <button className="px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-500">Run</button>
-          <button className="px-3 py-1 bg-gray-700 text-white rounded text-sm hover:bg-gray-600">Save</button>
-        </div>
-      </div>
-      <textarea
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        className="flex-1 bg-gray-900 border border-gray-700 rounded-lg p-4 font-mono text-sm text-green-400 resize-none focus:outline-none focus:border-purple-500"
-        spellCheck={false}
-      />
-    </div>
-  );
-}
-
-// Sub-page: AI Chat
-function VibeChat() {
-  const { energyLevel } = useContext(DepartmentContext);
-  
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">🤖 AI Assistant</h2>
-      <div className="bg-gray-800/50 rounded-xl p-6">
-        <p className="text-gray-400 mb-4">
-          Current Energy: <span className="text-purple-400">{energyLevel}</span>
-        </p>
-        <p className="text-white">
-          Use the floating ACHEEVY panel (💬 button in bottom-right) to chat with the AI assistant.
-          The V.I.B.E. department uses JOVIAL energy for creative, encouraging responses.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Sub-page: Templates
-function VibeTemplates() {
-  const templates = [
-    { name: 'REST API', desc: 'Cloudflare Worker with CRUD endpoints', icon: '🔌' },
-    { name: 'React SPA', desc: 'Single-page app with Vite', icon: '⚛️' },
-    { name: 'Landing Page', desc: 'Marketing page with animations', icon: '🎨' },
-    { name: 'Full-Stack App', desc: 'Worker + D1 + React frontend', icon: '🏗️' }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">📋 Templates</h2>
-      <div className="grid grid-cols-2 gap-4">
-        {templates.map((t, i) => (
-          <div key={i} className="bg-gray-800/50 rounded-xl p-6 hover:bg-gray-700/50 cursor-pointer transition-colors">
-            <span className="text-3xl mb-3 block">{t.icon}</span>
-            <p className="text-white font-medium">{t.name}</p>
-            <p className="text-gray-500 text-sm">{t.desc}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Sub-page: Projects
-function VibeProjects() {
-  const projects = [
-    { name: 'my-api', language: 'TypeScript', lastEdit: '2 hours ago' },
-    { name: 'portfolio-site', language: 'React', lastEdit: '1 day ago' },
-    { name: 'discord-bot', language: 'JavaScript', lastEdit: '3 days ago' }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">📁 Projects</h2>
-        <button onClick={() => window.location.href = '/vibe-ide'} className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500">+ New Project</button>
-      </div>
-      <div className="space-y-3">
-        {projects.map((p, i) => (
-          <div key={i} className="bg-gray-800/50 rounded-xl p-4 flex items-center justify-between hover:bg-gray-700/50 cursor-pointer transition-colors">
-            <div>
-              <p className="text-white font-medium">{p.name}</p>
-              <p className="text-gray-500 text-sm">{p.language} • {p.lastEdit}</p>
-            </div>
-            <button className="text-purple-400 hover:text-purple-300">Open →</button>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Sub-page: Settings
-function VibeSettings() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">⚙️ Editor Settings</h2>
-      <div className="bg-gray-800/50 rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between py-2 border-b border-gray-700">
-          <div>
-            <p className="text-white">Theme</p>
-            <p className="text-gray-500 text-sm">Editor color scheme</p>
-          </div>
-          <select className="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-white">
-            <option>Dark (Default)</option>
-            <option>Light</option>
-            <option>Monokai</option>
-          </select>
-        </div>
-        <div className="flex items-center justify-between py-2 border-b border-gray-700">
-          <div>
-            <p className="text-white">Font Size</p>
-            <p className="text-gray-500 text-sm">Code editor font size</p>
-          </div>
-          <select className="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-white">
-            <option>12px</option>
-            <option>14px</option>
-            <option>16px</option>
-          </select>
-        </div>
-        <div className="flex items-center justify-between py-2">
-          <div>
-            <p className="text-white">Auto-save</p>
-            <p className="text-gray-500 text-sm">Automatically save changes</p>
-          </div>
-          <input type="checkbox" defaultChecked className="w-5 h-5 accent-purple-500" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Main V.I.B.E. Page with Sub-navigation
+/**
+ * V.I.B.E. - Vibrant Imagination Build Environment
+ * Prompt-based vibe coding with live preview
+ */
 export default function Vibe() {
-  const navItems = [
-    { path: 'editor', label: 'Editor', icon: '💻' },
-    { path: 'projects', label: 'Projects', icon: '📁' },
-    { path: 'templates', label: 'Templates', icon: '📋' },
-    { path: 'ai-chat', label: 'AI Chat', icon: '🤖' },
-    { path: 'settings', label: 'Settings', icon: '⚙️' }
-  ];
+  const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [code, setCode] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    if (!prompt.trim() || isGenerating) return;
+
+    setChatHistory(prev => [...prev, { role: 'user', content: prompt }]);
+    setIsGenerating(true);
+    setPrompt('');
+
+    await new Promise(r => setTimeout(r, 1500));
+
+    const newCode = `// Generated from: "${prompt}"
+import React from 'react';
+
+export default function Component() {
+  return (
+    <div className="component">
+      <h1>Generated Component</h1>
+      <p>Built with V.I.B.E.</p>
+    </div>
+  );
+}`;
+
+    setCode(newCode);
+    setChatHistory(prev => [...prev, {
+      role: 'assistant',
+      content: 'Code generated! You can edit it in the editor.'
+    }]);
+    setIsGenerating(false);
+  };
 
   return (
-    <div className="flex gap-8 p-6">
-      {/* Sidebar Navigation */}
-      <nav className="w-56 shrink-0">
-        <h1 className="text-xl font-bold text-white mb-6">💻 V.I.B.E.</h1>
-        <p className="text-xs text-gray-500 mb-4">Vibrant Imagination Build Environment</p>
-        <div className="space-y-1">
-          {navItems.map(item => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-purple-600/20 text-purple-400 border-l-2 border-purple-400'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`
-              }
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
+    <div className="vibe-page dots-bg">
+      {/* Navigation */}
+      <nav className="vibe-nav">
+        <Link to="/" className="nav-logo">
+          <span>Nurds</span>
+          <span className="accent">Code</span>
+        </Link>
+        <div className="nav-links">
+          <Link to="/">Hub</Link>
+          <Link to="/code">Prompt to Code</Link>
+          <Link to="/vibe/editor" className="active">V.I.B.E.</Link>
+          <Link to="/testing-lab">Testing Lab</Link>
+          <Link to="/agents">Boomer_Angs</Link>
+        </div>
+        <div className="nav-actions">
+          <button className="btn-run">▶ Run</button>
+          <button className="btn-deploy">🚀 Deploy</button>
         </div>
       </nav>
 
-      {/* Content Area */}
-      <div className="flex-1 max-w-4xl">
-        <Routes>
-          <Route index element={<Navigate to="editor" replace />} />
-          <Route path="editor" element={<VibeEditor />} />
-          <Route path="projects" element={<VibeProjects />} />
-          <Route path="templates" element={<VibeTemplates />} />
-          <Route path="ai-chat" element={<VibeChat />} />
-          <Route path="settings" element={<VibeSettings />} />
-        </Routes>
+      {/* Main Content */}
+      <div className="vibe-content">
+        {/* Left: Prompt Interface */}
+        <div className="vibe-prompt-panel">
+          <div className="panel-header">
+            <div className="dot-grid">
+              <span className="dot"></span>
+              <span className="dot"></span>
+              <span className="dot"></span>
+            </div>
+            <h2>V.I.B.E.</h2>
+            <p>Vibrant Imagination Build Environment</p>
+          </div>
+
+          <div className="chat-area">
+            {chatHistory.length === 0 ? (
+              <div className="empty-chat animate-fade-in">
+                <h3>Start Building</h3>
+                <p>Describe what you want to create</p>
+                <div className="suggestions">
+                  <button onClick={() => setPrompt('Create a hero section with gradient background')}>
+                    Hero Section
+                  </button>
+                  <button onClick={() => setPrompt('Build a responsive navbar with dropdown')}>
+                    Navbar
+                  </button>
+                  <button onClick={() => setPrompt('Create a pricing card component')}>
+                    Pricing Card
+                  </button>
+                </div>
+              </div>
+            ) : (
+              chatHistory.map((msg, i) => (
+                <div key={i} className={`message ${msg.role} animate-fade-in`}>
+                  {msg.content}
+                </div>
+              ))
+            )}
+            {isGenerating && (
+              <div className="message assistant generating">
+                <span className="dot"></span>
+                <span className="dot"></span>
+                <span className="dot"></span>
+              </div>
+            )}
+          </div>
+
+          <form className="prompt-form" onSubmit={handleGenerate}>
+            <div className="prompt-box">
+              <textarea
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Describe what you want to build..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleGenerate(e);
+                  }
+                }}
+              />
+              <button type="submit" disabled={isGenerating || !prompt.trim()}>
+                →
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Right: Code Editor */}
+        <div className="vibe-editor-panel carbon-fiber">
+          <div className="editor-header">
+            <h3>Code Editor</h3>
+          </div>
+          <div className="editor-area">
+            {code ? (
+              <Editor
+                height="100%"
+                defaultLanguage="javascript"
+                value={code}
+                onChange={(value) => setCode(value || '')}
+                theme="vs-dark"
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  fontFamily: "'JetBrains Mono', monospace",
+                  padding: { top: 16 },
+                  scrollBeyondLastLine: false,
+                  wordWrap: 'on'
+                }}
+              />
+            ) : (
+              <div className="empty-editor animate-fade-in">
+                <div className="dot-grid">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
+                <p>Your code will appear here</p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

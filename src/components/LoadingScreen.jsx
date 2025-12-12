@@ -1,25 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 /**
- * Loading Screen - Matte Black Theme
- * Clean, minimal loading indicator
+ * Loading Screen - Dots Theme
  */
-function LoadingScreen({ message = 'Loading...' }) {
-  const [dots, setDots] = useState('');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 400);
-    return () => clearInterval(interval);
-  }, []);
-
+export default function LoadingScreen({ message = 'Loading' }) {
   return (
     <div style={styles.overlay}>
       <div style={styles.container}>
-        <div style={styles.spinner} />
-        <div style={styles.message}>{message}{dots}</div>
+        <div style={styles.dotGrid}>
+          <span style={{...styles.dot, animationDelay: '0s'}}></span>
+          <span style={{...styles.dot, animationDelay: '0.15s'}}></span>
+          <span style={{...styles.dot, animationDelay: '0.3s'}}></span>
+        </div>
+        <div style={styles.message}>{message}</div>
       </div>
+      <style>{keyframes}</style>
     </div>
   );
 }
@@ -43,34 +38,27 @@ const styles = {
     alignItems: 'center',
     gap: '24px'
   },
-  spinner: {
-    width: '48px',
-    height: '48px',
-    border: '3px solid #1A1A1A',
-    borderTopColor: '#00FF41',
+  dotGrid: {
+    display: 'flex',
+    gap: '10px'
+  },
+  dot: {
+    width: '14px',
+    height: '14px',
     borderRadius: '50%',
-    animation: 'spin 0.8s linear infinite'
+    background: '#00FF41',
+    animation: 'dotPulse 1.2s ease-in-out infinite'
   },
   message: {
-    color: '#888',
+    color: '#666',
     fontSize: '14px',
-    fontFamily: 'Inter, sans-serif',
-    minWidth: '140px'
+    fontFamily: 'Inter, sans-serif'
   }
 };
 
-// Add spinner animation
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
-  if (!document.getElementById('loading-spinner-style')) {
-    style.id = 'loading-spinner-style';
-    document.head.appendChild(style);
+const keyframes = `
+  @keyframes dotPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
   }
-}
-
-export default LoadingScreen;
+`;
