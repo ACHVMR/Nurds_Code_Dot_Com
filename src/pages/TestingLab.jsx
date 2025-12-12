@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Routes, Route, NavLink, Navigate } from 'react-router-dom';
 import { auditCode } from '../utils/deepmind-api';
 
-// Import the original Testing Lab for the Sandbox
-import TestingLabV2 from './TestingLabV2';
+// Import the fixed Testing Sandbox
+import TestingSandbox from './TestingSandbox';
 
 // Sub-page: Security Scanner (Uses CodeMender)
 function SecurityScanner() {
@@ -201,7 +201,7 @@ export default function TestingLab() {
       <div className="flex-1">
         <Routes>
           <Route index element={<Navigate to="sandbox" replace />} />
-          <Route path="sandbox" element={<TestingLabV2 />} />
+          <Route path="sandbox" element={<TestingSandbox />} />
           <Route path="security" element={<SecurityScanner />} />
           <Route path="performance" element={<PerformanceMonitor />} />
           <Route path="tests" element={<UnitTests />} />

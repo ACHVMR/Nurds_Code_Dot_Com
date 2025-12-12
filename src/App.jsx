@@ -10,7 +10,7 @@ import Editor from './pages/Editor';
 import CircuitBox from './pages/CircuitBox';
 import TestingLab from './pages/TestingLab';
 import Workbench from './pages/Workbench';
-import AgentBuilderV2 from './pages/AgentBuilderV2';
+import AgentBuilder from './pages/AgentBuilder';
 import ToolCatalog from './pages/ToolCatalog';
 import NURD from './pages/NURD';
 import { RoleProvider } from './context/RoleContext';
@@ -90,7 +90,7 @@ function App() {
                     <Route path="/editor" element={<Editor />} />
                     <Route path="/admin" element={<ProtectedRoute requiredRole="owner"><CircuitBox /></ProtectedRoute>} />
                     <Route path="/nurd" element={<NURD />} />
-                    <Route path="/agents" element={<AgentBuilderV2 />} />
+                    <Route path="/agents" element={<AgentBuilder />} />
                     <Route path="/tools" element={<ToolCatalog />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/subscribe" element={<Subscribe />} />
