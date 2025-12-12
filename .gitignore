@@ -13,10 +13,14 @@ build/
 # Misc
 .DS_Store
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env*
+.dev.vars
+*.pem
+*.key
+*.p12
+*_service_account.json
+cloudrun.env.local
+secret_*.json
 
 # Logs
 npm-debug.log*
