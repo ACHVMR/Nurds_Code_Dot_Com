@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import scribe2 from '../utils/scribe2';
 import { useRole } from '../context/RoleContext';
 import ownerBg from '../assets/owner_bg.png';
@@ -82,6 +82,15 @@ function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const { role, toggleRole, isOwner } = useRole();
+  const navigate = useNavigate();
+
+  // Quick action routes
+  const quickActionRoutes = {
+    'Start new project': '/vibe-ide',
+    'View my apps': '/deploy/overview',
+    'Browse templates': '/vibe/templates',
+    'Get help': '/support'
+  };
 
   const MODULES = isOwner ? MODULES_OWNER : MODULES_USER;
   const primaryColor = isOwner ? '#00D4FF' : '#00FF88';
@@ -388,9 +397,10 @@ function Home() {
 
             {/* Quick Actions */}
             <div className="space-y-2">
-              {['Start new project', 'View my apps', 'Browse templates', 'Get help'].map((action, i) => (
+              {Object.entries(quickActionRoutes).map(([action, route], i) => (
                 <button
                   key={i}
+                  onClick={() => navigate(route)}
                   className="w-full py-2.5 px-4 rounded-lg text-left text-sm font-medium transition-all hover:scale-[1.02]"
                   style={{ 
                     background: 'rgba(0,255,136,0.1)',

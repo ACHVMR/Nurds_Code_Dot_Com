@@ -32,8 +32,8 @@
   --nqno-banana-duration-normal: 300ms;
 
 
-  --bg: #0E0E0E;
-  --surface: #151515;
+  --bg: #000000;
+  --surface: #0a0a0a;
   --text: #F2F7FF;
   --mute: #A8B2C0;
   --accent: #C9A449;
@@ -252,6 +252,7 @@
 /* Modal Backdrop */
 .modal-backdrop {
   background: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 

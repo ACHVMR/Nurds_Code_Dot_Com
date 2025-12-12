@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import Navbar from './components/Navbar'; // Keeping Navbar for top header if needed, or might be redundant? Let's keep for now as Header.
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Pricing from './pages/Pricing';
@@ -8,33 +8,25 @@ import Subscribe from './pages/Subscribe';
 import Success from './pages/Success';
 import Editor from './pages/Editor';
 import CircuitBox from './pages/CircuitBox';
-import TestingLab from './pages/TestingLabV2';
+import TestingLab from './pages/TestingLab';
 import Workbench from './pages/Workbench';
 import AgentBuilderV2 from './pages/AgentBuilderV2';
 import ToolCatalog from './pages/ToolCatalog';
 import NURD from './pages/NURD';
 import { RoleProvider } from './context/RoleContext';
-import SmartSidePanel from './components/SmartSidePanel';
+import { DepartmentProvider } from './context/DepartmentContext'; // New Context
+import DepartmentSidebar from './components/DepartmentSidebar'; // New Sidebar
+import ACHEEVYPanel from './components/ACHEEVYPanel'; // DeepMind Chat Panel
+import VibeIdeShell from './components/ide/VibeIdeShell';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/LoadingScreen';
-
-/**
- * Nurds Code - The IDE Platform
- * Built on Cloudflare Vibecoding SDK
- * 
- * ARCHITECTURE:
- * - Nurds Code = The IDE (this platform)
- * - Deploy Platform = ACHEEVY-centered platform (separate but connected)
- * 
- * MODULES:
- * - Vibe Coding (Editor) - Build full-stack apps with AI
- * - Deploy Platform (Admin) - Manage deployments (links to separate platform)
- * - NURD - Training, workshops, community
- * - Testing Lab (Workbench) - Experiment with OSS APIs
- */
+import Settings from './pages/Settings';
+import Deploy from './pages/Deploy';
+import Vibe from './pages/Vibe';
 
 function App() {
   const [appLoading, setAppLoading] = useState(true);
+  const location = useLocation();
 
   useEffect(() => {
     // Simulate initial app load time
@@ -49,52 +41,64 @@ function App() {
     return <LoadingScreen message="Loading Nurds Code Platform" />;
   }
 
+  // Fullscreen IDE Mode check
+  const isIdeMode = location.pathname.startsWith('/vibe-ide');
+
   return (
     <RoleProvider>
-      <div className="min-h-screen flex flex-col">
-        <SmartSidePanel />
-        <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            {/* Hub - Main Dashboard */}
-            <Route path="/" element={<Home />} />
-            
-            {/* Vibe Coding - IDE */}
-            <Route path="/editor" element={<Editor />} />
-            
-            {/* Deploy Platform - Links to ACHEEVY-centered platform */}
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="owner">
-                <CircuitBox />
-              </ProtectedRoute>
-            } />
-            <Route path="/circuit-box" element={
-              <ProtectedRoute requiredRole="owner">
-                <CircuitBox />
-              </ProtectedRoute>
-            } />
-            
-            {/* NURD - Training & Community */}
-            <Route path="/nurd" element={<NURD />} />
-            
-            {/* Testing Lab / Workbench */}
-            <Route path="/workbench" element={<TestingLab />} />
-            <Route path="/testing-lab" element={<TestingLab />} />
-            
-            {/* Boomer_Angs - Agent Builder */}
-            <Route path="/agents" element={<AgentBuilderV2 />} />
-            
-            {/* Tool Catalog - SmelterOS Tools */}
-            <Route path="/tools" element={<ToolCatalog />} />
-            
-            {/* Pricing & Subscription */}
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/subscribe" element={<Subscribe />} />
-            <Route path="/success" element={<Success />} />
+      <DepartmentProvider>
+        {isIdeMode ? (
+          <Routes location={location}>
+            <Route path="/vibe-ide" element={<VibeIdeShell />} />
           </Routes>
-        </main>
-        <Footer />
-      </div>
+        ) : (
+          <div className="min-h-screen flex bg-black text-white">
+            {/* New Fixed Sidebar */}
+            <DepartmentSidebar />
+            
+            {/* Main Content Area - Pushed to right by 240px */}
+            <main className="grow flex flex-col" style={{ marginLeft: '240px', width: 'calc(100% - 240px)' }}>
+              <Navbar /> {/* Optional: Keep top navbar for global search/actions if desired, or remove if Sidebar handles all */}
+              
+              <div className="grow p-4">
+                <div key={location.pathname} className="animate-fade-in-up h-full">
+                  <Routes location={location}>
+                    {/* 🏠 HOME */}
+                    <Route path="/" element={<Home />} />
+                    
+                    {/* ⚙️ SETTINGS */}
+                    <Route path="/settings/*" element={<Settings />} />
+                    
+                    {/* 🚀 DEPLOY */}
+                    <Route path="/deploy/*" element={<Deploy />} />
+                    
+                    {/* 🧪 TESTING LAB */}
+                    <Route path="/testing-lab/*" element={<TestingLab />} />
+                    
+                    {/* 💻 V.I.B.E. */}
+                    <Route path="/vibe/*" element={<Vibe />} />
+
+                    {/* Legacy / Shared Routes (mapped to departments later) */}
+                    <Route path="/editor" element={<Editor />} />
+                    <Route path="/admin" element={<ProtectedRoute requiredRole="owner"><CircuitBox /></ProtectedRoute>} />
+                    <Route path="/nurd" element={<NURD />} />
+                    <Route path="/agents" element={<AgentBuilderV2 />} />
+                    <Route path="/tools" element={<ToolCatalog />} />
+                    <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/subscribe" element={<Subscribe />} />
+                    <Route path="/success" element={<Success />} />
+                  </Routes>
+                </div>
+              </div>
+              
+              <Footer />
+            </main>
+            
+            {/* Floating ACHEEVY Chat Panel */}
+            <ACHEEVYPanel />
+          </div>
+        )}
+      </DepartmentProvider>
     </RoleProvider>
   );
 }
