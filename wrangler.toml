@@ -1,20 +1,28 @@
-name = "nurdscode-api"
-main = "workers/api.js"
-compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
 
-[env.production]
-name = "nurdscode-api-prod"
+name = "nurds-platform-api"
+main = "src/index.ts"
+compatibility_date = "2025-12-11"
 
+# Bindings to Cloudflare D1 Database
 [[d1_databases]]
 binding = "DB"
-database_name = "nurdscode_db"
-database_id = "your-d1-database-id"
+database_name = "nurds-core-db"
+database_id = "nurds-d1-id-placeholder" # Will be set during init
 
+# Environment Variables (Non-Secret)
 [vars]
-STRIPE_PUBLISHABLE_KEY = ""
-JWT_SECRET = ""
+SUPABASE_PROJECT_URL = "https://lgupmlysczbxluffnadq.supabase.co"
+TAVILY_API_URL = "https://tavily.api.tadata.com/mcp/tavily/scenery-ladle-marketer-bksg47"
 
-[secrets]
-STRIPE_SECRET_KEY = ""
-STRIPE_WEBHOOK_SECRET = ""
+# Agent Runtime Config
+AGENT_RUNTIME_URL = "https://replace-me-with-cloud-run-url.run.app"
+AGENT_RUNTIME_TIMEOUT_MS = 300000
+
+# Secrets (To be added via `wrangler secret put`)
+# - PERPLEXITY_API_KEY
+# - MODAL_API_KEY
+# - PAYPAL_CLIENT_SECRET
+# - STRIPE_SECRET_KEY
+# - RESEND_API_KEY
+# - TELEGRAM_BOT_TOKEN
+# - SUPABASE_SERVICE_ROLE_KEY

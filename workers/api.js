@@ -1,4 +1,8 @@
 import Stripe from 'stripe';
+import { initGemini, answerFast, thinkDeep } from '../src/server/utils/gemini-tools';
+import { FileSearchRAG } from '../src/server/utils/file-search-rag';
+import { SecurityMenderBot } from '../src/server/boomer-angs/security-mender-bot';
+import { DesignBot } from '../src/server/boomer-angs/design-bot';
 
 // JWT utility functions
 function generateToken(userId, secret) {
@@ -32,8 +36,49 @@ function verifyToken(token, secret) {
     }
 
     return decodedPayload;
+    return decodedPayload;
   } catch (error) {
     return null;
+  }
+}
+
+// Agent Runtime Invocation
+async function invokeAgentRuntime(env, jobType, payload, traceId) {
+  if (!env.AGENT_RUNTIME_URL) {
+    throw new Error('AGENT_RUNTIME_URL not configured');
+  }
+
+  const url = `${env.AGENT_RUNTIME_URL}/execute`;
+  const controller = new AbortController();
+  const timeoutMs = parseInt(env.AGENT_RUNTIME_TIMEOUT_MS) || 300000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-agent-runtime-secret': env.AGENT_RUNTIME_SHARED_SECRET || ''
+      },
+      body: JSON.stringify({
+        traceId,
+        jobType,
+        payload
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Agent Runtime failed (${response.status}): ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
 }
 
@@ -44,158 +89,56 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-// LLM Chat Handler - Tier-aware routing
+// LLM Chat Handler - Google DeepMind Integration
 async function chatHandler(request, env) {
-  const body = await request.json();
-  const { message, plan = 'free', history = [] } = body;
-  
-  // Model selection based on plan - Using OpenRouter with Claude Haiku 4.5 as default
-  const modelConfig = {
-    free: { provider: 'openrouter', model: 'anthropic/claude-3.5-haiku:beta' },
-    price_coffee: { provider: 'openrouter', model: 'anthropic/claude-3-5-sonnet' },
-    price_pro: { provider: 'openrouter', model: 'anthropic/claude-3-5-sonnet' },
-    price_enterprise: { provider: 'openrouter', model: 'anthropic/claude-3-5-opus' },
-  };
-  
-  const config = modelConfig[plan] || modelConfig.free;
-  
-  // Cloudflare AI Gateway Configuration
-  const CLOUDFLARE_ACCOUNT_ID = env.CLOUDFLARE_ACCOUNT_ID || 'your_account_id';
-  const GATEWAY_SLUG = env.AI_GATEWAY_SLUG || 'nurdscode-gateway';
-  const AI_GATEWAY_URL = `https://gateway.ai.cloudflare.com/v1/${CLOUDFLARE_ACCOUNT_ID}/${GATEWAY_SLUG}`;
-  
-  // Check if ACHEEVY orchestrator is configured
-  if (env.AGENT_CORE_URL) {
-    try {
-      const proxyResponse = await fetch(`${env.AGENT_CORE_URL}/agent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(env.AGENT_CORE_AUTH ? { 'Authorization': `Bearer ${env.AGENT_CORE_AUTH}` } : {})
-        },
-        body: JSON.stringify({
-          message,
-          history,
-          plan,
-          context: { model: config.model, provider: config.provider }
-        })
-      });
-      
-      if (proxyResponse.ok) {
-        const data = await proxyResponse.json();
-        return new Response(JSON.stringify(data), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-    } catch (error) {
-      console.error('ACHEEVY proxy error, falling back to local:', error);
-    }
-  }
-  
-  // Try OpenRouter (Claude Haiku 4.5) as primary provider
-  if (env.OPENROUTER_API_KEY && env.OPENROUTER_API_KEY !== 'your_openrouter_api_key_here') {
-    try {
-      const baseUrl = env.CLOUDFLARE_ACCOUNT_ID 
-        ? `${AI_GATEWAY_URL}/openrouter/api/v1/chat/completions`
-        : 'https://openrouter.ai/api/v1/chat/completions';
-
-      const openrouterResponse = await fetch(baseUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${env.OPENROUTER_API_KEY}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': env.APP_URL || 'https://nurdscode.com',
-          'X-Title': 'Nurds Code Platform'
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            { 
-              role: 'system', 
-              content: `You are an expert full-stack developer assistant for Nurds Code platform. 
-              
-Your role is to generate complete, production-ready code for Cloudflare Workers applications.
-
-When generating code:
-1. Use modern best practices and clean architecture
-2. Generate COMPLETE files with all imports, exports, and dependencies
-3. Include proper error handling and TypeScript types when applicable
-4. Use Cloudflare Workers APIs (Request, Response, KV, D1, R2, Durable Objects, etc.)
-5. Generate wrangler.toml configuration when needed
-6. Support popular frameworks: React, Next.js, Astro, Vue, Svelte, Remix
-7. Include comments explaining key functionality
-8. Make code ready to deploy with 'wrangler deploy'
-
-Generate full-stack applications that work seamlessly on Cloudflare's global network.`
-            },
-            ...history.slice(-20),
-            { role: 'user', content: message }
-          ],
-          temperature: 0.7,
-          max_tokens: 4096
-        })
-      });
-      
-      if (openrouterResponse.ok) {
-        const data = await openrouterResponse.json();
-        return new Response(JSON.stringify({
-          response: data.choices[0].message.content,
-          model: config.model,
-          provider: 'openrouter-claude',
-          usage: data.usage
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      } else {
-        const errorText = await openrouterResponse.text();
-        console.error('OpenRouter error:', errorText);
-      }
-    } catch (error) {
-      console.error('OpenRouter error:', error);
-    }
-  }
-
-  // Fallback to Hugging Face Inference API (FREE - no key required)
   try {
-    const hfResponse = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        inputs: `<s>[INST] You are a helpful coding assistant for Nurds Code platform. Help users write, debug, and understand code.\n\n${message} [/INST]`,
-        parameters: {
-          max_new_tokens: 2048,
-          temperature: 0.7,
-          return_full_text: false
-        }
-      })
-    });
+    const body = await request.json();
+    const { message, department = 'home', energyMode = 'TEACHER', history = [] } = body;
     
-    const data = await hfResponse.json();
-    
-    // Hugging Face returns array with generated_text or error
-    let responseText = 'Unable to generate response';
-    
-    if (Array.isArray(data) && data[0]?.generated_text) {
-      responseText = data[0].generated_text;
-    } else if (data.error) {
-      // Model is loading, return helpful message
-      responseText = `🚀 AI Model initializing... Please try again in a moment.\n\nYour prompt: "${message}"`;
+    if (!env.GOOGLE_API_KEY) {
+      return new Response(JSON.stringify({ error: 'GOOGLE_API_KEY not configured' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
+
+    const genAI = initGemini(env.GOOGLE_API_KEY);
+    
+    // Construct Prompt based on Department & Energy
+    const systemPrompt = `You are ACHEEVY, the AI orchestrator for Nurds Code.
+Time: ${new Date().toISOString()}
+Department: ${department.toUpperCase()}
+Energy Mode: ${energyMode}
+
+Your goal is to assist the user effectively while embodying the ${energyMode} energy.
+- TEACHER: Guiding, informative, helpful tips.
+- PROFESSIONAL: Concise, clear, efficient.
+- FOCUSED: Minimalist, results-driven.
+- JOVIAL: Creative, encouraging, supportive.
+
+Context:
+${history.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+
+User Question: ${message}
+`;
+
+    // Use Gemini 3.0 Flash (via proxy) for fast response
+    const responseText = await answerFast(genAI, systemPrompt);
     
     return new Response(JSON.stringify({
       response: responseText,
-      model: 'Mistral-7B (Hugging Face)',
-      provider: 'huggingface-free',
-      status: data.error ? 'loading' : 'success'
+      model: env.FAST_LLM_MODEL || 'gemini-3.0-flash',
+      energy: energyMode,
+      department: department
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
+
   } catch (error) {
+    console.error('Gemini chat error:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      response: `Error generating code: ${error.message}\n\nYour prompt: "${message}"`
+      response: `Error: ${error.message}` 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -521,9 +464,127 @@ async function handleRequest(request, env) {
     });
   }
 
-  // Route: Chat (LLM)
+  // Route: Chat (LLM) - ACHEEVY main handler
   if (path === '/api/chat' && request.method === 'POST') {
     return chatHandler(request, env);
+  }
+
+  // Route: Gemini 3.0 Pro (Thinking)
+  if (path === '/api/gemini/think' && request.method === 'POST') {
+    try {
+      const { prompt } = await request.json();
+      const genAI = initGemini(env.GOOGLE_API_KEY);
+      const reasoning = await thinkDeep(genAI, prompt);
+      
+      return new Response(JSON.stringify({
+        reasoning,
+        model: env.REASONING_LLM_MODEL || 'gemini-3.0-pro'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
+  }
+
+  // Route: Gemini 3.0 Flash (Fast)
+  if (path === '/api/gemini/fast' && request.method === 'POST') {
+    try {
+      const { prompt } = await request.json();
+      const genAI = initGemini(env.GOOGLE_API_KEY);
+      const response = await answerFast(genAI, prompt);
+      
+      return new Response(JSON.stringify({
+        response,
+        model: env.FAST_LLM_MODEL || 'gemini-3.0-flash'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
+  }
+
+  // Route: RAG Upload Document
+  if (path === '/api/rag/upload' && request.method === 'POST') {
+    try {
+      const formData = await request.formData();
+      const file = formData.get("file");
+      const name = formData.get("name");
+      const department = formData.get("department") || "general";
+
+      if (!file || !name) {
+        return new Response(JSON.stringify({ error: "Missing file or name" }), { status: 400, headers: corsHeaders });
+      }
+
+      // 1. In a real app involving Google File API, we would upload the file/buffer to Google here.
+      // For this implementation, we will mock the "upload" by storing a reference in Supabase/D1.
+      // Since we don't have the Google File API capability in this environment directly without a proper server-side upload flow (which is complex for Workers),
+      // we will assume the file content is passed to the LLM directly or stored in D1.
+      
+      // Let's store metadata in D1 if available
+      if (env.DB) {
+         await env.DB.prepare(
+          'INSERT INTO rag_documents (name, department, created_at, file_uri) VALUES (?, ?, ?, ?)'
+        ).bind(name, department, new Date().toISOString(), 'mock-uri-' + Date.now()).run();
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "File reference stored (Mock)",
+        file_uri: 'mock-uri-' + Date.now()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
+  }
+
+  // Route: RAG Search
+  if (path === '/api/rag/search' && request.method === 'POST') {
+    try {
+      const { query, department } = await request.json();
+      
+      // 1. Fetch relevant docs from DB
+      let docs = [];
+      if (env.DB) {
+        const result = await env.DB.prepare(
+          'SELECT * FROM rag_documents WHERE department = ? OR department = "general" LIMIT 5'
+        ).bind(department || 'general').all();
+        docs = result.results;
+      }
+
+      // If no docs, basically return null
+      if (!docs || docs.length === 0) {
+        return new Response(JSON.stringify({ answer: "No documentation found for this topic." }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      // 2. Perform RAG Search
+      // Since we mocked the upload, the "fileUri" is fake. 
+      // In a real scenario, we'd pass the real Google File URI to the FileSearchRAG class.
+      // For now, we will simulate the answer or use context if we had the text content.
+      
+      // REAL IMPLEMENTATION CALL (commented out due to mock URI):
+      // const rag = new FileSearchRAG(env.GOOGLE_API_KEY);
+      // const answer = await rag.searchDocs(query, docs[0].file_uri);
+
+      // MOCK RESPONSE for now since we don't have real file connection yet:
+      const answer = `[RAG Search Simulated]\nFound ${docs.length} documents. Based on "${docs[0].name}", here is the answer to "${query}"...`;
+
+      return new Response(JSON.stringify({
+        answer,
+        sources: docs.map(d => d.name)
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+      
+    } catch (e) {
+       return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
   }
 
   // Route: Voice transcription
@@ -557,6 +618,7 @@ async function handleRequest(request, env) {
       const body = await request.json();
       const { projectName, content, files } = body;
       
+      
       // Log the save action (in production, this would persist to KV/D1/R2)
       console.log(`Saved [${projectName || 'Untitled Project'}]`);
       
@@ -565,6 +627,27 @@ async function handleRequest(request, env) {
         message: `Project "${projectName || 'Untitled Project'}" saved successfully`,
         timestamp: new Date().toISOString()
       }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Route: Agent Runtime Execution
+  if (path === '/api/agent/execute' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { jobType, payload } = body;
+      const traceId = crypto.randomUUID();
+      
+      const result = await invokeAgentRuntime(env, jobType, payload, traceId);
+      
+      return new Response(JSON.stringify(result), {
         status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -941,6 +1024,36 @@ async function handleRequest(request, env) {
     }
   }
 
+  // Route: Security Audit (Manual Trigger)
+  if (path === '/api/security/audit' && request.method === 'POST') {
+    try {
+      const { code } = await request.json();
+      const bot = new SecurityMenderBot(env.GOOGLE_API_KEY, env.GITHUB_TOKEN);
+      const report = await bot.auditCode(code || "// No code provided");
+      
+      return new Response(JSON.stringify(report), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
+  }
+
+  // Route: Design Generation (Nano Banana Pro)
+  if (path === '/api/design/generate' && request.method === 'POST') {
+    try {
+      const { prompt, style } = await request.json();
+      const bot = new DesignBot(env.GOOGLE_API_KEY);
+      const result = await bot.generateAsset(prompt, style);
+      
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
+    }
+  }
+
   // Default 404
   return new Response('Not Found', {
     status: 404,
@@ -948,8 +1061,27 @@ async function handleRequest(request, env) {
   });
 }
 
+// Scheduled Task (Cron) - Daily Security Audit
+async function scheduled(event, env, ctx) {
+  console.log("Running Daily CodeMender Security Audit...");
+  // In production, this would fetch the repo, scan it, and auto-PR fixes.
+  // For now, we simulate a scan log.
+  const bot = new SecurityMenderBot(env.GOOGLE_API_KEY, env.GITHUB_TOKEN);
+  // Simulating a scan of a critical file
+  const mockCode = "function login(u,p) { eval(u); }"; // Intentionally vulnerable
+  const report = await bot.auditCode(mockCode);
+  
+  if (report.vulnerabilities?.length > 0) {
+    console.log(`[Security Alert] Found ${report.vulnerabilities.length} issues.`);
+    await bot.createPatchPR("nurds-code/platform", "login.js", report.patchedCode);
+  } else {
+    console.log("[Security Clean] No issues found.");
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     return handleRequest(request, env);
   },
+  scheduled
 };
