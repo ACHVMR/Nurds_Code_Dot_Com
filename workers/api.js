@@ -658,6 +658,152 @@ async function handleRequest(request, env) {
     }
   }
 
+  // Route: Model Garden - List all models
+  if (path === '/api/models' && request.method === 'GET') {
+    const models = {
+      closedSource: {
+        'gpt-4o': { provider: 'openai', name: 'GPT-4o', inputCost: 0.005, outputCost: 0.015, capabilities: ['text', 'vision', 'code'] },
+        'gpt-4o-mini': { provider: 'openai', name: 'GPT-4o Mini', inputCost: 0.00015, outputCost: 0.0006, capabilities: ['text', 'vision', 'code'] },
+        'claude-3-5-sonnet': { provider: 'anthropic', name: 'Claude 3.5 Sonnet', inputCost: 0.003, outputCost: 0.015, capabilities: ['text', 'vision', 'code'] },
+        'claude-3-5-haiku': { provider: 'anthropic', name: 'Claude 3.5 Haiku', inputCost: 0.0008, outputCost: 0.004, capabilities: ['text', 'code'] },
+        'gemini-2.0-flash': { provider: 'google', name: 'Gemini 2.0 Flash', inputCost: 0.0001, outputCost: 0.0004, capabilities: ['text', 'vision', 'audio', 'code'] }
+      },
+      openSource: {
+        'llama-3.3-70b': { provider: 'together', name: 'Llama 3.3 70B', inputCost: 0.0009, outputCost: 0.0009, capabilities: ['text', 'code'] },
+        'deepseek-v3': { provider: 'deepseek', name: 'DeepSeek V3', inputCost: 0.00014, outputCost: 0.00028, capabilities: ['text', 'code'] },
+        'qwen-2.5-72b': { provider: 'together', name: 'Qwen 2.5 72B', inputCost: 0.0009, outputCost: 0.0009, capabilities: ['text', 'code'] }
+      },
+      videoGeneration: {
+        'runway-gen3': { provider: 'runway', name: 'Runway Gen-3', costPerSecond: 0.05 },
+        'luma-dream-machine': { provider: 'luma', name: 'Luma Dream Machine', costPerSecond: 0.04 },
+        'minimax-video-01': { provider: 'minimax', name: 'MiniMax Video-01', costPerSecond: 0.01 }
+      }
+    };
+    
+    return new Response(JSON.stringify(models), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Route: Video Generation (queues job to agent runtime)
+  if (path === '/api/video/generate' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { prompt, provider = 'runway', duration = 5, aspectRatio = '16:9' } = body;
+      
+      // Queue video generation job
+      const jobId = crypto.randomUUID();
+      
+      // In production, this would queue to agent-runtime via invokeAgentRuntime
+      // For now, return a mock job
+      return new Response(JSON.stringify({
+        jobId,
+        status: 'queued',
+        prompt,
+        provider,
+        duration,
+        aspectRatio,
+        estimatedCost: duration * (provider === 'runway' ? 0.05 : 0.02),
+        estimatedTime: `${duration * 8} seconds`,
+        createdAt: new Date().toISOString()
+      }), {
+        status: 202,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Route: App Builder - Estimate costs
+  if (path === '/api/builder/estimate' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { description, model = 'claude-3-5-sonnet' } = body;
+      
+      // Detect complexity and features
+      const wordCount = description.split(/\s+/).length;
+      const features = [];
+      
+      if (/auth|login/i.test(description)) features.push({ name: 'Authentication', tokens: 15000 });
+      if (/payment|stripe/i.test(description)) features.push({ name: 'Payments', tokens: 20000 });
+      if (/database|supabase/i.test(description)) features.push({ name: 'Database', tokens: 12000 });
+      if (/dashboard|admin/i.test(description)) features.push({ name: 'Dashboard', tokens: 25000 });
+      if (/ai|chat|llm/i.test(description)) features.push({ name: 'AI Integration', tokens: 15000 });
+      
+      const baseTokens = wordCount * 100;
+      const featureTokens = features.reduce((sum, f) => sum + f.tokens, 0);
+      const totalTokens = (baseTokens + featureTokens) * 3; // 3 iterations
+      
+      // Cost calculation based on model
+      const modelCosts = {
+        'gpt-4o': 0.015,
+        'claude-3-5-sonnet': 0.015,
+        'deepseek-v3': 0.00028
+      };
+      
+      const costPerToken = modelCosts[model] || 0.01;
+      const totalCost = (totalTokens / 1000) * costPerToken;
+      
+      return new Response(JSON.stringify({
+        estimatedTokens: totalTokens,
+        totalCost: Math.round(totalCost * 100) / 100,
+        estimatedTime: totalTokens < 50000 ? '5-10 minutes' : totalTokens < 150000 ? '15-30 minutes' : '1-2 hours',
+        features: features.map(f => f.name),
+        model
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
+  // Route: App Builder - Build full-stack app
+  if (path === '/api/builder/build' && request.method === 'POST') {
+    try {
+      const body = await request.json();
+      const { description, model = 'claude-3-5-sonnet', config = {} } = body;
+      
+      // Create build job
+      const buildId = crypto.randomUUID();
+      
+      // In production, this would stream to frontend and use agent-runtime
+      return new Response(JSON.stringify({
+        buildId,
+        status: 'building',
+        description,
+        model,
+        config,
+        phases: [
+          { id: 'analysis', name: 'Analyzing Requirements', status: 'pending' },
+          { id: 'architecture', name: 'Designing Architecture', status: 'pending' },
+          { id: 'scaffolding', name: 'Creating Structure', status: 'pending' },
+          { id: 'components', name: 'Building Components', status: 'pending' },
+          { id: 'styling', name: 'Applying Styles', status: 'pending' },
+          { id: 'integration', name: 'Integrating Services', status: 'pending' },
+          { id: 'testing', name: 'Testing', status: 'pending' },
+          { id: 'deployment', name: 'Preparing Deploy', status: 'pending' }
+        ],
+        createdAt: new Date().toISOString()
+      }), {
+        status: 202,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+  }
+
   // Route: Create checkout session
   if (path === '/api/create-checkout-session' && request.method === 'POST') {
     try {

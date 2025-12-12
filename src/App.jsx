@@ -23,6 +23,7 @@ import LoadingScreen from './components/LoadingScreen';
 import Settings from './pages/Settings';
 import Deploy from './pages/Deploy';
 import Vibe from './pages/Vibe';
+import Build from './pages/Build';
 
 function App() {
   const [appLoading, setAppLoading] = useState(true);
@@ -77,6 +78,9 @@ function App() {
                     
                     {/* 💻 V.I.B.E. */}
                     <Route path="/vibe/*" element={<Vibe />} />
+                    
+                    {/* 🔨 BUILD */}
+                    <Route path="/build/*" element={<Build />} />
 
                     {/* Legacy / Shared Routes (mapped to departments later) */}
                     <Route path="/editor" element={<Editor />} />
