@@ -1,0 +1,495 @@
+# 🚀 AchieveMore Quick Reference Card
+**Print this. Keep at your desk. Reference daily.**
+
+---
+
+## DAILY CHECKLIST (5 min every morning)
+
+```bash
+#!/bin/bash
+# Morning routine
+./scripts/morning-standup.sh | tee standup-$(date +%Y%m%d).log
+
+# Check: uptime, errors, costs, deployments
+# Share: Log with team in #engineering-standup
+```
+
+**What to look for:**
+- ✅ Uptime > 99.9%?
+- ✅ Error rate < 0.1%?
+- ✅ Cost reasonable for requests?
+- ❌ Any recent deployments? Any failed?
+
+---
+
+## EMERGENCY RESPONSE (When Something Breaks)
+
+**Step 1: Determine Severity**
+```
+Is it affecting users? P1 (Critical)
+Is it affecting internal systems? P2 (High)
+Is it something we should fix soon? P3 (Medium)
+```
+
+**Step 2: Find Your Answer**
+| Symptom | Solution |
+|---------|----------|
+| High latency (>5s) | Terminal Manual § 7.3 |
+| 500 errors | Terminal Manual § 7 |
+| Database connection lost | Terminal Manual § 2.1 |
+| Temporal server down | Terminal Manual § 2.2 |
+| Out of memory | Terminal Manual § 2.3 |
+| Rate limit hit | Terminal Manual § 2.4 |
+| Don't know what's wrong | Terminal Manual § 1.1 (status) |
+
+**Step 3: Follow Steps Exactly**
+- Don't improvise
+- If unclear, escalate to senior engineer
+- Document the fix
+
+**Step 4: Create Incident Report**
+```bash
+cat > /incidents/incident-$(date +%Y%m%d-%H%M%S).md << 'EOF'
+## Incident: [Name]
+**Time:** $(date)
+**Severity:** P1/P2/P3
+**Duration:** X minutes
+**Cause:** [Root cause]
+**Fix:** [What you did]
+**Prevention:** [How to avoid next time]
+EOF
+```
+
+---
+
+## CODE DEPLOYMENT (Every deployment)
+
+**Follow these steps EXACTLY:**
+
+```bash
+# 1. Feature branch
+git checkout -b feature/my-feature
+
+# 2. Make changes + test locally
+pytest tests/ -v
+
+# 3. Build & push
+docker build -t achievemore/ii-agent:my-feature .
+docker tag achievemore/ii-agent:my-feature \
+    gcr.io/$GCP_PROJECT_ID/ii-agent:my-feature
+docker push gcr.io/$GCP_PROJECT_ID/ii-agent:my-feature
+
+# 4. Deploy to staging
+gcloud run deploy ii-agent-staging \
+    --image gcr.io/$GCP_PROJECT_ID/ii-agent:my-feature
+sleep 10
+
+# 5. Test staging
+curl -X POST https://ii-agent-staging-xxx.run.app/test/resume-optimizer \
+    -H "Authorization: Bearer ${STAGING_API_KEY}" \
+    -d '{"resume_url":"test.pdf"}'
+
+# 6. Deploy to production (via CLI - safest)
+achievemore deploy production
+
+# 7. Verify
+achievemore status | grep ii-agent
+
+# 8. Commit code
+git add -A && git commit -m "feature: [description]"
+git push origin feature/my-feature
+# Create PR on GitHub
+```
+
+**If anything fails at any step:**
+1. STOP (don't continue)
+2. Rollback to previous version (if in production)
+3. Debug in staging
+4. Try again
+
+---
+
+## ORACLE ROUTING DECISIONS
+
+**How to test Oracle:**
+```bash
+achievemore oracle "your request" app-id
+
+# Example:
+achievemore oracle "optimize my resume" resume-optimizer
+
+# Output shows:
+# - Model chosen
+# - Temperature & max_tokens
+# - Estimated cost
+# - Success rate history
+# - From cache? (yes/no)
+```
+
+**If routing seems wrong:**
+- Check cache hit rate (Terminal Manual § 5)
+- View routing rules: `cat /oracle/routing/app-id.json`
+- Update if needed (Terminal Manual § 5)
+
+---
+
+## COST TRACKING (Weekly, Friday 5pm)
+
+```bash
+# Run weekly cost analysis
+achievemore logs all 1000 | grep "cost" | \
+    awk '{sum += $NF} END {print "Total cost: $" sum}'
+
+# Check by model
+sudo -u postgres psql -d achievemore_db << 'EOF'
+SELECT model, ROUND(SUM(cost)::numeric, 2) as weekly_cost
+FROM model_invocations
+WHERE created_at > NOW() - INTERVAL '7 days'
+GROUP BY model
+ORDER BY weekly_cost DESC;
+EOF
+
+# Monthly trend
+# If cost rising:
+# 1. Check which models are expensive
+# 2. Update routing in Terminal Manual § 5
+# 3. Increase cache TTL (cheaper)
+# 4. Reduce token limits (faster + cheaper)
+```
+
+---
+
+## PERFORMANCE ISSUES (If p99 latency > 5 seconds)
+
+**Quick diagnostics:**
+
+```bash
+# 1. Check system resources
+free -h          # Memory
+df -h            # Disk
+top              # CPU (q to quit)
+
+# 2. Check database
+sudo -u postgres psql -d achievemore_db << 'EOF'
+SELECT query, calls, mean_exec_time FROM pg_stat_statements 
+ORDER BY mean_exec_time DESC LIMIT 5;
+EOF
+
+# 3. Check model providers
+# Visit: 
+# - https://status.openai.com (OpenAI)
+# - https://www.google.com/appsstatus (Google)
+# - https://status.anthropic.com (Anthropic)
+
+# 4. Profile a request
+curl -v http://localhost:8000/api/resume/optimize \
+    -H "X-Debug: true" | tee request.log
+
+# 5. Fix based on findings
+# Database slow? Add index (Platform DevOps § 10)
+# Memory high? Reduce cache size
+# Model slow? Switch provider
+```
+
+---
+
+## MONITORING DASHBOARDS
+
+**Check these every 2 hours when on-call:**
+
+```bash
+# System status
+achievemore status
+
+# Detailed metrics
+achievemore metrics
+
+# Recent errors (top 20)
+achievemore logs all 100 | grep ERROR | head -20
+
+# Current workflows (in progress)
+curl http://localhost:8081/api/v1/workflows \
+    -H "Content-Type: application/json" | jq '.'
+```
+
+**Set alerts for:**
+- CPU > 80% for 5+ minutes
+- Memory > 85% for 5+ minutes
+- Error rate > 1% for 10+ minutes
+- Latency p99 > 10 seconds for 10+ minutes
+
+---
+
+## TROUBLESHOOTING FLOWCHART
+
+```
+Something broken?
+    ↓
+Can I restart the service?
+    ├─ YES → Try: achievemore scale 0 && sleep 5 && achievemore scale 50
+    ├─ Still broken? → Check Terminal Manual § 2
+    └─ Database issue? → Check Terminal Manual § 2.1
+    
+Is data affected?
+    ├─ YES (users lost resume) → Page senior eng immediately
+    └─ NO → Less urgent, debug normally
+
+Is it 3am and I'm on-call?
+    ├─ YES → Fix only if critical (P1)
+    ├─ Page-able? → Wake up senior eng
+    └─ Not critical? → Document + hand off in morning standup
+```
+
+---
+
+## IMPORTANT NUMBERS TO KNOW
+
+```
+Baseline Performance (normal conditions):
+├─ Requests/second: 115 (1M users)
+├─ Average latency: 2-3 seconds
+├─ p99 latency: < 5 seconds
+├─ Success rate: > 99%
+└─ Cache hit rate: > 30%
+
+Cost Metrics:
+├─ LLM cost per request: $0.00015 (with optimization)
+├─ Compute cost per request: $0.00004
+├─ Total cost per request: $0.00019
+├─ Monthly total cost: $44,745
+└─ Cost per user/month: $0.045
+
+Scaling Indicators:
+├─ If p99 > 5s: Scale to 100 workers
+├─ If p99 > 10s: Scale to 150 workers (and investigate)
+├─ If error rate > 1%: Page senior eng
+├─ If cost > $50K/month: Optimize routing + caching
+```
+
+---
+
+## KEY DOCUMENTS TO REFERENCE
+
+**Bookmark these files:**
+
+```
+MOST USED:
+├─ Terminal Operations Manual (40 pages)
+│  └─ Daily use, incident response
+│  └─ Location: /opt/achievemore/docs/terminal-ops-manual.md
+│
+WHEN DESIGNING:
+├─ Platform DevOps Guide (80 pages)
+│  └─ Architecture, scaling, cost planning
+│  └─ Location: /opt/achievemore/docs/platform-devops-guide.md
+│
+IF STUCK:
+├─ Documentation Guide (25 pages)
+│  └─ How to find answers, decision tree
+│  └─ Location: /opt/achievemore/docs/documentation-guide.md
+│
+REFERENCE:
+├─ This Quick Card (print it!)
+│  └─ Location: /opt/achievemore/docs/quick-reference.md
+```
+
+---
+
+## PHONE TREE (Who to Call When)
+
+```
+All questions:
+└─ engineering-lead@achievemore.com
+
+On-call rotation (check Slack):
+├─ Mon-Thurs: [Name]
+├─ Fri: [Name]
+├─ Weekend: [Name]
+└─ On-call has: phone, Slack, email
+
+If on-call person doesn't respond (5 min):
+└─ Call CTO phone: [number]
+
+If CTO doesn't respond:
+└─ Call VP Engineering: [number]
+
+Escalation path:
+┌─────────────┐
+│ On-Call Eng │
+│ (5 min)     │
+└──────┬──────┘
+       ↓
+┌─────────────┐
+│ Tech Lead   │
+│ (10 min)    │
+└──────┬──────┘
+       ↓
+┌─────────────┐
+│ CTO         │
+│ (15 min)    │
+└─────────────┘
+```
+
+---
+
+## BEFORE YOU GO ON-CALL
+
+**Checklist (must complete):**
+
+- [ ] Read Terminal Manual § 2 (Emergency procedures) - MEMORIZE KEY ONES
+- [ ] Read Terminal Manual § 7 (Troubleshooting)
+- [ ] Run through 5 incident scenarios with senior eng
+- [ ] Know phone numbers (above)
+- [ ] Know escalation path (above)
+- [ ] Have laptop charger + laptop fully charged
+- [ ] Have quiet place to work (no distractions)
+- [ ] Have water + snacks (might be long)
+- [ ] Put Slack on phone
+- [ ] Set up calendar blocking (so no meetings)
+
+---
+
+## THE GOLDEN RULES
+
+1. **Always follow Terminal Manual § 1.2 when deploying**
+   - Don't skip steps
+   - Don't merge to main without this
+
+2. **Always escalate if unsure**
+   - Better to wake up senior eng than cause outage
+   - It's literally their job to help
+
+3. **Always document everything**
+   - Incident report (even if resolved quick)
+   - Update to Terminal Manual (if new procedure)
+   - Slack post (so team knows what happened)
+
+4. **Always test in staging first**
+   - Never deploy directly to production
+   - Always verify staging works
+
+5. **Always check Terminal Manual § 2 first**
+   - Before doing anything else
+   - 95% of incidents are in there
+
+6. **Always optimize for user impact**
+   - Smallest fix to get users back
+   - Debug deeper afterward
+   - Temporary fix is better than no fix
+
+7. **Always be ready to rollback**
+   - Keep previous version in mind
+   - Know how to deploy previous
+   - Do it fast if needed
+
+---
+
+## LAST 10 COMMITS
+
+Check what was recently deployed:
+
+```bash
+git log --oneline -10
+# Shows recent changes
+# If something broke, rollback to commit before the break:
+git revert HEAD~1  # Revert most recent commit
+```
+
+---
+
+## QUICK COMMANDS (Copy & Paste)
+
+**Morning standup:**
+```bash
+./scripts/morning-standup.sh
+```
+
+**Check status:**
+```bash
+achievemore status
+```
+
+**View logs:**
+```bash
+achievemore logs all 100 | grep ERROR | tail -20
+```
+
+**Scale workers:**
+```bash
+achievemore scale 100
+```
+
+**Test Oracle routing:**
+```bash
+achievemore oracle "optimize my resume" resume-optimizer
+```
+
+**Deploy to staging:**
+```bash
+docker build -t test:latest . && docker run test:latest npm test
+```
+
+**Deploy to production:**
+```bash
+achievemore deploy production
+```
+
+**Check cost:**
+```bash
+sudo -u postgres psql -d achievemore_db -c \
+    "SELECT SUM(cost) FROM model_invocations WHERE created_at > NOW() - INTERVAL '1 day';"
+```
+
+---
+
+## WHAT TO TRACK IN YOUR NOTEBOOK (If you're on-call)
+
+```
+Date: ___________
+Shift: 9am - 5pm
+
+Major Events:
+1. _________________ (time: ____, duration: ____)
+2. _________________ (time: ____, duration: ____)
+
+Metrics snapshot (from morning standup):
+├─ Uptime: _____%
+├─ Error rate: _____%
+├─ Daily cost: $______
+└─ Requests: ________
+
+Incidents (if any):
+├─ Incident 1: _________________ (resolved: yes/no)
+└─ Incident 2: _________________ (resolved: yes/no)
+
+Notes for tomorrow:
+- ________________________
+- ________________________
+- ________________________
+
+Sign-off time: ______
+Handoff engineer: ___________________________
+```
+
+---
+
+## REMEMBER
+
+**You are not alone.**
+
+- Terminal Manual has answers to 95% of issues
+- Senior engineers are available to help
+- It's better to ask than to guess
+- Every incident is learning opportunity
+- Everyone on the team has been where you are
+
+**You've got this. 🚀**
+
+---
+
+**Keep this card visible while on-call.**  
+**Refer to it constantly.**  
+**Update it when you learn something new.**
+
+Last Updated: January 5, 2026  
+Questions? engineering-lead@achievemore.com

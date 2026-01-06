@@ -1,0 +1,161 @@
+/**
+ * Deploy - Placeholder Page CSS
+ */
+
+.deploy-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0A0A0A;
+}
+
+.deploy-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #111;
+  border-bottom: 1px solid #282828;
+}
+
+.deploy-nav .nav-logo {
+  display: flex;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-right: 24px;
+}
+
+.deploy-nav .nav-logo span { color: #fff; }
+.deploy-nav .nav-logo .accent { color: #00FF41; }
+
+.deploy-nav .nav-links {
+  display: flex;
+  gap: 8px;
+}
+
+.deploy-nav .nav-links a {
+  padding: 8px 14px;
+  border-radius: 6px;
+  color: #666;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.deploy-nav .nav-links a:hover {
+  background: #1A1A1A;
+  color: #999;
+}
+
+.deploy-nav .nav-links a.active {
+  background: #1A1A1A;
+  color: #00FF41;
+}
+
+.deploy-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.deploy-coming-soon {
+  text-align: center;
+  max-width: 500px;
+}
+
+.deploy-coming-soon h1 {
+  color: #00FF41;
+  font-size: 48px;
+  margin: 24px 0 8px;
+}
+
+.deploy-coming-soon .subtitle {
+  color: #888;
+  font-size: 18px;
+  margin: 0 0 32px;
+}
+
+.description {
+  margin-bottom: 32px;
+}
+
+.description p {
+  color: #666;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.deploy-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #111;
+  border: 1px solid #282828;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.target:hover {
+  border-color: #3A3A3A;
+}
+
+.target .icon {
+  font-size: 24px;
+}
+
+.target span:last-child {
+  color: #888;
+  font-size: 14px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  padding: 14px 28px;
+  background: #00FF41;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+}
+
+/* Dot Grid */
+.dot-grid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dot-grid .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00FF41;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dot-grid .dot:nth-child(2) { animation-delay: 0.2s; }
+.dot-grid .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}

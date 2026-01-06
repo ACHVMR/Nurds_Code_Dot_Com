@@ -1,28 +1,23 @@
-
 name = "nurds-platform-api"
 main = "src/index.ts"
 compatibility_date = "2025-12-11"
 
-# Bindings to Cloudflare D1 Database
 [[d1_databases]]
 binding = "DB"
 database_name = "nurds-core-db"
-database_id = "nurds-d1-id-placeholder" # Will be set during init
+database_id = "nurds-d1-id-placeholder"
 
-# Environment Variables (Non-Secret)
 [vars]
+# Cloudflare AI Gateway
+AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT_ID/nurdscode-gateway"
+
+# GCP Integration
+AGENT_RUNTIME_URL = "https://acheevy-runtime-xxx.run.app"
+VERTEX_PROJECT_ID = "nurds-code-gcp-prod"
+VERTEX_LOCATION = "us-central1"
+
+# Supabase (if using pgvector for VL-JEPA)
 SUPABASE_PROJECT_URL = "https://lgupmlysczbxluffnadq.supabase.co"
-TAVILY_API_URL = "https://tavily.api.tadata.com/mcp/tavily/scenery-ladle-marketer-bksg47"
 
-# Agent Runtime Config
-AGENT_RUNTIME_URL = "https://replace-me-with-cloud-run-url.run.app"
+# Agent timeouts
 AGENT_RUNTIME_TIMEOUT_MS = 300000
-
-# Secrets (To be added via `wrangler secret put`)
-# - PERPLEXITY_API_KEY
-# - MODAL_API_KEY
-# - PAYPAL_CLIENT_SECRET
-# - STRIPE_SECRET_KEY
-# - RESEND_API_KEY
-# - TELEGRAM_BOT_TOKEN
-# - SUPABASE_SERVICE_ROLE_KEY

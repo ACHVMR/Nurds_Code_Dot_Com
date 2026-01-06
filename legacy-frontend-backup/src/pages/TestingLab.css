@@ -1,0 +1,269 @@
+/**
+ * Testing Lab - Prompt Interface with Dots Theme
+ */
+
+.testing-lab {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #0A0A0A;
+}
+
+/* Navigation */
+.lab-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  background: #111;
+  border-bottom: 1px solid #282828;
+}
+
+.lab-nav .nav-logo {
+  display: flex;
+  gap: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  margin-right: 24px;
+}
+
+.lab-nav .nav-logo span { color: #fff; }
+.lab-nav .nav-logo .accent { color: #00FF41; }
+
+.lab-nav .nav-links {
+  display: flex;
+  gap: 8px;
+}
+
+.lab-nav .nav-links a {
+  padding: 8px 14px;
+  border-radius: 6px;
+  color: #666;
+  font-size: 13px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.lab-nav .nav-links a:hover {
+  background: #1A1A1A;
+  color: #999;
+}
+
+.lab-nav .nav-links a.active {
+  background: #1A1A1A;
+  color: #00FF41;
+}
+
+/* Content */
+.lab-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  width: 100%;
+}
+
+.lab-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.lab-header h1 {
+  color: #00FF41;
+  font-size: 32px;
+  margin: 16px 0 8px;
+}
+
+.lab-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Dot Grid */
+.dot-grid {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.dot-grid .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00FF41;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.dot-grid .dot:nth-child(2) { animation-delay: 0.2s; }
+.dot-grid .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* Results Area */
+.results-area {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 24px;
+}
+
+.empty-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.empty-results h3 {
+  color: #fff;
+  font-size: 20px;
+  margin: 0 0 8px;
+}
+
+.empty-results p {
+  color: #666;
+}
+
+/* Result Items */
+.result-item {
+  margin-bottom: 16px;
+}
+
+.user-prompt {
+  background: #1A1A1A;
+  padding: 16px 20px;
+  border-radius: 12px;
+  color: #fff;
+  margin-left: 20%;
+}
+
+.test-result {
+  background: #111;
+  border: 1px solid #282828;
+  border-radius: 12px;
+  padding: 20px;
+  margin-right: 20%;
+}
+
+.test-result.passed {
+  border-color: #1A3A1A;
+}
+
+.test-result.failed {
+  border-color: #3A1A1A;
+}
+
+.result-header {
+  margin-bottom: 12px;
+}
+
+.result-status {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.test-result.passed .result-status { color: #00FF41; }
+.test-result.failed .result-status { color: #FF4444; }
+
+.result-details {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #888;
+}
+
+.detail-line {
+  padding: 4px 0;
+}
+
+/* Running Indicator */
+.running-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  color: #888;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #282828;
+  border-top-color: #00FF41;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Prompt Form */
+.lab-prompt-form {
+  margin-top: auto;
+}
+
+.lab-prompt-form .prompt-box {
+  position: relative;
+}
+
+.lab-prompt-form textarea {
+  width: 100%;
+  padding: 20px 60px 20px 24px;
+  background: #161616;
+  border: 2px solid #282828;
+  border-radius: 16px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  resize: none;
+  min-height: 80px;
+  transition: all 0.2s ease;
+}
+
+.lab-prompt-form textarea:focus {
+  outline: none;
+  border-color: #00FF41;
+  box-shadow: 0 0 30px rgba(0, 255, 65, 0.2);
+}
+
+.lab-prompt-form textarea::placeholder {
+  color: #555;
+}
+
+.lab-prompt-form button {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 48px;
+  height: 48px;
+  background: #00FF41;
+  border: none;
+  border-radius: 12px;
+  color: #000;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lab-prompt-form button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+}
+
+.lab-prompt-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
