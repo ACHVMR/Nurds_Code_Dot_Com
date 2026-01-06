@@ -3,9 +3,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import '../theme/app_theme.dart';
+import '../services/api_service.dart';
 
 // --- State Management ---
-final toolStateProvider = StateProvider.family<bool, String>((ref, id) => false);
+// Single source of truth for all tools
+final settingsProvider = StateProvider<Map<String, bool>>((ref) => {
+  "11labs": false,
+  "12labs": false,
+  "sam2": false,
+  "midjourney": false,
+  "runway": false,
+});
 
 class CircuitBoxPanel extends ConsumerWidget {
   const CircuitBoxPanel({super.key});
@@ -46,7 +54,8 @@ class CircuitBoxPanel extends ConsumerWidget {
   }
 
   Widget _buildToggle(WidgetRef ref, String id, String label) {
-    final isActive = ref.watch(toolStateProvider(id));
+    final settings = ref.watch(settingsProvider);
+    final isActive = settings[id] ?? false;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -77,8 +86,13 @@ class CircuitBoxPanel extends ConsumerWidget {
                 activeTrackColor: LoveArtTheme.neonTeal.withOpacity(0.3),
                 inactiveThumbColor: Colors.grey,
                 onChanged: (val) {
-                  ref.read(toolStateProvider(id).notifier).state = val;
-                  // TODO: Trigger Cloudflare API update here
+                  // Update local state
+                  final newSettings = Map<String, bool>.from(settings);
+                  newSettings[id] = val;
+                  ref.read(settingsProvider.notifier).state = newSettings;
+                  
+                  // Sync with backend
+                  ApiService().updateSettings(newSettings);
                 },
               ),
             ],

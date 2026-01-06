@@ -4,9 +4,25 @@ import 'package:glassmorphism/glassmorphism.dart';
 import '../theme/app_theme.dart';
 import '../widgets/circuit_box_panel.dart';
 import '../widgets/glitch_text.dart';
+import '../services/agent_stream_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OwnerDashboard extends StatelessWidget {
+class OwnerDashboard extends ConsumerStatefulWidget {
   const OwnerDashboard({super.key});
+
+  @override
+  ConsumerState<OwnerDashboard> createState() => _OwnerDashboardState();
+}
+
+class _OwnerDashboardState extends ConsumerState<OwnerDashboard> {
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to the agent stream on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(agentLogsProvider.notifier).startListening();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +51,7 @@ class OwnerDashboard extends StatelessWidget {
                       _buildHeader(),
                       const SizedBox(height: 40),
                       Expanded(
-                        child: _buildCentralConsole(),
+                        child: _buildCentralConsole(ref),
                       ),
                     ],
                   ),
@@ -85,7 +101,9 @@ class OwnerDashboard extends StatelessWidget {
     ).animate().fadeIn(duration: 1.seconds).slideX(begin: -0.1, end: 0);
   }
 
-  Widget _buildCentralConsole() {
+  Widget _buildCentralConsole(WidgetRef ref) {
+    final logs = ref.watch(agentLogsProvider);
+
     return GlassmorphicContainer(
       width: double.infinity,
       height: double.infinity,
@@ -112,13 +130,12 @@ class OwnerDashboard extends StatelessWidget {
             ),
             const Divider(color: Colors.white10),
             Expanded(
-              child: ListView(
-                children: [
-                   _buildLogItem("> INITIALIZING NEURAL_SWARM..."),
-                   _buildLogItem("> CONNECTING TO CLOUDFLARE_EDGE..."),
-                   _buildLogItem("> UPLINK ESTABLISHED."),
-                   _buildLogItem("> READY FOR TARGET_BUILD."),
-                ],
+              child: ListView.builder(
+                itemCount: logs.length,
+                itemBuilder: (context, index) {
+                  final log = logs[index];
+                  return _buildLogItem("[${log.agent.toUpperCase()}] > ${log.message}");
+                },
               ),
             ),
           ],
