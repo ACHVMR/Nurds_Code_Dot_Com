@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:glassmorphism/glassmorphism.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'theme/app_theme.dart';
-import 'widgets/circuit_box_panel.dart';
+import 'screens/owner_dashboard.dart';
+import 'screens/user_dashboard.dart';
 
 void main() {
   runApp(const ProviderScope(child: MyApp()));
@@ -18,7 +19,12 @@ class MyApp extends StatelessWidget {
       title: 'Nurds Code - V.I.B.E.',
       theme: LoveArtTheme.theme,
       debugShowCheckedModeBanner: false,
-      home: const SplitLandingScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplitLandingScreen(),
+        '/learning-hub': (context) => const UserDashboard(),
+        '/development-platform': (context) => const OwnerDashboard(),
+      },
     );
   }
 }
@@ -31,7 +37,7 @@ class SplitLandingScreen extends StatelessWidget {
     return Scaffold(
       body: Row(
         children: [
-          // LEFT SIDE: LEARNING HUB (USER) | Pink/Purple Vibe
+          // LEFT SIDE: LEARNING HUB (USER)
           Expanded(
             child: _buildPanel(
               context,
@@ -39,25 +45,19 @@ class SplitLandingScreen extends StatelessWidget {
               subtitle: "Start Learning",
               imagePath: "assets/images/user_bg.png",
               accentColor: Colors.purpleAccent,
-              onTap: () {
-                // Navigate to Learning Hub
-              },
+              onTap: () => Navigator.of(context).pushNamed('/learning-hub'),
             ),
           ),
           
-          // RIGHT SIDE: DEVELOPMENT PLATFORM (OWNER) | Teal/Blue Vibe
+          // RIGHT SIDE: DEVELOPMENT PLATFORM (OWNER)
           Expanded(
             child: _buildPanel(
               context,
               title: "NURDS CODE",
               subtitle: "Start Building",
-              imagePath: "assets/images/owner_bg.png", // Fallback if missing
+              imagePath: "assets/images/owner_bg.png",
               accentColor: LoveArtTheme.neonTeal,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => const OwnerDashboard(),
-                ));
-              },
+              onTap: () => Navigator.of(context).pushNamed('/development-platform'),
             ),
           ),
         ],
@@ -79,9 +79,9 @@ class SplitLandingScreen extends StatelessWidget {
         Image.asset(
           imagePath,
           fit: BoxFit.cover,
-          errorBuilder: (c, o, s) => Container(color: Colors.black), // Fallback
+          errorBuilder: (c, o, s) => Container(color: Colors.black),
         ).animate(onPlay: (c) => c.repeat(reverse: true))
-         .scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05), duration: 10.seconds),
+         .scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05), duration: 20.seconds),
 
         // Gradient Overlay
         Container(
@@ -91,7 +91,7 @@ class SplitLandingScreen extends StatelessWidget {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.black.withOpacity(0.3),
-                Colors.black.withOpacity(0.8),
+                Colors.black.withOpacity(0.9),
               ],
             ),
           ),
@@ -115,56 +115,42 @@ class SplitLandingScreen extends StatelessWidget {
                   title,
                   style: LoveArtTheme.theme.textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.w900,
+                    fontSize: 40,
                     shadows: [Shadow(color: accentColor, blurRadius: 20)],
                   ),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: onTap,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                    textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                const SizedBox(height: 30),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(color: accentColor.withOpacity(0.3), blurRadius: 15, spreadRadius: 2),
+                        ],
+                      ),
+                      child: Text(
+                        subtitle.toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
                   ),
-                  child: Text(subtitle.toUpperCase()),
                 ),
               ],
             ),
           ),
         ),
       ],
-    );
-  }
-}
-
-class OwnerDashboard extends StatelessWidget {
-  const OwnerDashboard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-           Positioned.fill(
-            child: Image.asset(
-              "assets/images/owner_bg.png",
-              fit: BoxFit.cover,
-               errorBuilder: (c, o, s) => Container(color: const Color(0xFF0A0E17)),
-            ),
-          ),
-          const Row(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Text("PLATFORM ONLINE", style: TextStyle(color: Colors.white, fontSize: 40)),
-                ),
-              ),
-              CircuitBoxPanel(),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
