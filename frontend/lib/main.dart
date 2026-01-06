@@ -35,33 +35,49 @@ class SplitLandingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          // LEFT SIDE: LEARNING HUB (USER)
-          Expanded(
-            child: _buildPanel(
-              context,
-              title: "V.I.B.E. ACADEMY",
-              subtitle: "Start Learning",
-              imagePath: "assets/images/user_bg.png",
-              accentColor: Colors.purpleAccent,
-              onTap: () => Navigator.of(context).pushNamed('/learning-hub'),
-            ),
-          ),
-          
-          // RIGHT SIDE: DEVELOPMENT PLATFORM (OWNER)
-          Expanded(
-            child: _buildPanel(
-              context,
-              title: "NURDS CODE",
-              subtitle: "Start Building",
-              imagePath: "assets/images/owner_bg.png",
-              accentColor: LoveArtTheme.neonTeal,
-              onTap: () => Navigator.of(context).pushNamed('/development-platform'),
-            ),
-          ),
-        ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 900) {
+            // Desktop Layout
+            return Row(
+              children: [
+                Expanded(child: _buildLeftPanel(context)),
+                Expanded(child: _buildRightPanel(context)),
+              ],
+            );
+          } else {
+            // Mobile Layout
+            return Column(
+              children: [
+                Expanded(child: _buildLeftPanel(context)),
+                Expanded(child: _buildRightPanel(context)),
+              ],
+            );
+          }
+        },
       ),
+    );
+  }
+
+  Widget _buildLeftPanel(BuildContext context) {
+    return _buildPanel(
+      context,
+      title: "V.I.B.E. ACADEMY",
+      subtitle: "Start Learning",
+      imagePath: "assets/images/user_bg.png",
+      accentColor: Colors.purpleAccent,
+      onTap: () => Navigator.of(context).pushNamed('/learning-hub'),
+    );
+  }
+
+  Widget _buildRightPanel(BuildContext context) {
+    return _buildPanel(
+      context,
+      title: "NURDS CODE",
+      subtitle: "Start Building",
+      imagePath: "assets/images/owner_bg.png",
+      accentColor: LoveArtTheme.neonTeal,
+      onTap: () => Navigator.of(context).pushNamed('/development-platform'),
     );
   }
 
@@ -72,10 +88,11 @@ class SplitLandingScreen extends StatelessWidget {
     required Color accentColor,
     required VoidCallback onTap,
   }) {
+    final bool isMobile = MediaQuery.of(context).size.width <= 900;
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background Image with Zoom Effect
         Image.asset(
           imagePath,
           fit: BoxFit.cover,
@@ -83,7 +100,6 @@ class SplitLandingScreen extends StatelessWidget {
         ).animate(onPlay: (c) => c.repeat(reverse: true))
          .scale(begin: const Offset(1,1), end: const Offset(1.05, 1.05), duration: 20.seconds),
 
-        // Gradient Overlay
         Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -97,11 +113,10 @@ class SplitLandingScreen extends StatelessWidget {
           ),
         ),
 
-        // Content
         Center(
           child: GlassmorphicContainer(
-            width: 400,
-            height: 250,
+            width: isMobile ? 300 : 400,
+            height: isMobile ? 200 : 250,
             borderRadius: 20,
             blur: 20,
             alignment: Alignment.center,
@@ -113,20 +128,24 @@ class SplitLandingScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
+                  textAlign: TextAlign.center,
                   style: LoveArtTheme.theme.textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.w900,
-                    fontSize: 40,
+                    fontSize: isMobile ? 32 : 40,
                     shadows: [Shadow(color: accentColor, blurRadius: 20)],
                   ),
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: isMobile ? 20 : 30),
                 Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: onTap,
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 30 : 40,
+                        vertical: isMobile ? 15 : 20,
+                      ),
                       decoration: BoxDecoration(
                         color: accentColor.withOpacity(0.8),
                         borderRadius: BorderRadius.circular(12),
@@ -136,10 +155,10 @@ class SplitLandingScreen extends StatelessWidget {
                       ),
                       child: Text(
                         subtitle.toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.black,
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: isMobile ? 14 : 18,
                           letterSpacing: 2,
                         ),
                       ),

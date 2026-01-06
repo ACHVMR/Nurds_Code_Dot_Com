@@ -7,6 +7,13 @@ import '../widgets/glitch_text.dart';
 class UserDashboard extends StatelessWidget {
   const UserDashboard({super.key});
 
+  void _showJackInForm(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => _JackInDialog(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     const Color academyAccent = Colors.purpleAccent;
@@ -29,7 +36,13 @@ class UserDashboard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(academyAccent),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildHeader(academyAccent),
+                    _buildJackInButton(context, academyAccent),
+                  ],
+                ),
                 const SizedBox(height: 60),
                 Expanded(
                   child: GridView.count(
@@ -89,6 +102,36 @@ class UserDashboard extends StatelessWidget {
     ).animate().fadeIn(duration: 1.seconds).slideY(begin: -0.1, end: 0);
   }
 
+  Widget _buildJackInButton(BuildContext context, Color accent) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _showJackInForm(context),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          decoration: BoxDecoration(
+            border: Border.all(color: accent),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(color: accent.withOpacity(0.2), blurRadius: 10, spreadRadius: 1),
+            ],
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.bolt, color: accent),
+              const SizedBox(width: 10),
+              Text(
+                "JACK IN",
+                style: TextStyle(color: accent, fontWeight: FontWeight.bold, letterSpacing: 2),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate(onPlay: (c) => c.repeat(reverse: true)).shimmer(duration: 3.seconds);
+  }
+
   Widget _buildCurriculumCard(String title, IconData icon, Color accent) {
     return GlassmorphicContainer(
       width: double.infinity,
@@ -127,5 +170,72 @@ class UserDashboard extends StatelessWidget {
         ),
       ),
     ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack);
+  }
+}
+
+class _JackInDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: GlassmorphicContainer(
+        width: 500,
+        height: 550,
+        borderRadius: 20,
+        blur: 20,
+        alignment: Alignment.center,
+        border: 2,
+        linearGradient: LinearGradient(colors: [Colors.white10, Colors.white.withOpacity(0.05)]),
+        borderGradient: LinearGradient(colors: [Colors.purpleAccent.withOpacity(0.3), Colors.transparent]),
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const GlitchText(
+                "INITIATING DATA_LINK",
+                style: TextStyle(color: Colors.purpleAccent, fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 30),
+              _buildField("CALLSIGN", "Enter Identity"),
+              const SizedBox(height: 20),
+              _buildField("ORGANIZATION", "Entity Reference"),
+              const SizedBox(height: 20),
+              _buildField("MISSION", "State Objective", maxLines: 3),
+              const SizedBox(height: 40),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purpleAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+                ),
+                child: const Text("ESTABLISH CONNECTION"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack);
+  }
+
+  Widget _buildField(String label, String hint, {int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 2)),
+        const SizedBox(height: 8),
+        TextField(
+          maxLines: maxLines,
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Colors.white10),
+            filled: true,
+            fillColor: Colors.white.withOpacity(0.05),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+          ),
+        ),
+      ],
+    );
   }
 }
