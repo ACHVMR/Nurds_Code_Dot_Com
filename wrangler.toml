@@ -5,19 +5,45 @@ compatibility_date = "2025-12-11"
 [[d1_databases]]
 binding = "DB"
 database_name = "nurds-core-db"
-database_id = "nurds-d1-id-placeholder"
+database_id = "e69e006b-5748-4ed2-b823-943db3cc0759"
+migrations_dir = "workers/migrations"
 
 [vars]
-# Cloudflare AI Gateway
+# === Light Core: Cloudflare AI Gateway ===
 AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT_ID/nurdscode-gateway"
 
-# GCP Integration
-AGENT_RUNTIME_URL = "https://acheevy-runtime-xxx.run.app"
+# === Heavy Swarm: GCP Cloud Run Endpoints ===
+# Update these after running scripts/deploy-swarm.sh
+ACHEEVY_ENDPOINT = "https://acheevy-orchestrator-REPLACE_ME.run.app"
+II_RESEARCHER_ENDPOINT = "https://ii-researcher-REPLACE_ME.run.app"
+CODEX_ENDPOINT = "https://codex-agent-REPLACE_ME.run.app"
+COMMON_GROUND_ENDPOINT = "https://common-ground-REPLACE_ME.run.app"
+
+# === GCP Configuration ===
 VERTEX_PROJECT_ID = "nurds-code-gcp-prod"
 VERTEX_LOCATION = "us-central1"
 
-# Supabase (if using pgvector for VL-JEPA)
+# === Circuit Box: Plugs (Disabled by default) ===
+ENABLE_HIGGSFIELD = "false"
+ENABLE_TWELVE_LABS = "false"
+ENABLE_SAM = "false"
+ENABLE_ELEVENLABS = "false"
+
+# === Model Routing ===
+DEFAULT_BRAINSTORM_MODEL = "gemini-2.0-flash-exp"
+DEFAULT_NURDOUT_MODEL = "glm-4-9b"
+DEFAULT_AGENT_MODEL = "gemini-2.0-flash-thinking-exp"
+DEFAULT_EDIT_MODEL = "gemini-2.0-flash-exp"
+
+# === Supabase (pgvector for embeddings) ===
 SUPABASE_PROJECT_URL = "https://lgupmlysczbxluffnadq.supabase.co"
 
-# Agent timeouts
+# === Timeouts ===
 AGENT_RUNTIME_TIMEOUT_MS = 300000
+LIGHT_TIMEOUT_MS = 30000
+HEAVY_TIMEOUT_MS = 300000
+
+# === Feature Flags ===
+ENABLE_SWARM = "true"
+ENABLE_ORACLE_FRAMEWORK = "true"
+ENABLE_KINGMODE = "true"
