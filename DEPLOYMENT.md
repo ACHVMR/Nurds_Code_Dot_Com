@@ -1,293 +1,333 @@
-# Deployment Guide for Nurdscode
+# NURDS CODE: Deployment Guide
+## Light Core + Heavy Swarm Architecture
 
-This guide covers deploying the Nurdscode application to Cloudflare Pages, Workers, and Container Registry.
+**Architecture Summary**:
+- **Light Core** (Cloudflare): Handles 95% of traffic, instant load times
+- **Heavy Swarm** (GCP Cloud Run): Activates on-demand for complex tasks, scales to 0
+- **Circuit Box**: Plug manager for specialized tools (Higgsfield, 12Labs, SAM, ElevenLabs)
 
-## Prerequisites
+---
 
-1. Cloudflare account with:
-   - Pages access
-   - Workers paid plan
-   - D1 database access
-   - Container Registry access
-2. Stripe account with API keys
-3. GitHub repository access
+## Phase 1: Deploy Light Core (Cloudflare Worker)
 
-## Step 1: Set Up Cloudflare D1 Database
+### Step 1: Run D1 Migration
 
-```bash
-# Create the D1 database
-wrangler d1 create nurdscode_db
+```powershell
+# Apply orchestrator tables
+npx wrangler d1 execute nurds-core-db --file=workers/migrations/0008_orchestrator_v2.sql --remote
 
-# Note the database ID from the output
-# Update wrangler.toml with the database ID
-
-# Run the schema migration
-wrangler d1 execute nurdscode_db --file=./schema.sql
+# Verify tables
+npx wrangler d1 execute nurds-core-db --command="SELECT name FROM sqlite_master WHERE type='table'" --remote
 ```
 
-## Step 2: Configure Secrets and Environment Variables
+**Expected output**: You should see tables like `circuit_plugs`, `agent_tasks_v2`, `model_usage_v2`, etc.
 
-### For Cloudflare Workers
+---
 
-```bash
-# Set secrets (sensitive data)
-wrangler secret put STRIPE_SECRET_KEY
-wrangler secret put STRIPE_WEBHOOK_SECRET
+### Step 2: Add Secrets
 
-# Set environment variables (non-sensitive)
-wrangler secret put JWT_SECRET
+```powershell
+# Gemini API Key (for brainstorm/edit modes)
+npx wrangler secret put GEMINI_API_KEY
+# Paste: YOUR_GEMINI_API_KEY
+
+# GLM API Key (for nurdout mode with visual understanding)
+npx wrangler secret put GLM_API_KEY
+# Paste: YOUR_GLM_API_KEY
+
+# Google Service Account Credentials (for GCP Cloud Run)
+npx wrangler secret put GOOGLE_CREDENTIALS
+# Paste: {"type":"service_account","project_id":"nurds-code-gcp-prod",...}
+
+# GROQ API Key (for Whisper voice transcription)
+npx wrangler secret put GROQ_API_KEY
+# Paste: YOUR_GROQ_API_KEY
+
+# ElevenLabs API Key (for text-to-speech)
+npx wrangler secret put ELEVENLABS_API_KEY
+# Paste: YOUR_ELEVENLABS_API_KEY
 ```
 
-Update `wrangler.toml` with your configuration:
+---
+
+### Step 3: Deploy Worker
+
+```powershell
+# Deploy to Cloudflare
+npx wrangler deploy
+
+# Test locally first (optional)
+npx wrangler dev
+```
+
+**Expected output**: Worker deployed to `nurds-platform-api.YOUR_SUBDOMAIN.workers.dev`
+
+---
+
+## Phase 2: Deploy Heavy Swarm (GCP Cloud Run)
+
+### Step 1: Authenticate with GCP
+
+```bash
+# Login to GCP
+gcloud auth login
+
+# Set project
+gcloud config set project nurds-code-gcp-prod
+
+# Verify
+gcloud config get-value project
+```
+
+---
+
+### Step 2: Build Docker Images
+
+You'll need Docker images for each agent. Example for ACHEEVY:
+
+```bash
+# Build ACHEEVY orchestrator
+cd ii-agent-repos/ii-agent
+docker build -t gcr.io/nurds-code-gcp-prod/ii-agent:latest .
+
+# Push to Google Container Registry
+docker push gcr.io/nurds-code-gcp-prod/ii-agent:latest
+
+# Repeat for other agents:
+# - ii-researcher
+# - codex
+# - common-ground
+# - symbioism
+```
+
+**Note**: See `ii-agent-dockerfile-template.md` in docs for Dockerfile examples.
+
+---
+
+### Step 3: Deploy Swarm
+
+```bash
+# Make script executable
+chmod +x scripts/deploy-swarm.sh
+
+# Deploy all agents
+./scripts/deploy-swarm.sh
+```
+
+**Expected output**: Service URLs for each agent.
+
+---
+
+### Step 4: Update wrangler.toml with Service URLs
+
+After deployment, copy the URLs and update `wrangler.toml`:
+
 ```toml
-[vars]
-STRIPE_PUBLISHABLE_KEY = "pk_test_your_key"
-JWT_SECRET = "your_jwt_secret"
+ACHEEVY_ENDPOINT = "https://acheevy-orchestrator-abc123.run.app"
+II_RESEARCHER_ENDPOINT = "https://ii-researcher-abc123.run.app"
+CODEX_ENDPOINT = "https://codex-agent-abc123.run.app"
+COMMON_GROUND_ENDPOINT = "https://common-ground-abc123.run.app"
 ```
 
-## Step 3: Deploy Backend (Cloudflare Workers)
+Then redeploy:
 
-```bash
-# Deploy the Worker
-npm run worker:deploy
-
-# Note the Worker URL for frontend configuration
+```powershell
+npx wrangler deploy
 ```
 
-## Step 4: Set Up Stripe Webhook
+---
 
-1. Go to Stripe Dashboard > Developers > Webhooks
-2. Add endpoint: `https://your-worker-url.workers.dev/api/webhook`
-3. Select events to listen:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-4. Copy the webhook signing secret
-5. Update Worker secret: `wrangler secret put STRIPE_WEBHOOK_SECRET`
+## Phase 3: Wire Up Frontend
 
-## Step 5: Deploy Frontend (Cloudflare Pages)
+### Landing Page Integration
 
-### Option A: Automatic Deployment via GitHub
+Update `src/pages/LandingPage.jsx` CTA buttons to call orchestrator endpoints:
 
-1. Go to Cloudflare Dashboard > Pages
-2. Create a new project
-3. Connect to GitHub repository
-4. Configure build settings:
-   - Build command: `npm run build`
-   - Build output directory: `dist`
-   - Environment variables:
-     - `VITE_STRIPE_PUBLISHABLE_KEY`: Your Stripe publishable key
-     - `VITE_API_URL`: Your Worker URL
+```jsx
+import { useState } from 'react';
 
-### Option B: Manual Deployment
+function LandingPage() {
+  const [loading, setLoading] = useState(false);
 
-```bash
-# Build the application
-npm run build
+  const handleStartBrainstorm = async () => {
+    setLoading(true);
+    try {
+      // Create session
+      const sessionRes = await fetch('/api/v1/orchestrator/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'user-123', // Replace with actual user ID from Clerk
+          mode: 'brainstorm',
+          prompt: 'Help me build a podcast assistant app'
+        })
+      });
+      const { sessionId } = await sessionRes.json();
 
-# Deploy to Pages
-wrangler pages deploy dist --project-name=nurdscode
+      // Execute
+      const execRes = await fetch('/api/v1/orchestrator/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          mode: 'brainstorm',
+          input: { prompt: 'Help me build a podcast assistant app' }
+        })
+      });
+      const result = await execRes.json();
+      console.log('Brainstorm result:', result);
+      
+      // Navigate to result page or show in modal
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleStartBrainstorm} disabled={loading}>
+        {loading ? 'Loading...' : 'Start Brainstorming'}
+      </button>
+      {/* Add more CTA buttons for nurdout, agent, edit modes */}
+    </div>
+  );
+}
 ```
 
-## Step 6: Configure Environment Variables for Pages
+---
 
-In Cloudflare Dashboard > Pages > Settings > Environment Variables:
+## Phase 4: Circuit Box Integration
 
-```
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_your_key
-VITE_API_URL=https://your-worker-url.workers.dev
-```
+### Enable/Disable Plugs
 
-## Step 7: Set Up Container Registry
+Add a settings panel where users can toggle Circuit Box plugs:
 
-### Configure GitHub Secrets
+```jsx
+function CircuitBoxPanel({ userId }) {
+  const [plugs, setPlugs] = useState({
+    higgsfield: false,
+    twelve_labs: false,
+    sam: false,
+    elevenlabs: false
+  });
 
-Add these secrets to your GitHub repository (Settings > Secrets):
+  const togglePlug = async (plugName, enabled) => {
+    await fetch('/api/v1/circuit-box/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, plugName, enabled })
+    });
+    setPlugs({ ...plugs, [plugName]: enabled });
+  };
 
-- `CLOUDFLARE_REGISTRY_USERNAME`: Your Cloudflare email
-- `CLOUDFLARE_REGISTRY_TOKEN`: API token from Cloudflare Dashboard
-
-### Get Cloudflare API Token
-
-1. Go to Cloudflare Dashboard > My Profile > API Tokens
-2. Create token with "Edit Cloudflare Workers" template
-3. Copy and add to GitHub secrets
-
-### Automatic Deployment
-
-The GitHub Action will automatically build and push the Docker image when you push to `main` or `develop` branches.
-
-### Manual Build and Push
-
-#### Using Docker (Default)
-
-```bash
-# Build the image
-docker build -t nurdscode-app .
-
-# Tag for Cloudflare Registry
-docker tag nurdscode-app registry.cloudflare.com/nurdscode-userappsandboxservice:custom
-
-# Login to Cloudflare Registry
-echo $CLOUDFLARE_REGISTRY_TOKEN | docker login registry.cloudflare.com -u $CLOUDFLARE_REGISTRY_USERNAME --password-stdin
-
-# Push to registry
-docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
+  return (
+    <div className="circuit-box">
+      <h3>Circuit Box</h3>
+      {Object.entries(plugs).map(([name, enabled]) => (
+        <label key={name}>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => togglePlug(name, e.target.checked)}
+          />
+          {name}
+        </label>
+      ))}
+    </div>
+  );
+}
 ```
 
-#### Using Daytona (Alternative if Docker isn't working)
+---
 
-If you encounter issues with Docker, use Daytona as an alternative:
+## Testing
 
-```bash
-# Install Daytona
-curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
+### Local Testing
 
-# Create Daytona workspace
-daytona create --name nurdscode-app
+```powershell
+# Start worker dev server
+npx wrangler dev
 
-# Build with Daytona
-daytona build
+# In another terminal, start frontend
+npm run dev
 
-# Export container image
-daytona export nurdscode-app:latest
-
-# Tag and push to registry (Daytona supports Docker registry protocol)
-daytona push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
-```
-
-#### Using Ubuntu.cloud Container
-
-For Ubuntu-based cloud deployments:
-
-```bash
-# Build with Ubuntu base
-docker build -f Dockerfile -t nurdscode-ubuntu .
-
-# Run locally for testing
-docker run -p 80:80 nurdscode-ubuntu
-
-# Tag and push
-docker tag nurdscode-ubuntu registry.cloudflare.com/nurdscode-userappsandboxservice:custom
-docker push registry.cloudflare.com/nurdscode-userappsandboxservice:custom
-```
-
-## Step 8: Verify Deployment
-
-### Test the Frontend
-- Visit your Cloudflare Pages URL
-- Navigate through all pages: /, /pricing, /editor, /subscribe
-
-### Test the Backend
-```bash
-# Health check
-curl https://your-worker-url.workers.dev/api/health
-
-# Test checkout session (should fail without proper data)
-curl -X POST https://your-worker-url.workers.dev/api/create-checkout-session \
+# Test endpoint
+curl http://localhost:8787/api/v1/orchestrator/session \
+  -X POST \
   -H "Content-Type: application/json" \
-  -d '{"priceId":"price_test","email":"test@example.com"}'
+  -d '{"userId":"test","mode":"brainstorm","prompt":"test"}'
 ```
 
-## Step 9: Set Up Custom Domain (Optional)
+---
 
-### For Pages
-1. Go to Cloudflare Pages > Custom domains
-2. Add domain: `nurdscode.com`
-3. Follow DNS setup instructions
+## Monitoring
 
-### For Workers
-1. Go to Workers > your-worker > Settings > Triggers
-2. Add Custom Domain
-3. Configure DNS records
+### Cloudflare Dashboard
+- View worker logs: `npx wrangler tail`
+- D1 analytics: [Cloudflare Dashboard](https://dash.cloudflare.com)
 
-## Monitoring and Maintenance
-
-### View Logs
+### GCP Cloud Run
 ```bash
-# Worker logs
-wrangler tail
+# View logs
+gcloud run services logs read acheevy-orchestrator --region=us-central1
 
-# D1 database queries
-wrangler d1 execute nurdscode_db --command="SELECT * FROM subscriptions LIMIT 10"
+# Check metrics
+gcloud run services describe acheevy-orchestrator --region=us-central1
 ```
 
-### Update Application
-```bash
-# Update frontend
-npm run build
-wrangler pages deploy dist
+---
 
-# Update backend
-npm run worker:deploy
-```
+## Cost Optimization
+
+**Light Core (Cloudflare)**:
+- Workers: $5/mo (10M requests included)
+- D1: Free tier (100K reads/day)
+- R2: $0.015/GB/month
+
+**Heavy Swarm (GCP Cloud Run)**:
+- Scales to 0: **$0 when idle**
+- Active: ~$0.24/hour per instance
+- Expected cost: **$20-50/month** (with proper scaling)
+
+**Total estimated cost**: **$25-60/month** for MVP
+
+---
 
 ## Troubleshooting
 
-### Issue: Docker not working or unavailable
-**Solution**: Use Daytona as an alternative container runtime
-```bash
-# Install Daytona
-curl -sf https://download.daytona.io/daytona/install.sh | sudo sh
-
-# Create workspace
-daytona create
-
-# Start development environment
-daytona start
+### Issue: "Database not found"
+**Solution**: Verify D1 database ID in `wrangler.toml` matches actual database:
+```powershell
+npx wrangler d1 list
 ```
 
-**Alternative**: Use Ubuntu.cloud containers
-- Deploy directly to cloud providers with Ubuntu base images
-- Compatible with most container orchestration platforms
+### Issue: "GCP Cloud Run not responding"
+**Solution**: Check service is deployed:
+```bash
+gcloud run services list --region=us-central1
+```
 
-### Issue: Stripe webhook not working
-- Verify webhook secret is correct
-- Check Worker logs: `wrangler tail`
-- Ensure events are selected in Stripe Dashboard
+### Issue: "Circuit plug not activating"
+**Solution**: Check plug is enabled:
+```bash
+curl "http://localhost:8787/api/v1/circuit-box/status?userId=test&plugName=higgsfield"
+```
 
-### Issue: Database not accessible
-- Verify D1 database ID in wrangler.toml
-- Check if schema was applied: `wrangler d1 execute nurdscode_db --command="SELECT name FROM sqlite_master WHERE type='table'"`
+---
 
-### Issue: CORS errors
-- Ensure Worker is deployed and accessible
-- Check CORS headers in workers/api.js
-- Verify VITE_API_URL environment variable
+## Next Steps
 
-### Issue: Build fails
-- Clear node_modules: `rm -rf node_modules && npm install`
-- Check Node.js version: should be 18+
-- Verify all dependencies are installed
+1. ✅ Migration created
+2. ✅ Deployment script ready
+3. ✅ wrangler.toml configured
+4. ⏳ **Run migration** (Phase 1, Step 1)
+5. ⏳ **Deploy worker** (Phase 1, Step 3)
+6. ⏳ **Deploy swarm** (Phase 2, Step 3)
+7. ⏳ **Wire frontend** (Phase 3)
 
-## Production Checklist
-
-- [ ] D1 database created and migrated
-- [ ] Stripe products and prices created
-- [ ] Stripe webhook configured and tested
-- [ ] Worker secrets configured
-- [ ] Frontend deployed to Pages
-- [ ] Environment variables set for Pages
-- [ ] Custom domains configured (if applicable)
-- [ ] Docker image built and pushed to registry
-- [ ] SSL/TLS certificates active
-- [ ] Monitoring set up
-- [ ] Backup strategy in place
-- [ ] Rate limiting configured (if needed)
-
-## Security Notes
-
-- Never commit secrets to Git
-- Rotate API keys regularly
-- Use environment-specific keys (test vs production)
-- Monitor for unusual API usage
-- Keep dependencies updated
-- Review Stripe webhook signatures
-- Implement rate limiting for API endpoints
-
-## Support
-
-For issues or questions:
-- Check the main README.md
-- Review Cloudflare documentation
-- Contact support@nurdscode.com
+**Ready to execute?** Start with:
+```powershell
+npx wrangler d1 execute nurds-core-db --file=workers/migrations/0008_orchestrator_v2.sql --remote
+```
