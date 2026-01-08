@@ -7,6 +7,14 @@
 
 ## 🎯 Quick Navigation
 
+### Intelligent Internet Mesh (Jan 2026)
+| Document | Purpose | Read Time |
+|----------|---------|-----------|
+| **[INTELLIGENT_INTERNET_TO_NURDS_BLUEPRINT.md](INTELLIGENT_INTERNET_TO_NURDS_BLUEPRINT.md)** | User-facing 5-layer mapping + UX flow | 8 min |
+| **[DEPLOY_INTELLIGENT_INTERNET_MESH.md](DEPLOY_INTELLIGENT_INTERNET_MESH.md)** | Deployment options + docker-compose usage | 10 min |
+| **[API_INTELLIGENT_INTERNET_MESH.md](API_INTELLIGENT_INTERNET_MESH.md)** | Edge endpoints + recommended service contracts | 10 min |
+| **[docker-compose.nurds.yaml](docker-compose.nurds.yaml)** | Integrated compose entrypoint (platform + II repos) | 4 min |
+
 ### This Session's Documentation (Nov 2, 2025)
 | Document | Purpose | Read Time |
 |----------|---------|-----------|

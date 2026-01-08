@@ -1,0 +1,196 @@
+version: '3.8'
+
+# =====================================================
+# Nurds Code + Intelligent Internet (II) Mesh
+# =====================================================
+# Purpose:
+# - Provide a single compose entrypoint that can run the Nurds
+#   platform plus checked-out II repositories.
+# - Uses real build contexts where this workspace contains a
+#   Dockerfile; otherwise, services run as placeholders under
+#   `profiles: [stub]` until containerization is finalized.
+#
+# Repo locations in this workspace:
+# - Nurds platform (this repo): ./
+# - II repos: ./Nurds_Code_Dot_Com/services/intelligent-internet/*
+#
+# Start (platform only):
+#   docker compose -f docker-compose.nurds.yaml up -d nurdscode-frontend nurdscode-worker
+#
+# Start (with II core):
+#   docker compose -f docker-compose.nurds.yaml --profile ii up -d
+#
+# =====================================================
+
+services:
+  # -----------------------------------------------------
+  # Nurds Code platform (frontend + worker)
+  # -----------------------------------------------------
+  nurdscode-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8787}
+      - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    command: npm run dev
+    networks:
+      - nurds-net
+
+  nurdscode-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "8787:8787"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - AI_GATEWAY_URL=${AI_GATEWAY_URL}
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - MAX_REQUESTS_PER_MINUTE=${MAX_REQUESTS_PER_MINUTE:-60}
+      - RESPONSE_TIMEOUT_MS=${RESPONSE_TIMEOUT_MS:-30000}
+      - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY}
+    command: npm run worker:dev
+    depends_on:
+      - redis
+    networks:
+      - nurds-net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - nurds-net
+
+  # -----------------------------------------------------
+  # Intelligent Internet core services (when available)
+  # -----------------------------------------------------
+  ii-agent-backend:
+    profiles: ["ii"]
+    build:
+      context: ./Nurds_Code_Dot_Com/services/intelligent-internet/ii-agent
+      dockerfile: docker/backend/Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379
+      # LLM keys/providers are passed through as env vars
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY}
+      - E2B_API_KEY=${E2B_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    networks:
+      - nurds-net
+
+  gemini-bridge:
+    profiles: ["ii"]
+    build:
+      context: ./Nurds_Code_Dot_Com/services/intelligent-internet/gemini-cli-mcp-openai-bridge
+      dockerfile: Dockerfile
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    ports:
+      - "8081:8081"
+    networks:
+      - nurds-net
+
+  common-ground:
+    profiles: ["ii"]
+    build:
+      context: ./Nurds_Code_Dot_Com/services/intelligent-internet/CommonGround
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8082:8082"
+    depends_on:
+      - redis
+    networks:
+      - nurds-net
+
+  # -----------------------------------------------------
+  # Stubs for repos that exist in-workspace but do not
+  # currently have a Dockerfile wired here.
+  # -----------------------------------------------------
+  ii-researcher:
+    profiles: ["stub"]
+    image: alpine:3.19
+    command: ["sh", "-c", "echo 'ii-researcher: scaffold only (add Dockerfile/command)'; sleep infinity"]
+    networks:
+      - nurds-net
+
+  common-chronicle:
+    profiles: ["stub"]
+    image: alpine:3.19
+    command: ["sh", "-c", "echo 'Common_Chronicle: scaffold only (add Dockerfile/command)'; sleep infinity"]
+    networks:
+      - nurds-net
+
+  ii-commons-db:
+    profiles: ["stub"]
+    image: alpine:3.19
+    command: ["sh", "-c", "echo 'II-Commons: scaffold only (add docker stack)'; sleep infinity"]
+    networks:
+      - nurds-net
+
+  pptist:
+    profiles: ["stub"]
+    image: alpine:3.19
+    command: ["sh", "-c", "echo 'PPTist: scaffold only (add Dockerfile/command)'; sleep infinity"]
+    networks:
+      - nurds-net
+
+  # Optional routing layer (placeholder). If you want
+  # subdomain routing (agent.nurds.code, etc), use Traefik
+  # or Cloudflare + internal service routing.
+  traefik:
+    profiles: ["stub"]
+    image: traefik:v3.2
+    command:
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - nurds-net
+
+networks:
+  nurds-net:
+    driver: bridge
+
+volumes:
+  redis-data:

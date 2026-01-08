@@ -43,3 +43,10 @@ wrangler.toml.backup
 # Temporary files
 /tmp
 *.tmp
+
+.env
+
+# Prevent accidental commits of duplicated workspace / internal doc dumps
+Nurds_Code_Dot_Com/
+workers/services/docs2use/
+workers/services/GCP Setup & Flutter Build.md

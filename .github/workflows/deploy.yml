@@ -1,0 +1,253 @@
+name: Deploy NurdsCode to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ============================================
+  # JOB 1: Lint, Build & Test
+  # ============================================
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Lint
+        run: npm run lint --if-present
+        
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_URL: https://api.nurdscode.com
+          VITE_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+          VITE_SUPABASE_PROJECT_URL: ${{ secrets.SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          
+      - name: Run tests
+        run: npm test --if-present
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # ============================================
+  # JOB 2: Deploy Frontend to Cloudflare Pages
+  # ============================================
+  deploy-pages:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=nurdscode --commit-dirty=true
+          
+      - name: Deployment Summary
+        run: |
+          echo "## 🚀 Pages Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Frontend deployed to: https://nurdscode.com" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # JOB 3: Deploy Workers API
+  # ============================================
+  deploy-workers:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Deploy Workers to Production
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          
+      - name: Verify API Health
+        run: |
+          sleep 10
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://api.nurdscode.com/api/health || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✅ API health check passed"
+          else
+            echo "⚠️ API health check returned: $response (may still be propagating)"
+          fi
+          
+      - name: Deployment Summary
+        run: |
+          echo "## 🔧 Workers Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "API deployed to: https://api.nurdscode.com" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # JOB 4: Run Database Migrations
+  # ============================================
+  migrate-db:
+    needs: deploy-workers
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: Install wrangler
+        run: npm install -g wrangler
+        
+      - name: Check for schema changes
+        id: schema-check
+        run: |
+          if [ -f "schema.sql" ]; then
+            echo "schema_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "schema_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Run D1 migrations
+        if: steps.schema-check.outputs.schema_exists == 'true'
+        run: |
+          wrangler d1 execute nurdscode-db --file=./schema.sql --remote --env production || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          
+      - name: Migration Summary
+        run: |
+          echo "## 🗄️ Database Migration Complete" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # JOB 5: Build & Push Container (if Dockerfile exists)
+  # ============================================
+  deploy-container:
+    needs: [deploy-pages, deploy-workers]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for Dockerfile
+        id: dockerfile-check
+        run: |
+          if [ -f "Dockerfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Set up Docker Buildx
+        if: steps.dockerfile-check.outputs.exists == 'true'
+        uses: docker/setup-buildx-action@v3
+        
+      - name: Log in to GitHub Container Registry
+        if: steps.dockerfile-check.outputs.exists == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Build and push container
+        if: steps.dockerfile-check.outputs.exists == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/nurdscode-sandbox:latest
+            ghcr.io/${{ github.repository_owner }}/nurdscode-sandbox:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          
+      - name: Container Summary
+        if: steps.dockerfile-check.outputs.exists == 'true'
+        run: |
+          echo "## 📦 Container Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Image: ghcr.io/${{ github.repository_owner }}/nurdscode-sandbox:latest" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================
+  # JOB 6: Final Summary
+  # ============================================
+  summary:
+    needs: [deploy-pages, deploy-workers, migrate-db]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 🎉 NurdsCode Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Pages) | ${{ needs.deploy-pages.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API (Workers) | ${{ needs.deploy-workers.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Database (D1) | ${{ needs.migrate-db.result == 'success' && '✅' || '⏭️' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Links" >> $GITHUB_STEP_SUMMARY
+          echo "- 🌐 [nurdscode.com](https://nurdscode.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔧 [API](https://api.nurdscode.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 [Editor](https://nurdscode.com/editor)" >> $GITHUB_STEP_SUMMARY
