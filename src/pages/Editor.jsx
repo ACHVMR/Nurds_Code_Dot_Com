@@ -4,6 +4,8 @@ import Editor from '@monaco-editor/react';
 import VoiceControl from '../components/VoiceControl';
 import ContextTicker from '../components/ContextTicker';
 import { Sparkles, Wand2, Code2, FileCode, Zap } from 'lucide-react';
+import { useAuth } from '@clerk/clerk-react';
+import { ensureLucSession, transitionLucSession, extractChatMessage } from '../services/luc';
 
 const INITIAL_ASSISTANT_MESSAGES = [
   {
@@ -45,6 +47,7 @@ console.log("Welcome to Nurds Code!");`);
   const messagesEndRef = useRef(null);
   const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
   const location = useLocation();
+  const { getToken } = useAuth();
 
   useEffect(() => {
     try {
@@ -91,6 +94,23 @@ console.log("Welcome to Nurds Code!");`);
       console.warn('Unable to restore editor state:', error);
     }
   }, []);
+
+  // Opening the editor is treated as entering iteration mode (best-effort).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getToken().catch(() => null);
+        if (!token || cancelled) return;
+        const lucSessionId = await ensureLucSession({ apiBase, token });
+        if (cancelled) return;
+        await transitionLucSession({ apiBase, token, sessionId: lucSessionId, toPhase: 'iteration' });
+      } catch {
+        // best-effort
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [apiBase, getToken]);
 
   useEffect(() => {
     if (typeof localStorage === 'undefined') return;
@@ -175,7 +195,7 @@ console.log("Welcome to Nurds Code!");`);
       return;
     }
 
-    const historyPayload = [...assistantMessages, { role: 'user', content: trimmed }]
+    const messagesPayload = [...assistantMessages, { role: 'user', content: trimmed }]
       .slice(-10)
       .map(({ role, content }) => ({ role, content }));
 
@@ -188,16 +208,18 @@ console.log("Welcome to Nurds Code!");`);
     setAssistantLoading(true);
 
     try {
+      const token = await getToken().catch(() => null);
+      const lucSessionId = await ensureLucSession({ apiBase, token });
+
       const response = await fetch(`${apiBase}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          message: trimmed,
-          history: historyPayload,
-          plan: assistantPlan,
-          userId,
+          messages: messagesPayload,
+          lucSessionId,
         }),
       });
 
@@ -206,14 +228,14 @@ console.log("Welcome to Nurds Code!");`);
         throw new Error(errorPayload.error || 'Assistant request failed.');
       }
 
-      const data = await response.json();
+      const payload = await response.json().catch(() => ({}));
+      const data = extractChatMessage(payload);
       setAssistantMessages((prev) => {
         const next = [
           ...prev,
           {
             role: 'assistant',
             content: data.message,
-            model: data.model,
             usage: data.usage,
           },
         ];

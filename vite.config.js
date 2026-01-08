@@ -19,7 +19,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@v0/chat-sdk': '/src/sdk/v0-mock.js', // Use mock implementation
+      // V0 alias removed - legacy UI component deprecated
     },
   },
 });

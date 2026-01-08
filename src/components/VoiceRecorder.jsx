@@ -5,7 +5,6 @@ import { audioManager } from '../utils/audioLibrary';
 /**
  * VoiceRecorder Component
  * Handles voice input with visual feedback and transcription display
- * Features Nextel-style UI with Nothing Brand design
  */
 export default function VoiceRecorder({ onTranscript, onError, autoStart = false }) {
   const {
@@ -25,7 +24,7 @@ export default function VoiceRecorder({ onTranscript, onError, autoStart = false
   React.useEffect(() => {
     if (autoStart) {
       startRecording();
-      audioManager.play('pttStart'); // Play PTT start chirp
+      audioManager.play('recordStart');
     }
   }, [autoStart]);
 
@@ -50,10 +49,10 @@ export default function VoiceRecorder({ onTranscript, onError, autoStart = false
   const handleStartStop = () => {
     if (isRecording) {
       stopRecording();
-      audioManager.play('pttEnd'); // Play PTT end chirp when stopping
+      audioManager.play('recordStop');
     } else {
       startRecording();
-      audioManager.play('pttStart'); // Play PTT start chirp when starting
+      audioManager.play('recordStart');
     }
   };
 

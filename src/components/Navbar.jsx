@@ -16,7 +16,11 @@ const Navbar = () => {
       <nav className="navbar">
         <div className="nav-container">
           <Link to="/" className="nav-logo">
-            <span className="logo-text">NURDS CODE</span>
+            <img 
+              src="/assets/branding/IMG_1836.PNG" 
+              alt="NURDS CODE" 
+              className="h-10 w-auto object-contain" 
+            />
           </Link>
 
           <div className="nav-actions">
@@ -25,7 +29,7 @@ const Navbar = () => {
               <Link 
                 to="/auth/signup" 
                 className="btn-primary text-sm px-6 py-2 rounded-lg hover:shadow-lg transition-all"
-                style={{ backgroundColor: '#E68961', color: 'black', fontWeight: '600' }}
+                style={{ backgroundColor: '#FF6B00', color: 'black', fontWeight: '600' }}
               >
                 Get Started
               </Link>

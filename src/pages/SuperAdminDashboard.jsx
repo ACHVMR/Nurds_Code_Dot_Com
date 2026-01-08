@@ -1,136 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './SuperAdminDashboard.css';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { Shield, Users, Database, Settings } from 'lucide-react';
 
-const SuperAdminDashboard = () => {
-  const [ideas, setIdeas] = useState([]);
-  const [selectedIdea, setSelectedIdea] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchWeeklyIdeas();
-  }, []);
-
-  const fetchWeeklyIdeas = async () => {
-    try {
-      const token = await window.Clerk?.session?.getToken();
-      const response = await fetch('/api/admin/ideas', {
-        headers: { 
-          'Authorization': `Bearer ${token}` 
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setIdeas(data.ideas || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch ideas:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleStartBuilding = (idea) => {
-    navigate(`/acheevy/${idea.id}`, { 
-      state: { idea } 
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="loader"></div>
-        <p>Loading weekly app ideas...</p>
-      </div>
-    );
-  }
-
+export default function SuperAdminDashboard() {
   return (
-    <div className="superadmin-dashboard">
-      <header className="dashboard-header">
-        <h1>🎯 Weekly App Ideas Engine</h1>
-        <p>Generated every Monday • {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      </header>
-
-      <div className="ideas-grid">
-        {ideas.map((idea, idx) => (
-          <div
-            key={idea.id}
-            className="idea-ticket"
-            style={{ animationDelay: `${idx * 0.1}s` }}
-            onClick={() => setSelectedIdea(idea)}
-          >
-            <div className="ticket-header">
-              <span className="ticket-number">#{String(idx + 1).padStart(2, '0')}</span>
-              <span className={`complexity-badge ${idea.complexity}`}>
-                {idea.complexity?.toUpperCase()}
-              </span>
-            </div>
-            
-            <h3 className="idea-title">{idea.title}</h3>
-            <p className="idea-description">{idea.description}</p>
-            
-            <div className="idea-footer">
-              <span className="category-tag">{idea.category}</span>
-              <button 
-                className="build-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStartBuilding(idea);
-                }}
-              >
-                🎤 Build This
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedIdea && (
-        <div className="idea-modal" onClick={() => setSelectedIdea(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="close-btn" 
-              onClick={() => setSelectedIdea(null)}
-            >
-              ✕
-            </button>
-            
-            <h2>{selectedIdea.title}</h2>
-            
-            <div className="modal-metadata">
-              <span className={`badge complexity-${selectedIdea.complexity}`}>
-                {selectedIdea.complexity}
-              </span>
-              <span className="badge">{selectedIdea.category}</span>
-            </div>
-            
-            <p className="full-description">{selectedIdea.description}</p>
-            
-            {selectedIdea.keywords && (
-              <div className="keywords-section">
-                <h4>Keywords:</h4>
-                <div className="keyword-tags">
-                  {JSON.parse(selectedIdea.keywords || '[]').map(kw => (
-                    <span key={kw} className="keyword-tag">{kw}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            <button 
-              className="primary-btn"
-              onClick={() => handleStartBuilding(selectedIdea)}
-            >
-              🎤 Start Building with ACHEEVY
-            </button>
+    <div className="min-h-screen bg-black text-white p-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+        <div className="flex items-center gap-4 mb-8">
+          <Shield className="w-10 h-10 text-red-400" />
+          <div>
+            <h1 className="text-3xl font-bold">SuperAdmin Dashboard</h1>
+            <p className="text-gray-400">System administration and monitoring</p>
           </div>
         </div>
-      )}
+
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {[
+            { icon: Users, label: 'Total Users', value: '1,247' },
+            { icon: Database, label: 'D1 Records', value: '45.2K' },
+            { icon: Settings, label: 'Active Agents', value: '19' },
+            { icon: Shield, label: 'System Status', value: 'Healthy' },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white/5 rounded-xl p-4 border border-white/10">
+              <stat.icon className="w-6 h-6 text-purple-400 mb-2" />
+              <p className="text-2xl font-bold">{stat.value}</p>
+              <p className="text-gray-500 text-sm">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white/5 rounded-xl p-6 border border-red-500/20">
+          <h2 className="text-xl font-semibold mb-4 text-red-400">Admin Controls</h2>
+          <p className="text-gray-400">Administrative functions available here...</p>
+        </div>
+      </motion.div>
     </div>
   );
-};
-
-export default SuperAdminDashboard;
+}

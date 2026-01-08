@@ -13,6 +13,12 @@
  * - File Upload (images, audio)
  */
 
+import { fetchAuthed } from '../utils/fetchAuthed.js';
+
+// Use worker proxy to avoid CORS issues
+const WORKER_PROXY_URL = '/api/kieai';
+
+// Fallback to direct API for local dev
 const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY || '6423cd116ad6e1e3f43f3506aaf4b751';
 const KIE_BASE_URL = 'https://api.kie.ai/api/v1';
 
@@ -30,11 +36,9 @@ export async function uploadFile(file, type = 'image') {
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await fetch(`${KIE_BASE_URL}/files/upload`, {
+  // Use worker proxy
+  const response = await fetchAuthed(`${WORKER_PROXY_URL}/files/upload`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${KIE_API_KEY}`
-    },
     body: formData
   });
 
@@ -45,7 +49,7 @@ export async function uploadFile(file, type = 'image') {
 
   const data = await response.json();
   return {
-    url: data.data.url
+    url: data.data?.url || data.url
   };
 }
 
@@ -70,11 +74,11 @@ export async function createFromAudioTask(params) {
     callbackUrl
   } = params;
 
-  const response = await fetch(`${KIE_BASE_URL}/jobs/createTask`, {
+  // Use worker proxy
+  const response = await fetchAuthed(`${WORKER_PROXY_URL}/jobs/createTask`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${KIE_API_KEY}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
       model: 'infinitalk/from-audio',
@@ -96,7 +100,7 @@ export async function createFromAudioTask(params) {
 
   const data = await response.json();
   return {
-    taskId: data.data.taskId
+    taskId: data.data?.taskId || data.taskId
   };
 }
 
@@ -106,13 +110,9 @@ export async function createFromAudioTask(params) {
  * @returns {Promise<Object>}
  */
 export async function queryTaskStatus(taskId) {
-  const response = await fetch(
-    `${KIE_BASE_URL}/jobs/recordInfo?taskId=${taskId}`,
-    {
-      headers: {
-        'Authorization': `Bearer ${KIE_API_KEY}`
-      }
-    }
+  // Use worker proxy
+  const response = await fetchAuthed(
+    `${WORKER_PROXY_URL}/jobs/recordInfo?taskId=${taskId}`
   );
 
   if (!response.ok) {
@@ -120,7 +120,7 @@ export async function queryTaskStatus(taskId) {
   }
 
   const data = await response.json();
-  return data.data;
+  return data.data || data;
 }
 
 /**

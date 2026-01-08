@@ -7,17 +7,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0E0E0E',
+        background: '#0A1628', // Obsidian
         surface: '#151515',
-        text: '#EAEAEA',
+        text: '#E2E8F0',
         mute: '#9A9A9A',
-        accent: '#C9A449',
-        neon: '#39FF14',
+        accent: '#FF6B35', // Safety Orange
+        neon: '#00FF41', // Terminal Green
+        cyan: '#00D4FF', // Neon Cyan
         border: '#222222',
       },
       fontFamily: {
-        sans: ['"Doto"', 'ui-sans-serif', 'system-ui'],
+        sans: ['"JetBrains Mono"', 'ui-monospace', 'monospace'], // Enforce global terminal feel
         marker: ['"Permanent Marker"', 'cursive'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
       borderRadius: {
         DEFAULT: '0px',

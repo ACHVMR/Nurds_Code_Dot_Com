@@ -5,14 +5,13 @@ function Footer() {
   return (
     <footer className="bg-background border-t border-[#2a2a2a] mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Main Footer Content */}
+        {/* Brand Logo */}
         <div className="flex flex-col items-center justify-center gap-4 md:flex-row md:gap-6">
-          {/* Made In PLR Logo */}
           <div className="flex items-center gap-3">
             <img 
-              src="/assets/logos/made-in-plr.svg" 
-              alt="Made in PLR" 
-              className="h-10 md:h-12 object-contain hover:opacity-80 transition-opacity"
+              src="/assets/branding/IMG_1836.PNG" 
+              alt="Nurds Code" 
+              className="h-12 md:h-14 object-contain hover:opacity-80 transition-opacity"
             />
             <span className="hidden sm:inline text-text text-sm border-l border-[#2a2a2a] pl-3">
               Nurds Code est. 2025

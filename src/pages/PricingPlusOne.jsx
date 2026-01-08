@@ -1,44 +1,42 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Users, DollarSign, Plus } from 'lucide-react';
 
-function PricingPlusOne() {
+export default function PricingPlusOne() {
   return (
-    <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-4">Plus One — Add Collaborators</h1>
-        <p className="mb-6 text-text/70">Invite team members for $1/day. Progressive discounts apply for larger teams.</p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-            <div className="text-4xl font-bold text-[#E68961] mb-2">$1/day</div>
-            <div className="text-text/60">per collaborator</div>
+    <div className="min-h-screen bg-black text-white py-20">
+      <div className="max-w-4xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Plus className="w-8 h-8 text-purple-400" />
+            <h1 className="text-5xl font-bold">Plus 1 Team Plan</h1>
           </div>
-          <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-            <div className="text-4xl font-bold text-[#E68961] mb-2">50%</div>
-            <div className="text-text/60">max discount (5 people)</div>
-          </div>
-          <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-            <div className="text-4xl font-bold text-[#E68961] mb-2">∞</div>
-            <div className="text-text/60">unlimited projects</div>
-          </div>
-        </div>
+          <p className="text-xl text-gray-400">Rideshare-style pricing for teams</p>
+        </motion.div>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">How it works</h2>
-          <ol className="list-decimal list-inside text-text/70">
-            <li>Click "Invite" to create a collaborator slot for $1/day.</li>
-            <li>Assign the collaborator to a project.</li>
-            <li>Billing is prorated daily and appears on your monthly invoice.</li>
-          </ol>
-        </div>
+        <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl p-8 border border-purple-500/20 mb-8">
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            <div className="text-center">
+              <Users className="w-12 h-12 mx-auto mb-4 text-purple-400" />
+              <h3 className="text-2xl font-bold">$1/collaborator/day</h3>
+              <p className="text-gray-400">Only pay for active team members</p>
+            </div>
+            <div className="text-center">
+              <DollarSign className="w-12 h-12 mx-auto mb-4 text-green-400" />
+              <h3 className="text-2xl font-bold">DIFU Credits</h3>
+              <p className="text-gray-400">Share and transfer credits between team</p>
+            </div>
+          </div>
 
-        <div className="flex gap-4">
-          <Link to="/subscribe" className="btn-primary">Invite a collaborator</Link>
-          <Link to="/pricing" className="btn-secondary">Back to Pricing</Link>
+          <button className="w-full py-4 bg-purple-500 hover:bg-purple-600 rounded-xl font-semibold transition-colors">
+            Start Team Trial
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
-export default PricingPlusOne;

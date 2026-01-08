@@ -1,22 +1,27 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Doto:wght@400;600;700;800&family=Permanent+Marker&display=swap');
+@import "@fontsource/jetbrains-mono"; /* Import JetBrains Mono */
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
 
 :root {
-  --bg: #000000;
+  --bg-obsidian: #0A1628;
+  --bg: var(--bg-obsidian);
   --surface: #151515;
-  --text: #F2F7FF; /* Frosty white */
+  --text: #E2E8F0; /* Off-white text for contrast */
   --mute: #9A9A9A;
-  --accent: #C9A449;
-  --neon: #E68961;
+  --accent: #FF6B35; /* Safety Orange */
+  --neon-orange: #FF6B35;
+  --neon: #00FF41; /* Terminal Green */
+  --neon-cyan: #00D4FF;
   --border: #222222;
+  --glass-panel: rgba(10, 22, 40, 0.85); /* For floating agent panels */
 }
 
 @layer base {
   html, body {
-    background-color: var(--bg);
+    background-color: var(--bg-obsidian);
     color: var(--text);
-    font-family: 'Doto', sans-serif;
-    font-weight: 500; /* Heavier default weight for Doto */
+    font-family: 'JetBrains Mono', monospace; /* Enforce global terminal feel */
+    font-weight: 500;
   }
   
   h1, h2, h3, h4, h5, h6 {

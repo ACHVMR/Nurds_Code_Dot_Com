@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
 import Layout from './components/Layout';
 import Home from './pages/Home';
+import LandingPage from './pages/LandingPage';
 import Pricing from './pages/Pricing';
 import Subscribe from './pages/Subscribe';
 import SignUp from './pages/SignUp';
@@ -17,10 +18,10 @@ import UsageLedger from './pages/UsageLedger';
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import ACHEEVYIntent from './pages/ACHEEVYIntent';
 import LiveBuildEditor from './pages/LiveBuildEditor';
+import ACHEEVY from './pages/ACHEEVY';
 
 // Voice-First Platform Pages
 import VoiceProfileSettings from './pages/VoiceProfileSettings';
-import PhoneTest from './pages/PhoneTest';
 
 // Phase 1 Setup
 import Phase1Setup from './pages/Phase1Setup';
@@ -51,6 +52,9 @@ function App() {
   return (
     <Layout>
       <Routes>
+        {/* Landing Page (Immersive - No Layout Chrome) */}
+        <Route path="/welcome" element={<LandingPage />} />
+        
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
   <Route path="/pricing" element={<Pricing />} />
@@ -100,8 +104,9 @@ function App() {
           isSignedIn ? <ACHEEVYIntent /> : <Navigate to="/" />
         } />
         
-        <Route path="/phone-test" element={
-          isSignedIn ? <PhoneTest /> : <Navigate to="/" />
+        {/* Chat wACHEEVY - II-Agent Interface */}
+        <Route path="/chat-acheevy" element={
+          isSignedIn ? <ACHEEVY /> : <Navigate to="/" />
         } />
         
         <Route path="/phase1-setup" element={

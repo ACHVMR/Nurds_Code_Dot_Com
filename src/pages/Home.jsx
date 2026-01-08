@@ -1,13 +1,16 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Upload, Image as ImageIcon, FileCode, Video, Sparkles } from 'lucide-react';
+import { Upload, Image as ImageIcon, FileCode, Video, Sparkles, Brain, Zap, Crown, ArrowRight } from 'lucide-react';
 import { extractCodeFromImage, cloneProjectFromScreenshot } from '../services/ocr.js';
 import { generateVideoFromMedia } from '../services/kieai.js';
 import { useUser } from '@clerk/clerk-react';
-import PhoneSelector from '../components/phones/PhoneSelector';
 import TerminologyTicker from '../components/TerminologyTicker';
-import NextelPhone from '../components/NextelPhone';
 
+/**
+ * Home Page - VIBE Boardroom Interface
+ * Clean, full-width layout without device bezels
+ * Primary CTA: Chat w/ACHEEVY
+ */
 function Home() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -96,113 +99,150 @@ function Home() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section with NURD Logo */}
+      {/* Hero Section - VIBE Boardroom */}
       <section className="relative py-20 sm:py-32 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Text & CTA */}
-            <div className="text-center lg:text-left">
-              <h1 className="tagline mb-6 sm:mb-8">
-                Think It. Prompt It. Build It.
-              </h1>
-              <p className="text-lg sm:text-xl md:text-2xl text-text mb-8 sm:mb-12 max-w-2xl mx-auto lg:mx-0">
-                Build powerful applications with modern tools and workflows. 
-                <span className="block mt-4 text-[#E68961]">
-                  Talk to ACHEEVY • Voice-First Development ✨
-                </span>
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link to="/subscribe" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
-                  Start Building Now
-                </Link>
-                <Link to="/pricing" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
-                  View Pricing
-                </Link>
-                <Link to="/web3" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-[#D946EF] hover:bg-[#C740D9]">
-                  🔗 Web3 Platform
-                </Link>
-              </div>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-5 pointer-events-none">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.15)_1px,transparent_0)] bg-[size:32px_32px]" />
+        </div>
+
+        <div className="max-w-7xl mx-auto relative">
+          <div className="text-center max-w-4xl mx-auto">
+            {/* Logo Icon */}
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-500 shadow-2xl shadow-purple-500/30 mb-8">
+              <Brain className="w-12 h-12 text-white" />
             </div>
 
-            {/* Right Column - Nextel Phone */}
-            <div className="flex flex-col items-center gap-8">
-              {/* Nextel Phone - Primary Interaction */}
-              <div className="w-full max-w-md mx-auto">
-                <NextelPhone defaultOpen={false} />
-              </div>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight mb-6 text-white">
+              Ready to Think It,<br/>
+              <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+                Prompt It, and Build It?
+              </span>
+            </h1>
+            
+            <p className="text-lg sm:text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto">
+              Join NurdsCode today and turn your ideas into reality. 
+              Start your journey as a tech innovator now!
+            </p>
 
-              {/* Upload Drop Zone */}
-              <div
-                className={`relative w-full max-w-md mx-auto border-2 border-dashed rounded-2xl p-8 transition-all ${
-                  dragActive
-                    ? 'border-[#E68961] bg-[#E68961]/10'
-                    : 'border-[#2a2a2a] bg-[#1a1a1a]/50 hover:border-[#E68961]/50'
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
+            {/* Primary CTA - Chat w/ACHEEVY */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+              <Link 
+                to="/chat-acheevy" 
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 hover:from-purple-600 hover:via-pink-600 hover:to-orange-600 text-white font-semibold text-lg rounded-xl transition-all shadow-xl shadow-purple-500/25"
               >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileInput}
-                  accept="image/*,audio/*"
-                />
+                <Brain className="w-5 h-5" />
+                <span>Chat w/ACHEEVY</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              <Link 
+                to="/pricing" 
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-purple-500/50 text-purple-400 hover:bg-purple-500/10 font-semibold text-lg rounded-xl transition-all"
+              >
+                Learn More
+              </Link>
+            </div>
 
-                {!processing ? (
-                  <div className="text-center">
-                    <div className="flex justify-center gap-3 mb-4">
-                      <ImageIcon className="w-8 h-8 text-[#E68961]" />
-                      <FileCode className="w-8 h-8 text-purple-400" />
-                      <Video className="w-8 h-8 text-cyan-400" />
-                    </div>
-                    
-                    <h3 className="text-lg font-semibold text-text mb-2">
-                      Drop files here or click to upload
-                    </h3>
-                    
-                    <p className="text-sm text-text/60 mb-6">
-                      📸 Screenshot → Code extraction<br />
-                      🎨 Image + Audio → AI Video<br />
-                      🤖 Powered by Kie.ai & OCR
-                    </p>
+            {/* Mode Preview Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+              <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-amber-500/20">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center mb-4 mx-auto">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-amber-400 mb-2">Brainstorm</h3>
+                <p className="text-sm text-gray-500">Clarify direction, reduce uncertainty, assess your skill level</p>
+              </div>
+              <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-blue-500/20">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center mb-4 mx-auto">
+                  <FileCode className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-blue-400 mb-2">Forming</h3>
+                <p className="text-sm text-gray-500">Turn ideas into buildable specs with the 4-Question Lens</p>
+              </div>
+              <div className="p-6 bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-purple-500/20">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mb-4 mx-auto">
+                  <Crown className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-purple-400 mb-2">King Mode</h3>
+                <p className="text-sm text-gray-500">Full 19 II-agent swarm deployment with verification</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="btn-primary flex items-center gap-2 mx-auto"
-                    >
-                      <Upload className="w-4 h-4" />
-                      Choose File
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Sparkles className="w-12 h-12 text-[#E68961] mx-auto mb-4 animate-spin" />
-                    <p className="text-text font-semibold">{processingMessage}</p>
-                    {uploadedFile && (
-                      <p className="text-sm text-text/60 mt-2">{uploadedFile.name}</p>
-                    )}
-                  </div>
+      {/* Upload Drop Zone Section */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-950/50">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div
+            className={`relative border-2 border-dashed rounded-2xl p-8 transition-all ${
+              dragActive
+                ? 'border-[#E68961] bg-[#E68961]/10'
+                : 'border-[#2a2a2a] bg-[#1a1a1a]/50 hover:border-[#E68961]/50'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={handleFileInput}
+              accept="image/*,audio/*"
+            />
+
+            {!processing ? (
+              <div className="text-center">
+                <div className="flex justify-center gap-3 mb-4">
+                  <ImageIcon className="w-8 h-8 text-[#E68961]" />
+                  <FileCode className="w-8 h-8 text-purple-400" />
+                  <Video className="w-8 h-8 text-cyan-400" />
+                </div>
+                
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Drop files here or click to upload
+                </h3>
+                
+                <p className="text-sm text-gray-500 mb-6">
+                  📸 Screenshot → Code extraction<br />
+                  🎨 Image + Audio → AI Video<br />
+                  🤖 Powered by Kie.ai & OCR
+                </p>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg flex items-center gap-2 mx-auto transition-colors"
+                >
+                  <Upload className="w-4 h-4" />
+                  Choose File
+                </button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <Sparkles className="w-12 h-12 text-[#E68961] mx-auto mb-4 animate-spin" />
+                <p className="text-white font-semibold">{processingMessage}</p>
+                {uploadedFile && (
+                  <p className="text-sm text-gray-500 mt-2">{uploadedFile.name}</p>
                 )}
               </div>
+            )}
+          </div>
 
-              {/* Quick Stats */}
-              <div className="grid grid-cols-3 gap-4 w-full max-w-md mx-auto text-center">
-                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                  <div className="text-2xl font-bold text-[#E68961]">OCR</div>
-                  <div className="text-xs text-text/60">Code Extract</div>
-                </div>
-                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                  <div className="text-2xl font-bold text-purple-400">AI</div>
-                  <div className="text-xs text-text/60">Video Gen</div>
-                </div>
-                <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
-                  <div className="text-2xl font-bold text-cyan-400">24/7</div>
-                  <div className="text-xs text-text/60">Support</div>
-                </div>
-              </div>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+              <div className="text-2xl font-bold text-[#E68961]">OCR</div>
+              <div className="text-xs text-gray-500">Code Extract</div>
+            </div>
+            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+              <div className="text-2xl font-bold text-purple-400">AI</div>
+              <div className="text-xs text-gray-500">Video Gen</div>
+            </div>
+            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+              <div className="text-2xl font-bold text-cyan-400">24/7</div>
+              <div className="text-xs text-gray-500">Support</div>
             </div>
           </div>
         </div>
@@ -309,15 +349,6 @@ function Home() {
 
       {/* Terminology Ticker - Fixed Bottom */}
       <TerminologyTicker />
-
-      {/* Phone Selector - Voice Interface */}
-      {user && (
-        <PhoneSelector 
-          userId={user.id}
-          onMessageSend={handleVoiceMessage}
-          onVoiceRecord={handleVoiceRecord}
-        />
-      )}
     </div>
   );
 }

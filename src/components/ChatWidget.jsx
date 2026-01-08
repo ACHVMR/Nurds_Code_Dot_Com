@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { MessageSquare, X, Send, CornerUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@clerk/clerk-react';
+import { ensureLucSession, transitionLucSession, extractChatMessage } from '../services/luc';
 
 const STORAGE_KEY = 'acheevy_chat_history_v1';
 const STORAGE_DRAFT_KEY = 'acheevy_chat_draft_v1';
@@ -69,6 +70,13 @@ export default function ChatWidget() {
 
     try {
       const token = await getToken().catch(() => null);
+
+      const lucSessionId = await ensureLucSession({ apiBase, token });
+
+      const chatMessages = newHistory
+        .slice(-10)
+        .map(({ role, content }) => ({ role, content }));
+
       const res = await fetch(`${apiBase}/api/chat`, {
         method: 'POST',
         headers: {
@@ -76,8 +84,8 @@ export default function ChatWidget() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          message: text,
-          history: newHistory.slice(-10).map(({ role, content }) => ({ role, content })),
+          messages: chatMessages,
+          lucSessionId,
         }),
       });
 
@@ -86,8 +94,13 @@ export default function ChatWidget() {
         throw new Error(data.error || 'Assistant request failed');
       }
 
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.message, model: data.model }].slice(-30));
+      const payload = await res.json().catch(() => ({}));
+      const extracted = extractChatMessage(payload);
+
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: extracted.message, usage: extracted.usage },
+      ].slice(-30));
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unable to reach assistant';
       setError(msg);
@@ -97,9 +110,19 @@ export default function ChatWidget() {
     }
   };
 
-  const teleportWith = (idea) => {
-    try { localStorage.setItem('nurd_idea_prompt', idea || draft || ''); } catch {}
-    navigate('/editor', { state: { ideaPrompt: idea || draft || '' } });
+  const teleportWith = async (idea) => {
+    const teleportIdea = idea || draft || '';
+    try { localStorage.setItem('nurd_idea_prompt', teleportIdea); } catch {}
+
+    try {
+      const token = await getToken().catch(() => null);
+      const lucSessionId = await ensureLucSession({ apiBase, token });
+      await transitionLucSession({ apiBase, token, sessionId: lucSessionId, toPhase: 'iteration' });
+    } catch {
+      // best-effort: teleport should still work if LUC is unavailable
+    }
+
+    navigate('/editor', { state: { ideaPrompt: teleportIdea } });
   };
 
   const lastAssistant = useMemo(() => {

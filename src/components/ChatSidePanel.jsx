@@ -1,5 +1,7 @@
 import { useChat } from './GlobalChatProvider';
 import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
+import { ensureLucSession, extractChatMessage } from '../services/luc';
 
 export default function ChatSidePanel() {
   const { isChatOpen, closeChat } = useChat();
@@ -9,6 +11,8 @@ export default function ChatSidePanel() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const { getToken } = useAuth();
+  const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,14 +37,29 @@ export default function ChatSidePanel() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      const token = await getToken().catch(() => null);
+      const lucSessionId = await ensureLucSession({ apiBase, token });
+
+      const response = await fetch(`${apiBase}/api/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...messages, userMessage] })
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          messages: [...messages, userMessage].map(({ role, content }) => ({ role, content })),
+          lucSessionId,
+        })
       });
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.message }]);
+      if (!response.ok) {
+        const errPayload = await response.json().catch(() => ({}));
+        throw new Error(errPayload?.error || 'Assistant request failed');
+      }
+
+      const payload = await response.json().catch(() => ({}));
+      const extracted = extractChatMessage(payload);
+      setMessages(prev => [...prev, { role: 'assistant', content: extracted.message }]);
     } catch (error) {
       setMessages(prev => [
         ...prev,
@@ -77,12 +96,14 @@ export default function ChatSidePanel() {
               <span className="chat-status">Online</span>
             </div>
           </div>
-          <button onClick={closeChat} className="chat-close-btn" aria-label="Close chat">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={closeChat} className="chat-close-btn" aria-label="Close chat">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="chat-messages">

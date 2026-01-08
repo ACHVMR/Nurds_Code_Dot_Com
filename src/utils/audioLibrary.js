@@ -1,16 +1,16 @@
 /**
  * Audio Library for NURDS CODE
- * Provides notification sounds for phones and chat interfaces
+ * Provides notification sounds for chat and UI events
  * Users can customize which sounds play for different events
  */
 
 // Audio Library - All sounds generated with Web Audio API
 const AudioLibrary = {
-  // Nextel-style chirps
-  nextelChirp: {
-    name: 'Nextel Chirp',
-    category: 'nextel',
-    description: 'Classic Nextel dual-tone chirp',
+  // Session notifications
+  sessionTone: {
+    name: 'Session Tone',
+    category: 'notifications',
+    description: 'Dual-tone session notification',
     generate: (volume = 0.3) => {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
@@ -44,10 +44,11 @@ const AudioLibrary = {
     }
   },
 
-  nextelPTTStart: {
-    name: 'Nextel PTT Start',
-    category: 'nextel',
-    description: 'Push-to-talk start chirp (ascending)',
+  // Recording cues
+  recordStart: {
+    name: 'Record Start',
+    category: 'ui',
+    description: 'Start recording cue (ascending)',
     generate: (volume = 0.3) => {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
@@ -71,10 +72,10 @@ const AudioLibrary = {
     }
   },
 
-  nextelPTTEnd: {
-    name: 'Nextel PTT End',
-    category: 'nextel',
-    description: 'Push-to-talk end chirp (descending)',
+  recordStop: {
+    name: 'Record Stop',
+    category: 'ui',
+    description: 'Stop recording cue (descending)',
     generate: (volume = 0.3) => {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const now = audioContext.currentTime;
@@ -327,11 +328,11 @@ const AudioLibrary = {
 
 // Default sound mappings for different events
 const defaultSoundMap = {
-  // Phone events
-  phoneOpen: 'nextelChirp',
-  phoneClose: 'nextelChirp',
-  pttStart: 'nextelPTTStart',
-  pttEnd: 'nextelPTTEnd',
+  // Session events
+  sessionOpen: 'sessionTone',
+  sessionClose: 'sessionTone',
+  recordStart: 'recordStart',
+  recordStop: 'recordStop',
   
   // Chat events
   messageReceived: 'messageReceived',

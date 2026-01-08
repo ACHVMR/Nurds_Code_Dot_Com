@@ -1,0 +1,113 @@
+/* ACHEEVY UNIFIED BEZEL — STAGE 2 EXECUTION CONTROL STRIP */
+
+.acheevy-bezel {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(10, 10, 20, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.acheevy-bezel__left,
+.acheevy-bezel__right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.acheevy-bezel__group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.acheevy-bezel__label {
+  font-size: 12px;
+  opacity: 0.75;
+  user-select: none;
+}
+
+.acheevy-bezel__btn {
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.acheevy-bezel__btn:hover {
+  background: rgba(255, 255, 255, 0.10);
+}
+
+.acheevy-bezel__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.acheevy-bezel__btn--active {
+  border-color: rgba(150, 255, 240, 0.55);
+  box-shadow: 0 0 18px rgba(100, 255, 230, 0.18);
+}
+
+.acheevy-bezel__pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.22);
+  font-size: 12px;
+}
+
+.acheevy-bezel__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  user-select: none;
+}
+
+.acheevy-bezel__toggle input {
+  transform: translateY(1px);
+}
+
+/* FIND/SCOUT DISCLAIMER TOOLTIP */
+.acheevy-bezel__disclaimer {
+  position: absolute;
+  top: 48px;
+  right: 12px;
+  max-width: 320px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.92);
+  border: 1px solid rgba(100, 255, 230, 0.35);
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  z-index: 60;
+}
+
+.acheevy-bezel__disclaimer-close {
+  margin-top: 8px;
+  padding: 4px 8px;
+  background: rgba(100, 255, 230, 0.15);
+  border: 1px solid rgba(100, 255, 230, 0.35);
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 11px;
+}

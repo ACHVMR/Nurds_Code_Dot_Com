@@ -1,238 +1,99 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Check, Zap, Crown, Rocket } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-function Pricing() {
-  const tiers = [
-    {
-      name: 'Free',
-      price: '$0',
-      cta: 'Get Started',
-      bullets: [
-        'GROQ models only',
-        '2 projects max',
-        'No collaboration',
-        'No voice features',
-        'Community support',
-      ],
-      footnote: 'Perfect for learning.',
-      priceId: 'free',
-    },
-    {
-      name: 'Buy Me a Coffee',
-      price: '$6.99 / mo',
-      cta: 'Join Coffee Tier',
-      bullets: [
-        '10M tokens/month',
-        'Basic voice features',
-        '5 projects max',
-        'Email support',
-      ],
-      footnote: 'Great for hobbyists.',
-      priceId: 'price_coffee',
-    },
-    {
-      name: 'LITE',
-      price: '$14.99 / mo',
-      cta: 'Upgrade to LITE',
-      bullets: [
-        '30M tokens/month',
-        'Full voice integration',
-        'Unlimited projects',
-        'Priority support',
-      ],
-      footnote: 'For individual developers.',
-      priceId: 'price_lite',
-    },
-    {
-      name: 'Medium',
-      price: '$49.99 / mo',
-      cta: 'Upgrade to Medium',
-      bullets: [
-        '150M tokens/month',
-        'All premium models (GPT-4, Claude)',
-        'Full voice features',
-        'Team collaboration',
-        'Priority support',
-      ],
-      footnote: 'For teams & serious builders.',
-      priceId: 'price_medium',
-      popular: true,
-    },
-    {
-      name: 'Heavy',
-      price: '$149.99 / mo',
-      cta: 'Upgrade to Heavy',
-      bullets: [
-        '500M tokens/month',
-        'Advanced AI models',
-        'Dedicated resources',
-        'Premium support',
-        'Custom integrations',
-      ],
-      footnote: 'For power users.',
-      priceId: 'price_heavy',
-    },
-    {
-      name: 'Superior',
-      price: '$349.99 / mo',
-      cta: 'Go Superior',
-      bullets: [
-        'Unlimited tokens',
-        'Enterprise features',
-        'Dedicated support',
-        'SLA guarantees',
-        'White-label options',
-      ],
-      footnote: 'For large organizations.',
-      priceId: 'price_superior',
-    },
-  ];
+const tiers = [
+  {
+    name: 'Satellite',
+    price: 'Free',
+    description: 'Perfect for getting started',
+    icon: Rocket,
+    color: '#3B82F6',
+    features: ['5 prompts/day', 'Basic agents', 'Community support'],
+  },
+  {
+    name: 'Star',
+    price: '$19/mo',
+    description: 'For individual creators',
+    icon: Zap,
+    color: '#F59E0B',
+    features: ['100 prompts/day', 'All II-Agents', 'Voice features', 'Priority support'],
+  },
+  {
+    name: 'Galaxy',
+    price: '$49/mo',
+    description: 'For teams and power users',
+    icon: Crown,
+    color: '#8B5CF6',
+    features: ['Unlimited prompts', 'KingMode', 'Custom agents', 'API access', 'Dedicated support'],
+    popular: true,
+  },
+];
 
-  const modelNotes = [
-    {
-      name: 'GROQ 8B (default free)',
-      pro: 'fast, $0',
-      con: 'weaker reasoning & tools',
-    },
-    {
-      name: 'GROQ 70B',
-      pro: 'stronger coding',
-      con: 'higher latency',
-    },
-    {
-      name: 'GPT-4o mini',
-      pro: 'balanced quality/cost',
-      con: 'paid',
-    },
-    {
-      name: 'Claude mix',
-      pro: 'long-context, safety',
-      con: 'premium',
-    },
-  ];
-
+export default function Pricing() {
   return (
-    <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header with Tagline */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold mb-4 text-text">
-            Pricing
+    <div className="min-h-screen bg-black text-white py-20">
+      <div className="max-w-6xl mx-auto px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Simple, Transparent Pricing
           </h1>
-          <p className="tagline mb-8">
-            Think It. Prompt It. Build It.
-          </p>
-          
-          {/* NURD Tagline Sticker */}
-          <div className="flex justify-center mb-8">
-            <img 
-              src="/assets/branding/nurd-tagline.png" 
-              alt="NURD I'm cool like that"
-              className="h-16 md:h-20 object-contain hover:scale-105 transition-transform"
-            />
-          </div>
-        </div>
+          <p className="text-xl text-gray-400">Choose your level. Scale as you grow.</p>
+        </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {tiers.map((tier) => (
-            <div
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {tiers.map((tier, i) => (
+            <motion.div
               key={tier.name}
-              className={`panel flex flex-col ${
-                tier.popular ? 'border-2 border-accent' : ''
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className={`relative bg-white/5 rounded-2xl p-8 border ${
+                tier.popular ? 'border-purple-500' : 'border-white/10'
               }`}
             >
               {tier.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-accent text-background px-3 py-1 text-xs font-semibold">
-                    Most Popular
-                  </span>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-purple-500 rounded-full text-sm font-medium">
+                  Most Popular
                 </div>
               )}
-              
-              <div className="text-xl mb-1 text-text">{tier.name}</div>
-              <div className="text-3xl mb-4 text-text">{tier.price}</div>
-              
-              <ul className="space-y-2 mb-6 grow">
-                {tier.bullets.map((bullet) => (
-                  <li key={bullet} className="text-sm text-text">
-                    • {bullet}
+              <tier.icon className="w-10 h-10 mb-4" style={{ color: tier.color }} />
+              <h3 className="text-2xl font-bold mb-2">{tier.name}</h3>
+              <p className="text-gray-400 mb-4">{tier.description}</p>
+              <div className="text-4xl font-bold mb-6">{tier.price}</div>
+              <ul className="space-y-3 mb-8">
+                {tier.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <Check className="w-5 h-5 text-green-400" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
-
               <Link
-                to={`/subscribe?plan=${tier.priceId}`}
-                className="btn-primary text-center block mt-auto"
+                to="/subscribe"
+                className={`block w-full py-3 rounded-lg text-center font-medium transition-colors ${
+                  tier.popular
+                    ? 'bg-purple-500 hover:bg-purple-600'
+                    : 'bg-white/10 hover:bg-white/20'
+                }`}
               >
-                {tier.cta}
+                Get Started
               </Link>
-              
-              <div className="text-xs text-mute mt-3">{tier.footnote}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
-        <hr className="my-10 border-border" />
-
-        {/* Plus One Pricing Section */}
-        <div className="mb-16 bg-[#E68961]/5 border border-[#E68961] rounded-lg p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-text mb-2">Plus One: Add Collaborators</h2>
-            <p className="text-text/70 text-lg">
-              Add team members for just $1/day • Save up to 50% with progressive discounts
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-              <div className="text-4xl font-bold text-[#E68961] mb-2">$1/day</div>
-              <div className="text-text/60">per collaborator</div>
-            </div>
-            <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-              <div className="text-4xl font-bold text-[#E68961] mb-2">50%</div>
-              <div className="text-text/60">max discount (5 people)</div>
-            </div>
-            <div className="text-center p-6 bg-[#1a1a1a] rounded-lg">
-              <div className="text-4xl font-bold text-[#E68961] mb-2">∞</div>
-              <div className="text-text/60">unlimited projects</div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <Link
-              to="/pricing/plus-one"
-              className="inline-block px-8 py-3 bg-[#E68961] text-black rounded-lg font-semibold hover:bg-[#D4A05F] transition-colors"
-            >
-              View Plus One Details
-            </Link>
-          </div>
-        </div>
-
-        <div className="mb-10">
-          <h2 className="text-2xl mb-4 text-text">Model options & upgrade guidance</h2>
-          <div className="grid md:grid-cols-2 gap-4">
-            {modelNotes.map((model) => (
-              <div key={model.name} className="panel p-4">
-                <div className="font-semibold text-text mb-2">{model.name}</div>
-                <div className="text-sm mt-1">
-                  <span className="text-neon">+</span> {model.pro}
-                </div>
-                <div className="text-sm">
-                  <span className="text-accent">–</span> {model.con}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-16 text-center">
-          <p className="text-mute text-sm">
-            All plans include a 14-day money-back guarantee. No questions asked.
-          </p>
+        <div className="mt-12 text-center">
+          <Link to="/pricing/plus-one" className="text-purple-400 hover:text-purple-300">
+            Looking for team pricing? Check out Plus 1 →
+          </Link>
         </div>
       </div>
     </div>
   );
 }
-
-export default Pricing;

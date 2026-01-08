@@ -4,23 +4,50 @@
 :root {
   --z-backdrop: 999;
   --z-chat-panel: 1000;
-  --z-phone-mockup: 1001;
-  --z-phone-content: 1002;
   --z-chat-header: 1003;
   --z-file-upload-overlay: 1005;
   --z-floating-button: 1010;
   
   /* Golden Yellow Palette (Nurds Code Brand) */
-  --color-golden-yellow: #E68961;
-  --color-golden-yellow-rgb: 230, 137, 97;
-  --color-golden-hover: #D4A05F;
-  --color-golden-active: #C49350;
-  --color-golden-light: #F5D5B8;
-  --color-golden-dark: #B8733F;
-  --gradient-golden: linear-gradient(135deg, #E68961, #D4A05F);
-  --gradient-golden-hover: linear-gradient(135deg, #D4A05F, #C49350);
-  --gradient-golden-glow: radial-gradient(circle, rgba(230, 137, 97, 0.3), transparent);
+  --color-golden-yellow: #FF6B35; /* Safety Orange */
+  --color-golden-yellow-rgb: 255, 107, 53;
+  --color-golden-hover: #FF8559;
+  --color-golden-active: #E65A2C;
+  --color-golden-light: #FFD2C0;
+  --color-golden-dark: #cc562a;
+  --gradient-golden: linear-gradient(135deg, #FF6B35, #E65A2C);
+  --gradient-golden-hover: linear-gradient(135deg, #FF8559, #FF6B35);
+  --gradient-golden-glow: radial-gradient(circle, rgba(255, 107, 53, 0.3), transparent);
+
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(10, 22, 40, 0.65);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(12px);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
+
+/* ============================================
+   MESSAGE BUBBLES - GLASSMORPHISM
+   ============================================ */
+.chat-message-bubble {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  color: #E2E8F0;
+}
+
+.chat-message-bubble.user {
+  background: rgba(255, 107, 53, 0.15); /* Orange tint for user */
+  border-color: rgba(255, 107, 53, 0.3);
+}
+
+.chat-message-bubble.agent {
+  background: rgba(0, 255, 65, 0.08); /* Green tint for agent */
+  border-color: rgba(0, 255, 65, 0.2);
+}
+
 
 /* ============================================
    FLOATING CHAT BUTTON
