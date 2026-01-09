@@ -3,106 +3,118 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Home.css';
 
 /**
- * Home Page - Clean Matte Black with Dots Theme
+ * Home Page - NURDSCODE Landing Page
+ * Design: Dark theme with neon cyan/orange accents
  */
 export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="home dots-bg">
-      {/* Navigation */}
+    <div className="home-page">
+      {/* Navigation Header */}
       <nav className="home-nav">
-        <div className="nav-logo">
-          <span>Nurds</span>
-          <span className="accent">Code</span>
+        <div className="nav-container">
+          {/* Logo */}
+          <div className="nav-logo">
+            <span className="logo-text">NurdsCode</span>
+          </div>
+
+          {/* Navigation Links */}
+          <div className="nav-links">
+            <Link to="/" className="nav-link active">Home</Link>
+            <Link to="/about" className="nav-link">Pbouts</Link>
+            <Link to="/resources" className="nav-link">Resources</Link>
+            <Link to="/blog" className="nav-link">Blog</Link>
+            <Link to="/contact" className="nav-link">Contact</Link>
+          </div>
+
+          {/* Auth Buttons */}
+          <div className="nav-auth">
+            <button className="btn-link" onClick={() => navigate('/login')}>
+              Log in
+            </button>
+            <button className="btn-get-started" onClick={() => navigate('/code')}>
+              Get started
+            </button>
+          </div>
         </div>
-        <div className="nav-links">
-          <Link to="/" className="active">Hub</Link>
-          <Link to="/code">Prompt to Code</Link>
-          <Link to="/vibe/editor">V.I.B.E.</Link>
-          <Link to="/testing-lab">Testing Lab</Link>
-          <Link to="/agents">Boomer_Angs</Link>
-        </div>
-        <button className="nav-cta" onClick={() => navigate('/code')}>
-          Start Building →
-        </button>
       </nav>
 
-      {/* Hero */}
-      <section className="hero">
-        <div className="hero-content animate-fade-in">
-          <div className="dot-grid large">
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
-            <span className="dot"></span>
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-container">
+          {/* Left Content */}
+          <div className="hero-content">
+            <h1 className="hero-title">
+              <span className="hero-brand">NURDSCODE:</span>{' '}
+              <span className="hero-subtitle-text">CODE YOUR FUTURE. EMPOWER YOUR VIBE.</span>
+            </h1>
+
+            <p className="hero-description">
+              A community-driven platform for the next generation of tech leaders,
+              powered by STEAM, S.M.A.R.T. goals, and the F.D.H. methodology.
+            </p>
+
+            <div className="hero-actions">
+              <button className="btn-primary-hero" onClick={() => navigate('/code')}>
+                BECOME A NURD TODAY
+              </button>
+              <button className="btn-secondary-hero" onClick={() => navigate('/vibe/editor')}>
+                EXPLORE THE PLATFORM
+              </button>
+            </div>
           </div>
-          
-          <h1>
-            Think It.<br />
-            <span className="highlight">Prompt It.</span><br />
-            Build It.
-          </h1>
-          
-          <p className="tagline">
-            Describe what you want. Watch it come to life.
-          </p>
-          
-          <div className="hero-actions">
-            <button className="btn-primary" onClick={() => navigate('/code')}>
-              Start Building →
-            </button>
-            <button className="btn-secondary" onClick={() => navigate('/agents')}>
-              Create Agent
-            </button>
+
+          {/* Right Content - Character Illustration */}
+          <div className="hero-illustration">
+            <div className="illustration-container">
+              {/* Placeholder for character illustration */}
+              <div className="character-card">
+                <div className="character-badge">
+                  <div className="badge-icon">👨‍💻</div>
+                  <div className="badge-text">
+                    <div className="badge-title">TECH SAGE - LEVEL 7</div>
+                    <div className="progress-bars">
+                      <div className="progress-bar" style={{width: '80%'}}></div>
+                      <div className="progress-bar" style={{width: '65%'}}></div>
+                      <div className="progress-bar" style={{width: '90%'}}></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="character-main">
+                  <div className="nurd-logo-big">NURD</div>
+                  <div className="character-avatar">
+                    <div className="avatar-circle">🚀</div>
+                  </div>
+                </div>
+
+                <div className="methodology-tags">
+                  <div className="tag tag-foster">FOSTER</div>
+                  <div className="tag tag-develop">DEVELOP</div>
+                  <div className="tag tag-hone">HONE</div>
+                </div>
+
+                <div className="goals-card">
+                  <div className="goals-title">S.M.A.R.T. GOALS</div>
+                  <div className="goals-items">
+                    <div className="goal-item">✓ Build portfolio</div>
+                    <div className="goal-item">✓ Master React</div>
+                    <div className="goal-item">→ Launch startup</div>
+                  </div>
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="glow-circle glow-cyan"></div>
+                <div className="glow-circle glow-orange"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="features carbon-fiber">
-        <div className="features-grid">
-          <div className="feature-card animate-fade-in" onClick={() => navigate('/code')}>
-            <div className="card-dot"></div>
-            <h3>Prompt to Code</h3>
-            <p>Describe it. Build it. Deploy it.</p>
-          </div>
-          
-          <div className="feature-card animate-fade-in" onClick={() => navigate('/vibe/editor')} style={{animationDelay: '0.1s'}}>
-            <div className="card-dot"></div>
-            <h3>V.I.B.E.</h3>
-            <p>Vibrant Imagination Build Environment</p>
-          </div>
-          
-          <div className="feature-card animate-fade-in" onClick={() => navigate('/testing-lab')} style={{animationDelay: '0.2s'}}>
-            <div className="card-dot"></div>
-            <h3>Testing Lab</h3>
-            <p>Test code with AI assistance</p>
-          </div>
-          
-          <div className="feature-card animate-fade-in" onClick={() => navigate('/agents')} style={{animationDelay: '0.3s'}}>
-            <div className="card-dot"></div>
-            <h3>Boomer_Angs</h3>
-            <p>Build autonomous AI agents</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Quick Prompt */}
-      <section className="quick-prompt">
-        <h2>What do you want to build?</h2>
-        <div className="prompt-bar">
-          <input 
-            type="text" 
-            placeholder="Describe your idea..."
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') navigate('/code');
-            }}
-          />
-          <button onClick={() => navigate('/code')}>→</button>
-        </div>
-      </section>
+      {/* Footer Accent Line */}
+      <div className="hero-footer-accent"></div>
     </div>
   );
 }
