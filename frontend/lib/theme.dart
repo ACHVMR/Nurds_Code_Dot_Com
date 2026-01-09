@@ -2,18 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
+  // NURDS CODE DARK THEME - Official Brand Colors
   static const Color obsidian = Color(0xFF0A0A0A);
+  static const Color neonCyan = Color(0xFF00E5FF);
+  static const Color neonOrange = Color(0xFFFF5E00);
   static const Color terminalGreen = Color(0xFF00FF41);
   static const Color pureWhite = Color(0xFFFFFFFF);
-  static const Color darkGrey = Color(0xFF1E1E1E);
+  static const Color darkGrey = Color(0xFF111111);
 
   static ThemeData get darkTheme {
     return ThemeData.dark().copyWith(
       scaffoldBackgroundColor: obsidian,
-      primaryColor: terminalGreen,
+      primaryColor: neonCyan,
       colorScheme: const ColorScheme.dark(
-        primary: terminalGreen,
-        secondary: terminalGreen, // For accents
+        primary: neonCyan,
+        secondary: neonOrange,
+        tertiary: terminalGreen,
         surface: darkGrey,
         onSurface: pureWhite,
         onPrimary: obsidian,
@@ -39,13 +43,13 @@ class AppTheme {
           fontSize: 16,
         ),
         labelLarge: GoogleFonts.jetbrainsMono(
-          color: terminalGreen,
+          color: neonCyan,
           fontWeight: FontWeight.w600,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: terminalGreen,
+          backgroundColor: neonCyan,
           foregroundColor: obsidian,
           textStyle: GoogleFonts.jetbrainsMono(fontWeight: FontWeight.bold),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
