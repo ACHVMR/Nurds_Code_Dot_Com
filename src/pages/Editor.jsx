@@ -5,7 +5,8 @@ import VoiceControl from '../components/VoiceControl';
 import ContextTicker from '../components/ContextTicker';
 import { Sparkles, Wand2, Code2, FileCode, Zap } from 'lucide-react';
 import { useAuth } from '@clerk/clerk-react';
-import { ensureLucSession, transitionLucSession, extractChatMessage } from '../services/luc';
+import { ensureLucSession, transitionLucSession, extractChatMessage, getStoredLucSessionId } from '../services/luc';
+import AcheevyBezel from '../components/acheevyBezel';
 
 const INITIAL_ASSISTANT_MESSAGES = [
   {
@@ -42,7 +43,16 @@ console.log("Welcome to Nurds Code!");`);
   const [assistantPlan, setAssistantPlan] = useState('free');
   const [assistantLoading, setAssistantLoading] = useState(false);
   const [assistantError, setAssistantError] = useState('');
+  const [interactionMode, setInteractionMode] = useState('brainstorm');
+  const [agentLevel, setAgentLevel] = useState('standard');
+  const [lastAcheevyMeta, setLastAcheevyMeta] = useState(null);
+  const [scoutBriefing, setScoutBriefing] = useState('');
+  const [scoutSources, setScoutSources] = useState([]);
+  const [showScoutSources, setShowScoutSources] = useState(false);
   const [userId, setUserId] = useState('');
+  const [lucSessionId, setLucSessionId] = useState(() => getStoredLucSessionId());
+  const [bezelMode, setBezelMode] = useState('lab');
+  const [orchestratorHydrating, setOrchestratorHydrating] = useState(false);
   const editorRef = useRef(null);
   const messagesEndRef = useRef(null);
   const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
@@ -62,6 +72,31 @@ console.log("Welcome to Nurds Code!");`);
       if (ideaPrompt) {
         setAssistantInput(ideaPrompt);
         try { localStorage.removeItem('nurd_idea_prompt'); } catch {}
+      }
+
+      const incomingBriefing = location.state?.scoutBriefing || localStorage.getItem('nurdscode_scout_briefing');
+      const incomingResults = location.state?.scoutResults || (() => {
+        try {
+          const raw = localStorage.getItem('nurdscode_scout_results');
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      })();
+
+      const cameFromAcheevyIntake = !!location.state?.scoutBriefing || Array.isArray(location.state?.scoutResults);
+
+      if (typeof incomingBriefing === 'string' && incomingBriefing.trim()) {
+        setScoutBriefing(incomingBriefing);
+        try { localStorage.setItem('nurdscode_scout_briefing', incomingBriefing); } catch {}
+      }
+      if (Array.isArray(incomingResults) && incomingResults.length) {
+        setScoutSources(incomingResults);
+        try { localStorage.setItem('nurdscode_scout_results', JSON.stringify(incomingResults)); } catch {}
+
+        if (cameFromAcheevyIntake) {
+          setShowScoutSources(true);
+        }
       }
 
       if (storedCode) {
@@ -104,6 +139,7 @@ console.log("Welcome to Nurds Code!");`);
         if (!token || cancelled) return;
         const lucSessionId = await ensureLucSession({ apiBase, token });
         if (cancelled) return;
+        setLucSessionId(lucSessionId);
         await transitionLucSession({ apiBase, token, sessionId: lucSessionId, toPhase: 'iteration' });
       } catch {
         // best-effort
@@ -111,6 +147,120 @@ console.log("Welcome to Nurds Code!");`);
     })();
     return () => { cancelled = true; };
   }, [apiBase, getToken]);
+
+  // Hydrate bezel mode from orchestrator session (D1 source of truth).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!lucSessionId) return;
+      setOrchestratorHydrating(true);
+      try {
+        const token = await getToken().catch(() => null);
+        const res = await fetch(`/api/v1/orchestrator/session/${lucSessionId}`, {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (!res.ok) return; // session may not exist yet (lazy-create on first switch)
+
+        const payload = await res.json().catch(() => ({}));
+        const persisted = payload?.session?.mode;
+        const nextBezel =
+          persisted === 'BRAINSTORMING'
+            ? 'lab'
+            : persisted === 'NURD_OUT'
+              ? 'nerdout'
+              : persisted === 'AGENT_MODE'
+                ? 'forge'
+                : persisted === 'EDIT_MODE'
+                  ? 'polish'
+                  : null;
+
+        if (nextBezel && !cancelled) {
+          setBezelMode(nextBezel);
+          // Keep the assistant UX working with existing backend contract.
+          if (nextBezel === 'lab') setInteractionMode('brainstorm');
+          if (nextBezel === 'nerdout') setInteractionMode('forming');
+          if (nextBezel === 'forge') setInteractionMode('agent');
+          if (nextBezel === 'polish') setInteractionMode('forming');
+        }
+      } catch {
+        // best-effort
+      } finally {
+        if (!cancelled) setOrchestratorHydrating(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken, lucSessionId]);
+
+  const handleBezelModeChange = async (nextMode) => {
+    setBezelMode(nextMode);
+
+    // Map bezel -> assistant modes (existing /acheevy/chat contract)
+    if (nextMode === 'lab') setInteractionMode('brainstorm');
+    if (nextMode === 'nerdout') setInteractionMode('forming');
+    if (nextMode === 'forge') setInteractionMode('agent');
+    if (nextMode === 'polish') setInteractionMode('forming');
+
+    if (!lucSessionId) return;
+
+    // Map bezel -> orchestrator aliases (stored in D1 as canonical OpenHands mode)
+    const modeAlias =
+      nextMode === 'lab'
+        ? 'brainstorm'
+        : nextMode === 'nerdout'
+          ? 'nurdout'
+          : nextMode === 'forge'
+            ? 'agent'
+            : 'edit';
+
+    try {
+      const token = await getToken().catch(() => null);
+      await fetch('/api/v1/orchestrator/session/switch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ sessionId: lucSessionId, mode: modeAlias }),
+      });
+    } catch {
+      // best-effort
+    }
+  };
+
+  const handleBezelFindScout = async () => {
+    const query = window.prompt('FIND (SCOUT) query: what should ACHEEVY research?');
+    if (!query || !query.trim()) return;
+
+    try {
+      const token = await getToken().catch(() => null);
+      const res = await fetch('/api/v1/acheevy/scout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ query: query.trim(), limit: 3 }),
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || payload?.success === false) {
+        throw new Error(payload?.error || 'FIND failed.');
+      }
+
+      const results = payload?.results || payload?.data?.results || [];
+      setScoutBriefing(`FIND results for: ${query.trim()}`);
+      setScoutSources(Array.isArray(results) ? results : []);
+      setShowScoutSources(true);
+    } catch (e) {
+      setAssistantError(e instanceof Error ? e.message : 'FIND failed.');
+    }
+  };
 
   useEffect(() => {
     if (typeof localStorage === 'undefined') return;
@@ -195,10 +345,6 @@ console.log("Welcome to Nurds Code!");`);
       return;
     }
 
-    const messagesPayload = [...assistantMessages, { role: 'user', content: trimmed }]
-      .slice(-10)
-      .map(({ role, content }) => ({ role, content }));
-
     setAssistantMessages((prev) => {
       const next = [...prev, { role: 'user', content: trimmed }];
       return next.slice(-20);
@@ -209,17 +355,36 @@ console.log("Welcome to Nurds Code!");`);
 
     try {
       const token = await getToken().catch(() => null);
-      const lucSessionId = await ensureLucSession({ apiBase, token });
 
-      const response = await fetch(`${apiBase}/api/chat`, {
+      let sessionId = null;
+      try {
+        sessionId = await ensureLucSession({ apiBase, token });
+      } catch {
+        sessionId = null;
+      }
+
+      const resolvedMode = ['brainstorm', 'forming', 'agent'].includes(interactionMode)
+        ? interactionMode
+        : 'brainstorm';
+      const resolvedAgentLevel = resolvedMode === 'agent'
+        ? (['standard', 'swarm', 'king'].includes(agentLevel) ? agentLevel : 'standard')
+        : 'standard';
+
+      const response = await fetch('/api/v1/acheevy/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          messages: messagesPayload,
-          lucSessionId,
+          message: trimmed,
+          mode: resolvedMode,
+          agent_level: resolvedAgentLevel,
+          session_id: sessionId || undefined,
+          circuit_box: [],
+          scout_briefing: scoutBriefing || undefined,
+          scout_sources_count: scoutBriefing ? scoutSources.length : 0,
+          scout_bytes: scoutBriefing ? scoutBriefing.length : 0,
         }),
       });
 
@@ -229,14 +394,20 @@ console.log("Welcome to Nurds Code!");`);
       }
 
       const payload = await response.json().catch(() => ({}));
-      const data = extractChatMessage(payload);
+      const acheevyResponse = payload?.response || payload?.message;
+      if (!payload?.success || !acheevyResponse) {
+        throw new Error(payload?.error || 'Assistant request failed.');
+      }
+
+      setLastAcheevyMeta(payload?.metadata || null);
       setAssistantMessages((prev) => {
         const next = [
           ...prev,
           {
             role: 'assistant',
-            content: data.message,
-            usage: data.usage,
+            content: acheevyResponse,
+            usage: payload?.metadata,
+            model: payload?.metadata?.model,
           },
         ];
         return next.slice(-20);
@@ -284,24 +455,80 @@ console.log("Welcome to Nurds Code!");`);
     });
   };
 
+  const extractFirstFencedCodeBlock = (text) => {
+    if (typeof text !== 'string') return '';
+    const match = text.match(/```[a-zA-Z0-9_-]*\n([\s\S]*?)```/);
+    return match ? match[1].trim() : '';
+  };
+
+  const callAcheevyChat = async ({ message, forceAgent = false }) => {
+    const token = await getToken().catch(() => null);
+
+    let sessionId = null;
+    try {
+      sessionId = await ensureLucSession({ apiBase, token });
+    } catch {
+      sessionId = null;
+    }
+
+    const resolvedMode = forceAgent
+      ? 'agent'
+      : (['brainstorm', 'forming', 'agent'].includes(interactionMode) ? interactionMode : 'brainstorm');
+    const resolvedAgentLevel = resolvedMode === 'agent'
+      ? (['standard', 'swarm', 'king'].includes(agentLevel) ? agentLevel : 'standard')
+      : 'standard';
+
+    const response = await fetch('/api/v1/acheevy/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        message,
+        mode: resolvedMode,
+        agent_level: resolvedAgentLevel,
+        session_id: sessionId || undefined,
+        circuit_box: [],
+        scout_briefing: scoutBriefing || undefined,
+        scout_sources_count: scoutBriefing ? scoutSources.length : 0,
+        scout_bytes: scoutBriefing ? scoutBriefing.length : 0,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => ({}));
+      throw new Error(errorPayload.error || 'ACHEEVY request failed.');
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    const acheevyResponse = payload?.response || payload?.message;
+    if (!payload?.success || !acheevyResponse) {
+      throw new Error(payload?.error || 'ACHEEVY request failed.');
+    }
+
+    return { text: acheevyResponse, metadata: payload?.metadata || null };
+  };
+
   const generateCodeWithAI = async (prompt) => {
     setAiGenerating(true);
     try {
-      const response = await fetch(`${apiBase}/api/ai/generate-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          language,
-          context: code,
-        }),
+      const { text } = await callAcheevyChat({
+        forceAgent: true,
+        message: [
+          `Generate ${language} code for the following request.`,
+          `Return ONLY the code in a single fenced code block and nothing else.`,
+          '',
+          `REQUEST: ${prompt}`,
+          '',
+          `EXISTING CONTEXT (may be empty):`,
+          code || '',
+        ].join('\n'),
       });
 
-      if (!response.ok) throw new Error('AI generation failed');
-
-      const data = await response.json();
-      setCode(data.code || data.message);
-      setOutput('✨ Code generated by ACHEEVY AI!');
+      const extracted = extractFirstFencedCodeBlock(text);
+      setCode(extracted || text);
+      setOutput('Code generated by ACHEEVY.');
     } catch (error) {
       setOutput(`AI Error: ${error.message}`);
     } finally {
@@ -312,16 +539,17 @@ console.log("Welcome to Nurds Code!");`);
   const explainCode = async () => {
     setAiGenerating(true);
     try {
-      const response = await fetch(`${apiBase}/api/ai/explain-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language }),
+      const { text } = await callAcheevyChat({
+        forceAgent: false,
+        message: [
+          `Explain the following ${language} code clearly and concisely.`,
+          `Use headings and bullet points where helpful.`,
+          '',
+          code || '',
+        ].join('\n'),
       });
 
-      if (!response.ok) throw new Error('Explanation failed');
-
-      const data = await response.json();
-      setOutput(`📖 Code Explanation:\n\n${data.explanation}`);
+      setOutput(text);
     } catch (error) {
       setOutput(`Error: ${error.message}`);
     } finally {
@@ -332,17 +560,19 @@ console.log("Welcome to Nurds Code!");`);
   const optimizeCode = async () => {
     setAiGenerating(true);
     try {
-      const response = await fetch(`${apiBase}/api/ai/optimize-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, language }),
+      const { text } = await callAcheevyChat({
+        forceAgent: true,
+        message: [
+          `Optimize the following ${language} code.`,
+          `Return ONLY the optimized code in a single fenced code block and nothing else.`,
+          '',
+          code || '',
+        ].join('\n'),
       });
 
-      if (!response.ok) throw new Error('Optimization failed');
-
-      const data = await response.json();
-      setCode(data.optimized || data.code);
-      setOutput('⚡ Code optimized by ACHEEVY AI!');
+      const extracted = extractFirstFencedCodeBlock(text);
+      setCode(extracted || text);
+      setOutput('Code optimized by ACHEEVY.');
     } catch (error) {
       setOutput(`Error: ${error.message}`);
     } finally {
@@ -351,12 +581,28 @@ console.log("Welcome to Nurds Code!");`);
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-text">Editor</h1>
-          <p className="tagline text-2xl">Think It. Prompt It. Build It.</p>
-        </div>
+    <div className="min-h-screen">
+      <AcheevyBezel
+        enabled={!assistantLoading}
+        mode={bezelMode}
+        onModeChange={handleBezelModeChange}
+        lucQuoteText={
+          lastAcheevyMeta
+            ? `Tokens: ${lastAcheevyMeta.estimated_tokens ?? '—'} · Cost: ${lastAcheevyMeta.estimated_cost ?? '—'}`
+            : 'Tokens: —'
+        }
+        onFindScout={handleBezelFindScout}
+      />
+
+      <div className="py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold mb-2 text-text">Editor</h1>
+            <p className="tagline text-2xl">Think It. Prompt It. Build It.</p>
+            {orchestratorHydrating && (
+              <div className="text-xs text-mute mt-2">Syncing session mode…</div>
+            )}
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Editor Panel - Monaco */}
@@ -492,8 +738,37 @@ console.log("Welcome to Nurds Code!");`);
                   <p className="text-sm text-mute">
                     Cloudflare VibeSDK hints tailored to your plan.
                   </p>
+                  {scoutBriefing && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                      <span className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-text">
+                        🔎 FIND context attached ({scoutSources.length} sources)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowScoutSources((v) => !v)}
+                        className="text-xs text-accent hover:text-neon"
+                      >
+                        {showScoutSources ? 'Hide sources' : 'View sources'}
+                      </button>
+                    </div>
+                  )}
+                  {lastAcheevyMeta && (
+                    <div className="mt-1 text-[11px] text-mute">
+                      Mode: {lastAcheevyMeta.mode} · Level: {lastAcheevyMeta.agent_level} · Tokens: {lastAcheevyMeta.estimated_tokens} · Cost: {lastAcheevyMeta.estimated_cost}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
+                  <select
+                    value={agentLevel}
+                    onChange={(event) => setAgentLevel(event.target.value)}
+                    className="input-field text-sm"
+                    disabled={interactionMode !== 'agent'}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="swarm">Swarm</option>
+                    <option value="king">King</option>
+                  </select>
                   <select
                     value={assistantPlan}
                     onChange={(event) => setAssistantPlan(event.target.value)}
@@ -517,6 +792,32 @@ console.log("Welcome to Nurds Code!");`);
               </div>
 
               <div className="bg-background border border-border h-64 overflow-y-auto px-4 py-3">
+                {showScoutSources && scoutSources.length > 0 && (
+                  <div className="mb-4 rounded-lg border border-border bg-white/5 p-3">
+                    <div className="text-xs uppercase tracking-wide text-mute mb-2">FIND Sources</div>
+                    <ul className="space-y-2">
+                      {scoutSources.slice(0, 5).map((item) => (
+                        <li key={item?.url || item?.title} className="text-sm">
+                          {item?.url ? (
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-accent hover:text-neon underline"
+                            >
+                              {item.title || item.url}
+                            </a>
+                          ) : (
+                            <span className="text-text">{item?.title || 'Source'}</span>
+                          )}
+                          {item?.description && (
+                            <div className="text-xs text-mute mt-1 line-clamp-2">{item.description}</div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {assistantMessages.map((msg, index) => (
                   <div key={`assistant-message-${index}`} className="mb-4">
                     <div className="text-xs uppercase tracking-wide text-mute mb-1">
@@ -606,6 +907,7 @@ console.log("Welcome to Nurds Code!");`);
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

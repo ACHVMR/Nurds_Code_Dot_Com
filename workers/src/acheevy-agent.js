@@ -1,7 +1,8 @@
 /**
- * ACHEEVY CLOUDFLARE WORKER — FIND/SCOUT CAPABILITY
+ * ACHEEVY CLOUDFLARE WORKER — FIND (Firecrawl) CAPABILITY
  *
- * POST /api/v1/acheevy/scout
+ * POST /api/v1/acheevy/scout  (legacy name)
+ * POST /api/v1/acheevy/find   (preferred product name)
  * Body: { url: string, scoutEnabled: boolean }
  */
 
@@ -22,7 +23,7 @@ export async function handleScout(request, env) {
   const scoutEnabled = !!body?.scoutEnabled;
 
   if (!scoutEnabled) {
-    return new Response(JSON.stringify({ error: 'FIND/SCOUT not enabled' }), {
+    return new Response(JSON.stringify({ error: 'FIND not enabled' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' },
     });

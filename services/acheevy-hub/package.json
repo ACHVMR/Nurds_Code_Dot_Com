@@ -1,0 +1,21 @@
+{
+  "name": "acheevy-hub",
+  "version": "2.0.0",
+  "description": "ACHEEVY Hub - Central orchestrator for II-Agent workers",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "echo 'No build step required'"
+  },
+  "keywords": [
+    "acheevy",
+    "ii-agent",
+    "nurds-code",
+    "orchestrator"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

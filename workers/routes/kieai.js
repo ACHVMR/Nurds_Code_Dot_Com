@@ -21,7 +21,11 @@ const KIEAI_API_VERSION = 'v1';
  * Get API key from environment
  */
 function getApiKey(env) {
-  return env.KIE_API_KEY || '6423cd116ad6e1e3f43f3506aaf4b751';
+  const key = env.KIE_API_KEY;
+  if (!key) {
+    throw new Error('KIE_API_KEY is not configured');
+  }
+  return key;
 }
 
 /**

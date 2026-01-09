@@ -15,7 +15,7 @@ import {
   validateVoiceRequest,
 } from '../services/voice.js';
 
-const router = Router({ base: '/api/voice' });
+const router = Router({ base: '/api/v1/voice' });
 
 /**
  * GET /api/voice/options - Get available voice options

@@ -30,6 +30,22 @@ const II_AGENTS = {
   accessibility: 'ii-accessibility-worker'
 };
 
+function getTimeoutMs(env, fallback = 30000) {
+  const raw = env?.RESPONSE_TIMEOUT_MS;
+  const parsed = typeof raw === 'string' ? Number.parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+async function fetchWithTimeout(url, init, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort('timeout'), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 // --- HELPER FUNCTIONS ---
 
 function classifyIntent(prompt) {
@@ -90,7 +106,7 @@ async function callCloudRunAgent(agentName, prompt, env, flags = {}, ctx = {}) {
   const serviceUrl = `https://${II_AGENTS[agentName]}-${projectId}.${region}.run.app`;
   
   try {
-    const resp = await fetch(`${serviceUrl}/process`, {
+    const resp = await fetchWithTimeout(`${serviceUrl}/process`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -104,7 +120,7 @@ async function callCloudRunAgent(agentName, prompt, env, flags = {}, ctx = {}) {
         user_id: ctx?.userId,
         module_id: ctx?.moduleId,
       })
-    });
+    }, getTimeoutMs(env));
     
     if (!resp.ok) {
       throw new Error(`Agent ${agentName} returned ${resp.status}`);
@@ -127,7 +143,7 @@ async function callACHEEVYHub(workflowId, prompt, agents, env) {
   }
   
   try {
-    const resp = await fetch(`${hubUrl}/api/v1/workflow`, {
+    const resp = await fetchWithTimeout(`${hubUrl}/api/v1/workflow`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -139,7 +155,7 @@ async function callACHEEVYHub(workflowId, prompt, agents, env) {
         agents,
         callback_url: `${env.CLOUDFLARE_WORKER_URL || ''}/api/v1/workflow/callback`
       })
-    });
+    }, getTimeoutMs(env));
     
     return await resp.json();
   } catch (e) {
@@ -215,8 +231,23 @@ async function callVertexAI(prompt, env) {
 orchestrateRouter.post('/orchestrate', async (request, env) => {
   try {
     const body = await request.json();
-    const { prompt, circuit_flags = {}, context = [] } = body;
+    let { prompt, circuit_flags = {}, context = [] } = body;
     const workflowId = crypto.randomUUID();
+    
+    // Check for voice transcript header (from VoiceInput component)
+    const voiceTranscript = request.headers.get('X-Voice-Transcript');
+    const isVoiceMode = !!voiceTranscript || circuit_flags.enableVoice;
+    
+    if (voiceTranscript) {
+      // Voice input overrides prompt
+      prompt = voiceTranscript;
+      circuit_flags = {
+        ...circuit_flags,
+        enableVoice: true,
+        enableGroq: true,
+        source: 'voice'
+      };
+    }
 
     // 1. Intent Classification
     const intent = classifyIntent(prompt);
@@ -224,6 +255,9 @@ orchestrateRouter.post('/orchestrate', async (request, env) => {
     const responseEvents = [];
     responseEvents.push(`[ACHEEVY] Workflow Started: ${workflowId}`);
     responseEvents.push(`[ACHEEVY] Intent Detected: ${intent.toUpperCase()}`);
+    if (isVoiceMode) {
+      responseEvents.push(`[VOICE] Mode: ACTIVE | Transcript: "${prompt.slice(0, 50)}..."`);
+    }
     responseEvents.push(`[II-AGENT] Dispatching to: ${selectedAgents.join(', ')}`);
 
     let aiResponse = null;

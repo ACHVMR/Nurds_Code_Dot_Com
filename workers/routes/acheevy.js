@@ -22,8 +22,40 @@ import {
 } from '../sdk/acheevy-agent.js';
 import { handleFindRequest } from '../services/find.js';
 import { handleScoutRequest } from '../services/scout.js';
+import { logChronicleEvent } from '../services/chronicle.js';
 
 const acheevyRouter = Router({ base: '/api/v1/acheevy' });
+
+function getTimeoutMs(env, fallback = 30000) {
+  const raw = env?.RESPONSE_TIMEOUT_MS;
+  const parsed = typeof raw === 'string' ? Number.parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+async function fetchWithTimeout(url, init, timeoutMs) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort('timeout'), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function promiseWithTimeout(promise, timeoutMs, label) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label || 'Operation'} timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 // ============================================
 // FIND - Hybrid Web + Local Knowledge
@@ -43,6 +75,12 @@ acheevyRouter.post('/find', async (request, env) => {
   }
 });
 
+// Contract guard:
+// - `/find` is reserved for hybrid search (web + optional knowledge)
+// - `/scout` is the Firecrawl capture pipeline (product label: FIND)
+// If a product-friendly alias is desired later, add a non-conflicting path like `/crawl`.
+// acheevyRouter.post('/crawl', ...same handler as `/scout`...)
+
 // ============================================
 // SCOUT - Web Crawl/Scrape
 // ============================================
@@ -56,8 +94,8 @@ acheevyRouter.post('/scout', async (request, env) => {
     const result = await handleScoutRequest(request, env);
     return jsonResponse({ success: true, ...result });
   } catch (error) {
-    console.error('SCOUT error:', error);
-    return errorResponse('SCOUT failed: ' + error.message, 500);
+    console.error('FIND error:', error);
+    return errorResponse('FIND failed: ' + error.message, 500);
   }
 });
 
@@ -77,7 +115,11 @@ acheevyRouter.post('/chat', async (request, env) => {
       mode = 'brainstorm', 
       agent_level = 'standard',
       circuit_box = [],
-      session_id 
+      session_id,
+      scout_briefing,
+      scoutBriefing,
+      scout_sources_count,
+      scout_bytes
     } = await request.json();
     
     const userId = request.userId;
@@ -108,18 +150,34 @@ acheevyRouter.post('/chat', async (request, env) => {
       const levelConfig = modeConfig.levels[agent_level];
       systemPrompt = levelConfig?.system_prompt || modeConfig.levels.standard.system_prompt;
     }
+
+    const briefingTextRaw = typeof scout_briefing === 'string'
+      ? scout_briefing
+      : typeof scoutBriefing === 'string'
+        ? scoutBriefing
+        : '';
+
+    const briefingText = briefingTextRaw.trim();
+    const systemContext = briefingText
+      ? `## FIND (Firecrawl) Context\n\n${briefingText}\n\n---\n\nUse the above captured sources to ground your responses.\n\n`
+      : '';
     
     // Select model based on mode
     const modelId = AGENT_CONFIG.models[mode === 'agent' ? 'execute' : mode === 'forming' ? 'forming' : 'clarify'];
     
-    // Call Cloudflare AI
-    const aiResponse = await env.AI.run(modelId, {
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: message }
-      ],
-      max_tokens: modeConfig.token_budget?.max || 2000
-    });
+    // Call Cloudflare AI (bounded so local dev doesn't hang indefinitely)
+    const timeoutMs = getTimeoutMs(env);
+    const aiResponse = await promiseWithTimeout(
+      env.AI.run(modelId, {
+        messages: [
+          { role: 'system', content: systemContext + systemPrompt },
+          { role: 'user', content: message }
+        ],
+        max_tokens: modeConfig.token_budget?.max || 2000
+      }),
+      timeoutMs,
+      'AI response'
+    );
     
     // Log conversation to D1
     await env.DB.prepare(`
@@ -139,6 +197,30 @@ acheevyRouter.post('/chat', async (request, env) => {
       estimatedCost,
       JSON.stringify(circuit_box)
     ).run();
+
+    // Common_Chronicle: Proof-of-Benefit logging for SCOUT-assisted chat
+    if (briefingText) {
+      try {
+        await logChronicleEvent(env, {
+          userId,
+          eventType: 'scout_assisted_chat',
+          goal: message,
+          scoutSourcesCount: scout_sources_count,
+          scoutBytes: scout_bytes || briefingText.length,
+          chatMessagesCount: 1,
+          stage: 'execute',
+          modelUsed: modelId,
+          metadata: {
+            mode,
+            agent_level,
+            circuit_box,
+            estimated_tokens: estimatedTokens,
+          },
+        });
+      } catch (chronicleError) {
+        console.warn('Chronicle logging failed:', chronicleError);
+      }
+    }
     
     // Report usage to Stripe meter
     if (env.STRIPE_SECRET_KEY) {
@@ -160,7 +242,8 @@ acheevyRouter.post('/chat', async (request, env) => {
     });
   } catch (error) {
     console.error('Chat w/ACHEEVY error:', error);
-    return errorResponse('Chat failed: ' + error.message, 500);
+    const isTimeout = /timed out/i.test(error?.message || '');
+    return errorResponse('Chat failed: ' + error.message, isTimeout ? 504 : 500);
   }
 });
 
@@ -244,7 +327,7 @@ acheevyRouter.post('/execute', async (request, env) => {
     
     const hubUrl = env.ACHEEVY_HUB_URL || 'https://acheevy-hub-nurds-code-prod.a.run.app';
     
-    const hubResponse = await fetch(`${hubUrl}${hubEndpoint}`, {
+    const hubResponse = await fetchWithTimeout(`${hubUrl}${hubEndpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -261,7 +344,7 @@ acheevyRouter.post('/execute', async (request, env) => {
           crown_gates: CROWN_GATES
         } : null
       }),
-    });
+    }, getTimeoutMs(env));
     
     const result = await hubResponse.json();
     
@@ -288,7 +371,8 @@ acheevyRouter.post('/execute', async (request, env) => {
     });
   } catch (error) {
     console.error('Execute error:', error);
-    return errorResponse('Execution failed: ' + error.message, 500);
+    const isAbort = error?.name === 'AbortError' || /aborted|timeout/i.test(error?.message || '');
+    return errorResponse('Execution failed: ' + error.message, isAbort ? 504 : 500);
   }
 });
 
@@ -418,7 +502,7 @@ acheevyRouter.post('/kingmode', async (request, env) => {
     // Route to ACHEEVY Hub on Cloud Run
     const hubUrl = env.ACHEEVY_HUB_URL || 'https://acheevy-hub-nurds-code-prod.a.run.app';
     
-    const hubResponse = await fetch(`${hubUrl}/kingmode`, {
+    const hubResponse = await fetchWithTimeout(`${hubUrl}/kingmode`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -427,7 +511,7 @@ acheevyRouter.post('/kingmode', async (request, env) => {
         'X-User-Id': userId,
       },
       body: JSON.stringify({ task, strategy, options }),
-    });
+    }, getTimeoutMs(env));
     
     if (!hubResponse.ok) {
       await env.DB.prepare(`
@@ -458,7 +542,8 @@ acheevyRouter.post('/kingmode', async (request, env) => {
     });
   } catch (error) {
     console.error('KingMode execution error:', error);
-    return errorResponse('Execution failed: ' + error.message, 500);
+    const isAbort = error?.name === 'AbortError' || /aborted|timeout/i.test(error?.message || '');
+    return errorResponse('Execution failed: ' + error.message, isAbort ? 504 : 500);
   }
 });
 
@@ -488,7 +573,7 @@ acheevyRouter.post('/workflow', async (request, env) => {
     
     const hubUrl = env.ACHEEVY_HUB_URL || 'https://acheevy-hub-nurds-code-prod.a.run.app';
     
-    const hubResponse = await fetch(`${hubUrl}/workflow`, {
+    const hubResponse = await fetchWithTimeout(`${hubUrl}/workflow`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -497,7 +582,7 @@ acheevyRouter.post('/workflow', async (request, env) => {
         'X-User-Id': userId,
       },
       body: JSON.stringify({ agents, task, options }),
-    });
+    }, getTimeoutMs(env));
     
     if (!hubResponse.ok) {
       await env.DB.prepare(`
@@ -518,7 +603,8 @@ acheevyRouter.post('/workflow', async (request, env) => {
     return jsonResponse({ success: true, workflowId, result });
   } catch (error) {
     console.error('Workflow execution error:', error);
-    return errorResponse('Execution failed: ' + error.message, 500);
+    const isAbort = error?.name === 'AbortError' || /aborted|timeout/i.test(error?.message || '');
+    return errorResponse('Execution failed: ' + error.message, isAbort ? 504 : 500);
   }
 });
 

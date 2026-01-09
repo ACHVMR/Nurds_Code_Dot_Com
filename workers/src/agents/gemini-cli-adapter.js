@@ -10,7 +10,7 @@
  * - gemini_documentation: Generate docs from code
  */
 
-import { ModelRouter, EXTERNAL_MODELS } from '../sdk/model-router.js';
+import { ModelRouter, EXTERNAL_MODELS } from '../../sdk/model-router.js';
 
 // ============================================================
 // TYPE DEFINITIONS

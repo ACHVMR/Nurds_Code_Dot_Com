@@ -4,29 +4,24 @@
  */
 
 import { Router } from 'itty-router';
-import { withCORS, handleCORSPreflight } from './middleware/cors.js';
+import { addCORSHeaders, handleCORSPreflight } from './middleware/cors.js';
 import { withErrorHandler } from './middleware/errorHandler.js';
 import { optionalAuth } from './middleware/auth.js';
 import { withModuleAccess, createModuleHeaders } from './middleware/moduleAccess.js';
 import { jsonResponse } from './utils/responses.js';
 import { notFound } from './utils/errors.js';
 
-// Import route modules
-import { authRouter } from './routes/auth.js';
-import { chatRouter } from './routes/chat.js';
-import { billingRouter } from './routes/billing.js';
-import { agentsRouter } from './routes/agents.js';
-import { projectsRouter } from './routes/projects.js';
-import { voiceRouter } from './routes/voice.js';
-import { adminRouter } from './routes/admin.js';
-import { orchestrateRouter } from './routes/orchestrate.js';
-import { modulesRouter } from './routes/modules.js';
-import { ocrRouter } from './routes/ocr.js';
-import { kieaiRouter } from './routes/kieai.js';
-import { plugsRouter } from './routes/plugs.js';
-import { acheevyRouter } from './routes/acheevy.js';
-import { orchestratorRouter } from './routes/orchestrator.js';
-import { lucRouter } from './routes/luc.js';
+// Route modules are loaded lazily to avoid import-time stalls in local runtimes.
+// This keeps `/` and `/api/health` responsive even if some feature modules pull
+// in heavier transitive dependencies.
+const lazyRouterHandle = (loader, exportName) => async (request, env, ctx) => {
+  const mod = await loader();
+  const routeRouter = mod?.[exportName];
+  if (!routeRouter?.handle) {
+    throw new Error(`Lazy route module missing expected export: ${exportName}`);
+  }
+  return routeRouter.handle(request, env, ctx);
+};
 
 // Create main router
 const router = Router();
@@ -88,40 +83,43 @@ router.get('/', () => {
 
 // Mount route modules using itty-router's handle method
 // Public routes (no module access check)
-router.all('/api/auth/*', authRouter.handle);
-router.all('/api/billing/*', billingRouter.handle);
-router.all('/api/admin/*', adminRouter.handle);
+router.all('/api/auth/*', lazyRouterHandle(() => import('./routes/auth.js'), 'authRouter'));
+router.all('/api/billing/*', lazyRouterHandle(() => import('./routes/billing.js'), 'billingRouter'));
+router.all('/api/admin/*', lazyRouterHandle(() => import('./routes/admin.js'), 'adminRouter'));
 
 // Module registry routes (for dashboard)
-router.all('/api/modules/*', modulesRouter.handle);
+router.all('/api/modules/*', lazyRouterHandle(() => import('./routes/modules.js'), 'modulesRouter'));
 
 // Module-gated routes (access control applied)
-router.all('/api/chat/*', chatRouter.handle);
-router.all('/api/agents/*', agentsRouter.handle);
-router.all('/api/projects/*', projectsRouter.handle);
-router.all('/api/voice/*', voiceRouter.handle);
-router.all('/api/v1/*', orchestrateRouter.handle);
+router.all('/api/chat/*', lazyRouterHandle(() => import('./routes/chat.js'), 'chatRouter'));
+router.all('/api/agents/*', lazyRouterHandle(() => import('./routes/agents.js'), 'agentsRouter'));
+router.all('/api/projects/*', lazyRouterHandle(() => import('./routes/projects.js'), 'projectsRouter'));
+router.all('/api/v1/voice/*', lazyRouterHandle(() => import('./routes/voice.js'), 'voiceRouter'));
+router.all('/api/v1/*', lazyRouterHandle(() => import('./routes/orchestrate.js'), 'orchestrateRouter'));
 
 // AI routes (OCR, Kie.ai video generation)
-router.all('/api/ai/ocr/*', ocrRouter.handle);
-router.all('/api/ai/ocr', ocrRouter.handle);
-router.all('/api/kieai/*', kieaiRouter.handle);
+router.all('/api/ai/ocr/*', lazyRouterHandle(() => import('./routes/ocr.js'), 'ocrRouter'));
+router.all('/api/ai/ocr', lazyRouterHandle(() => import('./routes/ocr.js'), 'ocrRouter'));
+router.all('/api/kieai/*', lazyRouterHandle(() => import('./routes/kieai.js'), 'kieaiRouter'));
 
 // Plugs routes (Hybrid deployment system)
-router.all('/api/v1/plugs/*', plugsRouter.handle);
-router.all('/api/v1/plugs', plugsRouter.handle);
+router.all('/api/v1/plugs/*', lazyRouterHandle(() => import('./routes/plugs.js'), 'plugsRouter'));
+router.all('/api/v1/plugs', lazyRouterHandle(() => import('./routes/plugs.js'), 'plugsRouter'));
 
 // ACHEEVY routes (II-Agent customization)
-router.all('/api/v1/acheevy/*', acheevyRouter.handle);
+router.all('/api/v1/acheevy/*', lazyRouterHandle(() => import('./routes/acheevy.js'), 'acheevyRouter'));
+
+// Common_Chronicle routes (Proof-of-Benefit audit trail)
+router.all('/api/v1/chronicle/*', lazyRouterHandle(() => import('./routes/chronicle.js'), 'chronicleRouter'));
 
 // Orchestrator routes (Multi-agent coordination)
-router.all('/api/v1/orchestrator/*', orchestratorRouter.handle);
+router.all('/api/v1/orchestrator/*', lazyRouterHandle(() => import('./routes/orchestrator.js'), 'orchestratorRouter'));
 
 // LUC routes (Token billing & refunds)
-router.all('/api/v1/luc/*', lucRouter.handle);
+router.all('/api/v1/luc/*', lazyRouterHandle(() => import('./routes/luc.js'), 'lucRouter'));
 
 // Legacy compatibility - direct chat endpoint
-router.post('/api/chat', chatRouter.handle);
+router.post('/api/chat', lazyRouterHandle(() => import('./routes/chat.js'), 'chatRouter'));
 
 // 404 handler
 router.all('*', () => {
@@ -150,7 +148,7 @@ async function handleRequest(request, env, ctx = {}) {
   const response = await authMiddleware(request, env, ctx);
 
   // Add CORS headers to response
-  return withCORS(response, request);
+  return addCORSHeaders(response, request);
 }
 
 /**
@@ -158,7 +156,31 @@ async function handleRequest(request, env, ctx = {}) {
  */
 export default {
   async fetch(request, env, ctx) {
-    return withErrorHandler(handleRequest)(request, env, ctx);
+    // IMPORTANT:
+    // Treat the platform ExecutionContext as immutable.
+    // Middlewares in this codebase attach request-scoped data onto `ctx`,
+    // so we pass a plain object to avoid proxy/freeze behaviors in some runtimes.
+    const requestCtx = {};
+
+    // Local dev stability: Wrangler/Miniflare will probe `/` and `/favicon.ico`.
+    // If middleware integration misbehaves in a runtime, ensure these probes
+    // always return immediately so local development can proceed.
+    const { pathname } = new URL(request.url);
+    if (request.method === 'GET' && pathname === '/') {
+      return jsonResponse({ name: 'NurdsCode API', version: '2.0.0', docs: '/api/health' });
+    }
+    if (request.method === 'GET' && pathname === '/api/health') {
+      return jsonResponse({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        version: '2.0.0',
+      });
+    }
+    if (request.method === 'GET' && pathname === '/favicon.ico') {
+      return new Response(null, { status: 204 });
+    }
+
+    return withErrorHandler(handleRequest)(request, env, requestCtx);
   },
 };
 

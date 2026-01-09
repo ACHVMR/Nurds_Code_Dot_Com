@@ -2,7 +2,7 @@
  * Kie.ai API Integration Service
  * Provides video generation, image creation, and file upload capabilities
  * 
- * API Key: 6423cd116ad6e1e3f43f3506aaf4b751
+ * API Key must be provided via env (do not hard-code).
  * Base URL: https://api.kie.ai
  * 
  * Supported Features:
@@ -19,7 +19,11 @@ import { fetchAuthed } from '../utils/fetchAuthed.js';
 const WORKER_PROXY_URL = '/api/kieai';
 
 // Fallback to direct API for local dev
-const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY || '6423cd116ad6e1e3f43f3506aaf4b751';
+const KIE_API_KEY = import.meta.env.VITE_KIE_API_KEY;
+
+if (!KIE_API_KEY) {
+  throw new Error('Missing VITE_KIE_API_KEY');
+}
 const KIE_BASE_URL = 'https://api.kie.ai/api/v1';
 
 // Task polling interval (ms)

@@ -49,10 +49,12 @@ export function withErrorHandler(handler) {
       }
 
       // Handle unexpected errors
+      const isProd = (env?.NODE_ENV === 'production') || (env?.ENVIRONMENT === 'production');
+
       return serverError(
-        process.env.NODE_ENV === 'production' 
-          ? 'An unexpected error occurred' 
-          : error.message
+        isProd
+          ? 'An unexpected error occurred'
+          : (error?.message || 'An unexpected error occurred')
       );
     }
   };

@@ -1,0 +1,160 @@
+/**
+ * VoiceInput Component Styles - Comet-style Voice Button
+ * Features pulsing animations, audio-reactive ring, and state transitions
+ */
+
+.voice-input {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Main button */
+.voice-input__button {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--acheevy-border, #3b3b3b);
+  background: var(--acheevy-bg, #1a1a1a);
+  color: var(--acheevy-text, #e0e0e0);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
+.voice-input__button:hover:not(:disabled) {
+  border-color: var(--acheevy-accent, #6366f1);
+  background: var(--acheevy-hover, #2a2a2a);
+}
+
+.voice-input__button:focus-visible {
+  outline: 2px solid var(--acheevy-accent, #6366f1);
+  outline-offset: 2px;
+}
+
+.voice-input__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icon container */
+.voice-input__icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.voice-input__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Recording state - pulsing animation */
+.voice-input__button--recording {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  animation: voice-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes voice-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+}
+
+/* Processing state - spinner */
+.voice-input__button--processing {
+  border-color: var(--acheevy-accent, #6366f1);
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--acheevy-accent, #6366f1);
+  pointer-events: none;
+}
+
+.voice-input__spinner {
+  animation: voice-spin 1s linear infinite;
+}
+
+@keyframes voice-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Audio level ring - expands based on audio level */
+.voice-input__ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.05s ease-out, opacity 0.2s ease;
+}
+
+.voice-input__button--recording .voice-input__ring {
+  opacity: 1;
+}
+
+/* Error message */
+.voice-input__error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  text-align: center;
+  max-width: 200px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 4px;
+  animation: voice-fade-in 0.2s ease;
+}
+
+/* Permission hint */
+.voice-input__permission-hint {
+  font-size: 0.7rem;
+  color: var(--acheevy-muted, #888);
+  text-align: center;
+  max-width: 180px;
+}
+
+@keyframes voice-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Breathing animation for idle state */
+.voice-input__button--idle:not(:disabled):not(:hover) {
+  animation: voice-breathe 3s ease-in-out infinite;
+}
+
+@keyframes voice-breathe {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.02);
+    opacity: 0.9;
+  }
+}
+
+/* Dark/light mode support */
+@media (prefers-color-scheme: light) {
+  .voice-input__button {
+    --acheevy-bg: #f5f5f5;
+    --acheevy-border: #d1d1d1;
+    --acheevy-text: #333;
+    --acheevy-hover: #e8e8e8;
+    --acheevy-muted: #666;
+  }
+}

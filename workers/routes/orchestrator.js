@@ -17,6 +17,7 @@ import { OpenHandsOrchestrator, EXECUTION_MODES } from '../src/orchestrator/open
 import { initializeFileManager } from '../src/integrations/google-file-manager.js';
 import { createCodexLoRA, handleCodexTool } from '../src/agents/codex-lora.js';
 import { createGeminiMCPHandler, GEMINI_TOOLS } from '../src/agents/gemini-cli-adapter.js';
+import { logChronicleEvent } from '../services/chronicle.js';
 
 const orchestratorRouter = Router({ base: '/api/v1/orchestrator' });
 
@@ -36,6 +37,40 @@ function getOrchestrator(sessionId, env) {
     orchestratorSessions.set(sessionId, orchestrator);
   }
   return orchestratorSessions.get(sessionId);
+}
+
+function normalizeMode(rawMode) {
+  if (!rawMode) return null;
+  const value = String(rawMode).trim();
+  if (!value) return null;
+
+  // Accept both internal keys and product-facing aliases.
+  // Canonical values are the OpenHands keys used in EXECUTION_MODES and enforced by D1.
+  const upper = value.toUpperCase();
+  if (EXECUTION_MODES[upper]) return upper;
+
+  const alias = upper.replace(/\s+/g, '_');
+  if (alias === 'BRAINSTORM') return 'BRAINSTORMING';
+  if (alias === 'BRAINSTORMING') return 'BRAINSTORMING';
+  if (alias === 'NURDOUT') return 'NURD_OUT';
+  if (alias === 'NURD_OUT') return 'NURD_OUT';
+  if (alias === 'AGENT') return 'AGENT_MODE';
+  if (alias === 'AGENT_MODE') return 'AGENT_MODE';
+  if (alias === 'EDIT') return 'EDIT_MODE';
+  if (alias === 'EDIT_MODE') return 'EDIT_MODE';
+
+  return null;
+}
+
+async function readSessionRow(env, sessionId) {
+  const { results } = await env.DB.prepare(
+    `SELECT session_id, user_id, mode, context, status, created_at, updated_at
+     FROM orchestrator_sessions
+     WHERE session_id = ?
+     LIMIT 1`
+  ).bind(sessionId).all();
+
+  return results?.[0] || null;
 }
 
 // ============================================
@@ -77,6 +112,38 @@ orchestratorRouter.post('/session/start', async (request, env) => {
 });
 
 /**
+ * GET /api/v1/orchestrator/session/:sessionId
+ * Read session state from D1 (source of truth for Stage 2 UI)
+ */
+orchestratorRouter.get('/session/:sessionId', async (request, env) => {
+  try {
+    const { sessionId } = request.params;
+    if (!sessionId) return errorResponse('sessionId is required', 400);
+
+    const row = await readSessionRow(env, sessionId);
+    if (!row) return errorResponse('Session not found', 404);
+
+    return jsonResponse({
+      success: true,
+      session: {
+        sessionId: row.session_id,
+        userId: row.user_id,
+        mode: row.mode,
+        status: row.status,
+        context: row.context,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      },
+      modeDetails: EXECUTION_MODES[row.mode] || null,
+      availableModes: Object.keys(EXECUTION_MODES),
+    });
+  } catch (error) {
+    console.error('Session read error:', error);
+    return errorResponse('Failed to read session: ' + error.message, 500);
+  }
+});
+
+/**
  * POST /api/v1/orchestrator/session/switch
  * Switch execution mode
  */
@@ -88,20 +155,66 @@ orchestratorRouter.post('/session/switch', async (request, env) => {
       return errorResponse('sessionId and mode are required', 400);
     }
 
-    const orchestrator = getOrchestrator(sessionId, env);
-    const result = await orchestrator.switchMode(mode);
+    const userId = request.userId;
+    const normalizedMode = normalizeMode(mode);
+    if (!normalizedMode) {
+      return errorResponse(
+        `Invalid mode. Use one of: ${Object.keys(EXECUTION_MODES).join(', ')} (or aliases: brainstorm, nurdout, agent, edit)`,
+        400
+      );
+    }
 
-    // Update D1
+    const orchestrator = getOrchestrator(sessionId, env);
+
+    // Ensure in-memory orchestrator is initialized for this session.
+    if (!orchestrator.sessionId) {
+      await orchestrator.initialize(sessionId, normalizedMode);
+    }
+
+    const previousRow = await readSessionRow(env, sessionId);
+    const previousMode = previousRow?.mode || null;
+
+    const result = await orchestrator.switchMode(normalizedMode);
+
+    // Upsert D1 (canonical source of truth)
     await env.DB.prepare(`
-      UPDATE orchestrator_sessions 
-      SET mode = ?, updated_at = datetime('now')
-      WHERE session_id = ?
-    `).bind(mode, sessionId).run();
+      INSERT INTO orchestrator_sessions (
+        session_id,
+        user_id,
+        mode,
+        context,
+        status,
+        created_at,
+        updated_at
+      ) VALUES (?, ?, ?, ?, 'active', datetime('now'), datetime('now'))
+      ON CONFLICT(session_id) DO UPDATE SET
+        mode = excluded.mode,
+        updated_at = datetime('now')
+    `)
+      .bind(sessionId, userId, normalizedMode, JSON.stringify({}))
+      .run();
+
+    // Audit log (Common_Chronicle)
+    try {
+      await logChronicleEvent(env, {
+        userId,
+        eventType: 'orchestrator_mode_switch',
+        stage: 'orchestrator',
+        modelUsed: null,
+        metadata: {
+          sessionId,
+          previousMode,
+          newMode: normalizedMode,
+        },
+      });
+    } catch (chronicleError) {
+      console.warn('Chronicle logging failed:', chronicleError);
+    }
 
     return jsonResponse({
       success: true,
       ...result,
-      message: `Switched from ${result.previousMode} to ${mode}`
+      message: `Switched from ${result.previousMode} to ${normalizedMode}`
     });
   } catch (error) {
     console.error('Mode switch error:', error);

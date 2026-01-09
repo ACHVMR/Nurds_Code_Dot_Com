@@ -1,0 +1,14 @@
+# This repo's `wrangler.toml` lives at the repo root.
+# Wrangler reads `.dev.vars` next to `wrangler.toml`, so use `../.dev.vars`.
+# This file exists only as a convenience template.
+
+# Copy contents into the root `.dev.vars`.
+GROQ_API_KEY=
+OPENROUTER_API_KEY=
+OPENAI_API_KEY=
+DEEPGRAM_API_KEY=
+ELEVENLABS_API_KEY=
+STRIPE_SECRET_KEY=
+KIE_API_KEY=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=

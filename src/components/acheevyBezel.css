@@ -85,7 +85,7 @@
   transform: translateY(1px);
 }
 
-/* FIND/SCOUT DISCLAIMER TOOLTIP */
+/* FIND DISCLAIMER TOOLTIP */
 .acheevy-bezel__disclaimer {
   position: absolute;
   top: 48px;
@@ -110,4 +110,26 @@
   color: white;
   cursor: pointer;
   font-size: 11px;
+}
+
+/* TTS Speaking Indicator */
+.acheevy-bezel__tts-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  animation: tts-pulse 1s ease-in-out infinite;
+}
+
+@keyframes tts-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+/* Error state for voice button */
+.acheevy-bezel__btn--error {
+  border-color: rgba(255, 100, 100, 0.5);
+  background: rgba(255, 100, 100, 0.1);
+  color: #ff6b6b;
+  cursor: not-allowed;
 }

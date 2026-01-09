@@ -77,7 +77,7 @@ function MyComponent() {
 - Task polling with progress tracking
 - Support for multiple AI models (Veo3.1, Runway, Suno)
 
-**API Key:** `6423cd116ad6e1e3f43f3506aaf4b751`
+**API Key:** `YOUR_KIE_API_KEY`
 
 **Supported File Formats:**
 
@@ -309,11 +309,11 @@ results.forEach((result, i) => {
 
 ```bash
 # Frontend (.env)
-VITE_KIE_API_KEY=6423cd116ad6e1e3f43f3506aaf4b751
+VITE_KIE_API_KEY=YOUR_KIE_API_KEY
 
 # Worker (wrangler.toml)
 [vars]
-KIE_API_KEY = "6423cd116ad6e1e3f43f3506aaf4b751"
+KIE_API_KEY = "YOUR_KIE_API_KEY"
 ```
 
 ### Polling Settings
@@ -357,7 +357,7 @@ binding = "AI"
 **Check:**
 - API key in .env: `VITE_KIE_API_KEY=...`
 - API key in wrangler.toml: `KIE_API_KEY=...`
-- Key matches: `6423cd116ad6e1e3f43f3506aaf4b751`
+- Key matches: `YOUR_KIE_API_KEY`
 
 **Fix:**
 - Restart dev server: `npm run dev`

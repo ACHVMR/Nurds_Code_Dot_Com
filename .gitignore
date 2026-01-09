@@ -18,6 +18,10 @@ build/
 .env.test.local
 .env.production.local
 .dev.vars
+.env.production
+.env.production.*
+*.pem
+*.key
 
 # Logs
 npm-debug.log*
@@ -39,10 +43,15 @@ lerna-debug.log*
 # Cloudflare
 .wrangler/
 wrangler.toml.backup
+.mf/
 
 # Temporary files
 /tmp
 *.tmp
+
+# OS (Windows)
+Thumbs.db
+desktop.ini
 
 .env
 
@@ -50,3 +59,19 @@ wrangler.toml.backup
 Nurds_Code_Dot_Com/
 workers/services/docs2use/
 workers/services/GCP Setup & Flutter Build.md
+
+# Large asset files (keep originals local, use compressed versions in repo)
+public/assets/branding/
+public/assets/illustrations/*.PNG
+public/assets/illustrations/*.png
+public/assets/landing-hero.png
+!public/assets/illustrations/*-optimized.*
+
+# VibeSDK is a separate git repository - do not include in parent repo
+vibesdk/
+
+# Terraform state (sensitive)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl

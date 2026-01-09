@@ -19,6 +19,7 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import ACHEEVYIntent from './pages/ACHEEVYIntent';
 import LiveBuildEditor from './pages/LiveBuildEditor';
 import ACHEEVY from './pages/ACHEEVY';
+import TestPermissions from './pages/TestPermissions';
 
 // Voice-First Platform Pages
 import VoiceProfileSettings from './pages/VoiceProfileSettings';
@@ -66,6 +67,8 @@ function App() {
         <Route path="/auth/onboarding" element={
           isSignedIn ? <Onboarding /> : <Navigate to="/auth/signup" />
         } />
+
+        <Route path="/test-permissions" element={<TestPermissions />} />
         
         {/* Protected Routes */}
         <Route path="/subscribe" element={
