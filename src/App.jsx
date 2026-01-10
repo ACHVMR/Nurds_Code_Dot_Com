@@ -9,6 +9,7 @@ import Subscribe from './pages/Subscribe';
 import SignUp from './pages/SignUp';
 import Auth from './pages/Auth';
 import PricingPlusOne from './pages/PricingPlusOne';
+import OAuthCallback from './pages/OAuthCallback';
 import Onboarding from './pages/Onboarding';
 import Editor from './pages/Editor';
 import DailyInsights from './pages/DailyInsights';
@@ -41,27 +42,44 @@ const DeployWorkbench = lazy(() => import('./pages/DeployWorkbench'));
 const DeployTestingLab = lazy(() => import('./pages/DeployTestingLab'));
 
 
-function App() {
+// Component that safely handles auth when Clerk is available
+function AppWithAuth() {
   const { isSignedIn, user } = useAuth();
-  
-  // Check if user is SuperAdmin
   const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
-  
-  // Feature flag for Deploy features (can be controlled via env var or user role)
   const deployEnabled = import.meta.env.VITE_DEPLOY_ENABLED === 'true' || isSuperAdmin;
+  
+  return <AppContent isSignedIn={isSignedIn} user={user} isSuperAdmin={isSuperAdmin} deployEnabled={deployEnabled} />;
+}
+
+// Component that handles no auth (development mode)
+function AppWithoutAuth() {
+  const isSignedIn = false;
+  const user = null;
+  const isSuperAdmin = false;
+  const deployEnabled = import.meta.env.VITE_DEPLOY_ENABLED === 'true';
+  
+  return <AppContent isSignedIn={isSignedIn} user={user} isSuperAdmin={isSuperAdmin} deployEnabled={deployEnabled} />;
+}
+
+// Main app content component
+function AppContent({ isSignedIn, user, isSuperAdmin, deployEnabled }) {
 
   return (
-    <Layout>
+    <Layout isSignedIn={isSignedIn} user={user}>
       <Routes>
         {/* Landing Page (Immersive - No Layout Chrome) */}
         <Route path="/welcome" element={<LandingPage />} />
         
         {/* Public Routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Home user={user} />} />
   <Route path="/pricing" element={<Pricing />} />
   <Route path="/pricing/plus-one" element={<PricingPlusOne />} />
   <Route path="/auth" element={<Auth />} />
   <Route path="/auth/signup" element={<Navigate to="/auth" />} />
+        
+        {/* OAuth Callback Routes */}
+        <Route path="/auth/callback/google" element={<OAuthCallback />} />
+        <Route path="/auth/callback/github" element={<OAuthCallback />} />
         
         {/* Auth Routes */}
         <Route path="/auth/onboarding" element={
@@ -156,6 +174,25 @@ function App() {
         } />
       </Routes>
     </Layout>
+  );
+}
+
+// Main App component that chooses the right auth wrapper
+function App() {
+  console.log('🔍 App component rendering...');
+  
+  return (
+    <div style={{ 
+      padding: '20px', 
+      background: '#000', 
+      color: '#39FF14',
+      minHeight: '100vh',
+      fontFamily: 'monospace'
+    }}>
+      <h1>🎉 WORKING VERSION!</h1>
+      <p>App component is rendering successfully!</p>
+      <p>This confirms React Router and basic setup is working.</p>
+    </div>
   );
 }
 

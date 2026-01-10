@@ -1,19 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
-import App from './App';
+import App from './App-working';
 import './styles/index.css';
 
-// Get Clerk publishable key
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+console.log('🔍 STEP 5: Using clean App component structure...');
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={clerkPubKey}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </ClerkProvider>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </React.StrictMode>
 );
