@@ -1,10 +1,10 @@
 /**
  * Kie.ai API Integration Service
  * Provides video generation, image creation, and file upload capabilities
- * 
+ *
  * API Key must be provided via env (do not hard-code).
  * Base URL: https://api.kie.ai
- * 
+ *
  * Supported Features:
  * - From Audio (image + audio → video)
  * - Veo3.1 (text → video)
@@ -13,6 +13,7 @@
  * - File Upload (images, audio)
  */
 
+import { useState } from 'react';
 import { fetchAuthed } from '../utils/fetchAuthed.js';
 
 // Use worker proxy to avoid CORS issues
@@ -252,10 +253,10 @@ export async function generateVideoFromUrls(imageUrl, audioUrl, prompt, options 
  * React hook for video generation
  */
 export function useKieAIVideoGeneration() {
-  const [loading, setLoading] = React.useState(false);
-  const [progress, setProgress] = React.useState(null);
-  const [error, setError] = React.useState(null);
-  const [result, setResult] = React.useState(null);
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
 
   const generateVideo = async (imageFile, audioFile, prompt, options = {}) => {
     setLoading(true);

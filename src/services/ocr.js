@@ -1,7 +1,7 @@
 /**
  * OCR Service - Extract text/code from images
  * Uses Cloudflare AI Vision models for text extraction
- * 
+ *
  * Use cases:
  * - Extract code from screenshots
  * - Clone projects from images
@@ -9,6 +9,7 @@
  * - Extract text from documents
  */
 
+import { useState } from 'react';
 import { fetchAuthed } from '../utils/fetchAuthed.js';
 
 /**
@@ -287,9 +288,9 @@ function extractMarkdownBlock(code) {
  * React hook for OCR operations
  */
 export function useOCR() {
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState(null);
-  const [result, setResult] = React.useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [result, setResult] = useState(null);
 
   const extractText = async (imageSource, options = {}) => {
     setLoading(true);
