@@ -1,16 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Volume2, VolumeX, Play, Music, Bell, AlertCircle, CheckCircle, Zap } from 'lucide-react';
 import { audioManager, SOUND_EVENTS, AVAILABLE_SOUNDS } from '../utils/audioManager';
 import '../styles/audioSettings.css';
 
 export default function AudioSettings() {
-  const [settings, setSettings] = useState(audioManager.getSettings());
+  const [settings, setSettings] = useState(() => audioManager.getSettings());
   const [playingSound, setPlayingSound] = useState(null);
-
-  // Update local state when settings change
-  useEffect(() => {
-    setSettings(audioManager.getSettings());
-  }, []);
 
   const handleToggleSounds = () => {
     const newEnabled = !settings.enabled;
