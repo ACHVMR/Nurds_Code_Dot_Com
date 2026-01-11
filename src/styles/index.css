@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@fontsource/jetbrains-mono"; /* Import JetBrains Mono */
 @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+@import "tokens.css"; /* Nurds Code design tokens (Cyan/Green primary, Orange accent) */
 
 :root {
   --bg-obsidian: #0A1628;
