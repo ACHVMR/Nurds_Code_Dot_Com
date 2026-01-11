@@ -1,187 +1,333 @@
-import { useState, useMemo } from 'react';
-import { Beaker, Flame, Hammer, Sparkles, Search } from 'lucide-react';
+import React, { useEffect, useMemo, useState, Component } from "react";
+import "./acheevyBezel.css";
+import VoiceInput from "./VoiceInput";
 
 /**
- * TokenSignalBars - Cell phone-style signal bars for token usage
- * 0 bars = 0% usage (empty/good)
- * 5 bars = 100% usage (full/warning)
+ * Voice Error Boundary - Catches crashes in VoiceInput without breaking the bezel
  */
-function TokenSignalBars({ used = 0, total = 100000, className = '' }) {
-  const percentage = total > 0 ? Math.min((used / total) * 100, 100) : 0;
-  
-  // Calculate active bars (0-5) - more bars = more usage = warning
-  const activeBars = useMemo(() => {
-    if (percentage <= 0) return 0;
-    if (percentage <= 20) return 1;
-    if (percentage <= 40) return 2;
-    if (percentage <= 60) return 3;
-    if (percentage <= 80) return 4;
-    return 5;
-  }, [percentage]);
+class VoiceErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
-  // Color shifts from green (low usage) to yellow to red (high usage)
-  const getBarColor = (barIndex) => {
-    if (barIndex >= activeBars) return 'bg-gray-700'; // Inactive bar
-    if (activeBars <= 2) return 'bg-[#00FF41]'; // Green - low usage
-    if (activeBars <= 3) return 'bg-[#FFD700]'; // Yellow - medium usage
-    if (activeBars <= 4) return 'bg-[#FF8C00]'; // Orange - high usage
-    return 'bg-[#FF3D00]'; // Red - critical usage
-  };
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
 
-  const getGlowColor = () => {
-    if (activeBars <= 2) return 'shadow-[#00FF41]/30';
-    if (activeBars <= 3) return 'shadow-[#FFD700]/30';
-    if (activeBars <= 4) return 'shadow-[#FF8C00]/30';
-    return 'shadow-[#FF3D00]/40';
-  };
+  componentDidCatch(error, errorInfo) {
+    console.error('VoiceInput error:', error, errorInfo);
+  }
 
-  return (
-    <div 
-      className={`flex items-end gap-[2px] ${className}`}
-      title={`Token Usage: ${used.toLocaleString()} / ${total.toLocaleString()} (${percentage.toFixed(1)}%)`}
-    >
-      {[0, 1, 2, 3, 4].map((i) => (
-        <div
-          key={i}
-          className={`
-            w-[4px] rounded-sm transition-all duration-300
-            ${getBarColor(i)}
-            ${i < activeBars ? `shadow-lg ${getGlowColor()}` : ''}
-          `}
-          style={{
-            height: `${8 + i * 3}px`, // Bars get taller: 8px, 11px, 14px, 17px, 20px
-          }}
-        />
-      ))}
-    </div>
-  );
+  render() {
+    if (this.state.hasError) {
+      return (
+        <button 
+          className="acheevy-bezel__btn acheevy-bezel__btn--error" 
+          disabled
+          title="Voice input unavailable"
+        >
+          🎤 Error
+        </button>
+      );
+    }
+    return this.props.children;
+  }
 }
 
-const MODES = [
-  { id: 'lab', label: 'THE LAB', icon: Beaker, description: 'Brainstorm & clarify' },
-  { id: 'nerdout', label: 'NURD OUT', icon: Flame, description: 'Deep research & specs' },
-  { id: 'forge', label: 'THE FORGE', icon: Hammer, description: 'Agent execution' },
-  { id: 'polish', label: 'POLISH', icon: Sparkles, description: 'Edit & refine' },
-];
+/**
+ * ACHEEVY UNIFIED BEZEL — STAGE 2 EXECUTION CONTROL STRIP
+ *
+ * Contains:
+ * - 4 Modes: THE LAB, NURD OUT, THE FORGE, POLISH
+ * - Voice Input button (STT via Groq Whisper)
+ * - TTS Audio Feedback (ElevenLabs)
+ * - FIND button (Firecrawl web crawl with first-time disclaimer)
+ * - LUC token quote display
+ * - Circuit Box toggles (11 Labs, 12 Labs, SAM, Higgsfield)
+ */
 
-const CIRCUITS = [
-  { id: '11labs', label: '11L', fullLabel: '11Labs Voice' },
-  { id: '12labs', label: '12L', fullLabel: '12Labs Video' },
-  { id: 'sam', label: 'SAM', fullLabel: 'Security Analyzer' },
-  { id: 'higgsfield', label: 'HGS', fullLabel: 'Higgsfield AI' },
-];
+const VOICE_API_BASE = '/api/v1/voice';
+
+// Voice command matchers for KingMode shortcuts
+const VOICE_COMMANDS = {
+  'switch to lab': { action: 'mode', value: 'lab' },
+  'switch to the lab': { action: 'mode', value: 'lab' },
+  'switch to nurd out': { action: 'mode', value: 'nerdout' },
+  'switch to nerd out': { action: 'mode', value: 'nerdout' },
+  'switch to forge': { action: 'mode', value: 'forge' },
+  'switch to the forge': { action: 'mode', value: 'forge' },
+  'switch to polish': { action: 'mode', value: 'polish' },
+  'switch to code': { action: 'mode', value: 'forge' },
+  'switch to chat': { action: 'mode', value: 'lab' },
+  'find': { action: 'find' },
+  'search': { action: 'find' },
+  'toggle circuit': { action: 'circuit' },
+  'enable voice': { action: 'circuit_toggle', key: 'labs11', value: true },
+  'disable voice': { action: 'circuit_toggle', key: 'labs11', value: false },
+};
 
 export default function AcheevyBezel({
   enabled = true,
-  mode = 'lab',
+  mode,
   onModeChange,
-  tokensUsed = 0,
-  tokensTotal = 100000,
+  lucQuoteText = "Tokens: —",
   onFindScout,
-  activeCircuits = [],
-  onCircuitToggle,
+  onVoiceTranscript,
+  onVoiceError,
+  onVoiceInput,
+  enableTTS = true,
+  circuitBox = { labs11: false, labs12: false, sam: false, higgsfield: false },
+  onCircuitBoxChange,
 }) {
-  const [localCircuits, setLocalCircuits] = useState(activeCircuits);
+  const modes = useMemo(
+    () => [
+      { id: "lab", label: "THE LAB" },
+      { id: "nerdout", label: "NURD OUT" },
+      { id: "forge", label: "THE FORGE" },
+      { id: "polish", label: "POLISH" },
+    ],
+    []
+  );
 
-  const handleCircuitToggle = (circuitId) => {
-    const updated = localCircuits.includes(circuitId)
-      ? localCircuits.filter((c) => c !== circuitId)
-      : [...localCircuits, circuitId];
-    setLocalCircuits(updated);
-    onCircuitToggle?.(updated);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const audioRef = React.useRef(null);
+
+  // TTS playback function
+  const playTTS = async (text) => {
+    if (!enableTTS || !text || ttsPlaying) return;
+    
+    try {
+      setTtsPlaying(true);
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`${VOICE_API_BASE}/synthesize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` }),
+        },
+        body: JSON.stringify({ text, voice: 'alloy' }),
+      });
+      
+      if (response.ok) {
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl;
+          audioRef.current.play();
+        }
+      }
+    } catch (err) {
+      console.error('TTS playback error:', err);
+    } finally {
+      setTtsPlaying(false);
+    }
+  };
+
+  // Handle voice transcript with KingMode command matching
+  const handleVoiceTranscript = async (transcript) => {
+    const lowerTranscript = transcript.toLowerCase().trim();
+    
+    // Check for voice commands first
+    for (const [phrase, command] of Object.entries(VOICE_COMMANDS)) {
+      if (lowerTranscript.includes(phrase)) {
+        switch (command.action) {
+          case 'mode':
+            onModeChange?.(command.value);
+            playTTS(`Switched to ${command.value} mode`);
+            return;
+          case 'find':
+            handleFindScout();
+            playTTS('Opening search');
+            return;
+          case 'circuit':
+            // Toggle all circuit boxes
+            const allOn = Object.values(circuitBox).every(Boolean);
+            onCircuitBoxChange?.(Object.fromEntries(
+              Object.keys(circuitBox).map(k => [k, !allOn])
+            ));
+            playTTS(allOn ? 'Circuit box disabled' : 'Circuit box enabled');
+            return;
+          case 'circuit_toggle':
+            onCircuitBoxChange?.({ ...circuitBox, [command.key]: command.value });
+            playTTS(`${command.key} ${command.value ? 'enabled' : 'disabled'}`);
+            return;
+        }
+      }
+    }
+    
+    // No command matched - send to orchestrator
+    if (typeof onVoiceInput === 'function') {
+      onVoiceInput(transcript);
+    }
+    
+    // Also call original transcript handler
+    onVoiceTranscript?.(transcript);
+  };
+
+  useEffect(() => {
+    // Check if user has seen the FIND (Firecrawl) disclaimer before
+    const seen = localStorage.getItem("acheevy_find_seen");
+    if (!seen) {
+      setShowDisclaimer(false);
+    }
+  }, []);
+
+  const handleFindScout = async () => {
+    const seen = localStorage.getItem("acheevy_find_seen");
+
+    if (!seen) {
+      setShowDisclaimer(true);
+      return;
+    }
+
+    if (typeof onFindScout === "function") {
+      return onFindScout();
+    }
+  };
+
+  const handleDisclaimerAccept = () => {
+    localStorage.setItem("acheevy_find_seen", "1");
+    setShowDisclaimer(false);
+
+    if (typeof onFindScout === "function") {
+      onFindScout();
+    }
   };
 
   return (
-    <div
-      className="fixed top-0 left-0 right-0 z-50 bg-[#0a1628]/95 backdrop-blur-sm border-b border-[#222]"
-      style={{ height: '56px' }}
-    >
-      <div className="h-full max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <span className="text-[#00FF41] font-bold text-lg tracking-tight">NURD</span>
+    <div className="acheevy-bezel" role="region" aria-label="ACHEEVY Bezel">
+      <div className="acheevy-bezel__left">
+        <div className="acheevy-bezel__group" aria-label="Modes">
+          <span className="acheevy-bezel__label">Mode</span>
+          {modes.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              className={
+                "acheevy-bezel__btn " +
+                (mode === m.id ? "acheevy-bezel__btn--active" : "")
+              }
+              disabled={!enabled}
+              onClick={() => onModeChange?.(m.id)}
+              aria-pressed={mode === m.id}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
 
-        {/* Mode Selector */}
-        <div className="flex items-center gap-1 bg-[#151515] rounded-lg p-1">
-          {MODES.map((m) => {
-            const Icon = m.icon;
-            const isActive = mode === m.id;
-            return (
-              <button
-                key={m.id}
-                onClick={() => enabled && onModeChange?.(m.id)}
-                disabled={!enabled}
-                title={m.description}
-                className={`
-                  flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all
-                  ${isActive
-                    ? 'bg-[#00F0FF] text-[#1a1a2e] shadow-lg shadow-[#00F0FF]/30'
-                    : 'text-gray-400 hover:text-[#00F0FF] hover:bg-[#00F0FF]/10'
-                  }
-                  ${!enabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                `}
-              >
-                <Icon size={14} />
-                <span className="hidden sm:inline">{m.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Circuit Box */}
-        <div className="flex items-center gap-1 bg-[#151515] rounded-lg p-1">
-          {CIRCUITS.map((c) => {
-            const isOn = localCircuits.includes(c.id);
-            return (
-              <button
-                key={c.id}
-                onClick={() => enabled && handleCircuitToggle(c.id)}
-                disabled={!enabled}
-                title={c.fullLabel}
-                className={`
-                  px-2 py-1.5 rounded text-xs font-mono transition-all
-                  ${isOn
-                    ? 'bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/60 shadow-[0_0_8px_rgba(0,255,136,0.3)]'
-                    : 'text-gray-500 hover:text-gray-300 border border-transparent hover:bg-white/5'
-                  }
-                  ${!enabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                `}
-              >
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="flex items-center gap-2">
-          {/* Find/Scout */}
+        <div className="acheevy-bezel__group" aria-label="Web crawl">
           <button
-            onClick={() => enabled && onFindScout?.()}
+            type="button"
+            className="acheevy-bezel__btn"
             disabled={!enabled}
-            title="Find/Scout - Research"
-            className={`
-              flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium
-              bg-[#151515] text-gray-400 hover:text-[#00F0FF] hover:bg-[#00F0FF]/10 border border-transparent hover:border-[#00F0FF]/30 transition-all
-              ${!enabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            `}
+            onClick={handleFindScout}
+            title="FIND (Firecrawl) — scrape and attach results to your next prompt"
           >
-            <Search size={14} />
-            <span className="hidden md:inline">Find</span>
+            FIND
           </button>
+        </div>
 
-          {/* Token Signal Bars - Cell phone style usage indicator */}
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono bg-[#151515]"
-          >
-            <TokenSignalBars used={tokensUsed} total={tokensTotal} />
-            <span className="text-[#00F0FF] tabular-nums">
-              {tokensUsed > 0 ? `${(tokensUsed / 1000).toFixed(1)}k` : '—'}
+        <div className="acheevy-bezel__group" aria-label="Voice Input">
+          <VoiceErrorBoundary>
+            <VoiceInput
+              disabled={!enabled || ttsPlaying}
+              onTranscript={handleVoiceTranscript}
+              onError={onVoiceError}
+            />
+          </VoiceErrorBoundary>
+          {ttsPlaying && (
+            <span className="acheevy-bezel__tts-indicator" title="Speaking...">
+              🔊
             </span>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Hidden audio element for TTS playback */}
+      <audio 
+        ref={audioRef} 
+        style={{ display: 'none' }}
+        onEnded={() => setTtsPlaying(false)}
+        onError={() => setTtsPlaying(false)}
+      />
+
+      <div className="acheevy-bezel__right">
+        <span className="acheevy-bezel__pill" aria-label="LUC token quote">
+          {lucQuoteText}
+        </span>
+
+        <div className="acheevy-bezel__group" aria-label="Circuit Box">
+          <span className="acheevy-bezel__label">Circuit Box</span>
+          <label className="acheevy-bezel__toggle">
+            <input
+              type="checkbox"
+              checked={!!circuitBox.labs11}
+              disabled={!enabled}
+              onChange={(e) =>
+                onCircuitBoxChange?.({ ...circuitBox, labs11: e.target.checked })
+              }
+            />
+            11 Labs
+          </label>
+          <label className="acheevy-bezel__toggle">
+            <input
+              type="checkbox"
+              checked={!!circuitBox.labs12}
+              disabled={!enabled}
+              onChange={(e) =>
+                onCircuitBoxChange?.({ ...circuitBox, labs12: e.target.checked })
+              }
+            />
+            12 Labs
+          </label>
+          <label className="acheevy-bezel__toggle">
+            <input
+              type="checkbox"
+              checked={!!circuitBox.sam}
+              disabled={!enabled}
+              onChange={(e) =>
+                onCircuitBoxChange?.({ ...circuitBox, sam: e.target.checked })
+              }
+            />
+            SAM
+          </label>
+          <label className="acheevy-bezel__toggle">
+            <input
+              type="checkbox"
+              checked={!!circuitBox.higgsfield}
+              disabled={!enabled}
+              onChange={(e) =>
+                onCircuitBoxChange?.({
+                  ...circuitBox,
+                  higgsfield: e.target.checked,
+                })
+              }
+            />
+            Higgsfield
+          </label>
+        </div>
+      </div>
+
+      {showDisclaimer && (
+        <div className="acheevy-bezel__disclaimer">
+          <p>
+            <strong>FIND</strong> uses Firecrawl to scrape the URL(s) you provide and
+            attach the results to your next prompt—without leaving this screen.
+          </p>
+          <button
+            type="button"
+            className="acheevy-bezel__disclaimer-close"
+            onClick={handleDisclaimerAccept}
+          >
+            Got it — Enable FIND
+          </button>
+        </div>
+      )}
     </div>
   );
 }

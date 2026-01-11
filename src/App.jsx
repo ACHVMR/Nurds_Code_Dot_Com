@@ -1,6 +1,5 @@
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import LandingPage from './pages/LandingPage';
@@ -44,11 +43,13 @@ const DeployWorkbench = lazy(() => import('./pages/DeployWorkbench'));
 const DeployTestingLab = lazy(() => import('./pages/DeployTestingLab'));
 
 
-// Component that safely handles auth when Clerk is available
-function AppWithAuth() {
-  const { isSignedIn, user } = useAuth();
-  const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
-  const deployEnabled = import.meta.env.VITE_DEPLOY_ENABLED === 'true' || isSuperAdmin;
+// Component that handles dev mode auth (no Clerk)
+function AppWithDevAuth() {
+  // In dev mode, simulate signed in for testing protected routes
+  const isSignedIn = import.meta.env.DEV;
+  const user = isSignedIn ? { id: 'dev-user', emailAddresses: [{ emailAddress: 'dev@nurdscode.com' }] } : null;
+  const isSuperAdmin = false;
+  const deployEnabled = import.meta.env.VITE_DEPLOY_ENABLED === 'true';
   
   return <AppContent isSignedIn={isSignedIn} user={user} isSuperAdmin={isSuperAdmin} deployEnabled={deployEnabled} />;
 }
@@ -187,17 +188,9 @@ function AppContent({ isSignedIn, user, isSuperAdmin, deployEnabled }) {
   );
 }
 
-// Main App component that chooses the right auth wrapper
+// Main App component - uses dev auth for now
 function App() {
-  console.log('🔍 App component rendering...');
-
-  // Try to use auth wrapper, fallback to no-auth for development
-  try {
-    return <AppWithAuth />;
-  } catch (error) {
-    console.warn('Clerk auth not available, using fallback:', error);
-    return <AppWithoutAuth />;
-  }
+  return <AppWithDevAuth />;
 }
 
 export default App;

@@ -1,107 +1,87 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth, UserButton } from '@clerk/clerk-react';
-import TokenBalance from './TokenBalance';
-import VoiceRecorder from './VoiceRecorder';
-// import './Navbar.css';
 
+/**
+ * Navbar Component - Nurds Code VibeSDK Theme
+ * Fixed navbar with neon green/cyan accents on obsidian background
+ */
 const Navbar = ({ isSignedIn = false, user = null }) => {
-  const [showVoiceModal, setShowVoiceModal] = useState(false);
-  const isSuperAdmin = user?.emailAddresses?.[0]?.emailAddress === 'owner@nurdscode.com';
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <>
-      <nav className="navbar">
-        <div className="nav-container">
-          <Link to="/" className="nav-logo">
-            <img 
-              src="/assets/branding/IMG_1836.PNG" 
-              alt="NURDS CODE" 
-              className="h-10 w-auto object-contain" 
-            />
+    <nav className="fixed top-0 left-0 right-0 z-50" style={{
+      background: 'rgba(10, 22, 40, 0.95)',
+      backdropFilter: 'blur(10px)',
+      borderBottom: '1px solid rgba(0, 255, 65, 0.2)'
+    }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <span style={{ 
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: '1.25rem',
+              fontWeight: 700,
+              color: '#00FF41'
+            }}>
+              NURDS<span style={{ color: '#FF6B35' }}>CODE</span>
+            </span>
           </Link>
 
-          <div className="nav-actions">
-            {/* Start Your Journey CTA - Always Visible in Header */}
-            {!isSignedIn && (
-              <Link 
-                to="/auth/signup" 
-                className="btn-primary text-sm px-6 py-2 rounded-lg hover:shadow-lg transition-all"
-                style={{ backgroundColor: '#FF6B00', color: 'black', fontWeight: '600' }}
-              >
-                Get Started
-              </Link>
-            )}
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center gap-6">
+            <Link to="/editor" className="text-sm hover:text-[#00FF41] transition-colors" style={{ color: '#E2E8F0' }}>
+              Editor
+            </Link>
+            <Link to="/pricing" className="text-sm hover:text-[#00FF41] transition-colors" style={{ color: '#E2E8F0' }}>
+              Pricing
+            </Link>
+            <Link to="/chat-acheevy" className="text-sm hover:text-[#00FF41] transition-colors" style={{ color: '#E2E8F0' }}>
+              ACHEEVY
+            </Link>
+          </div>
 
+          {/* CTA Buttons */}
+          <div className="flex items-center gap-3">
             {isSignedIn ? (
               <>
-                {/* Audio Settings Link */}
-                <Link 
-                  to="/audio-settings"
-                  className="nav-link"
-                  title="Audio Settings"
-                >
-                  🔊
+                <Link to="/dashboard" className="px-4 py-2 text-sm rounded-lg transition-all" style={{
+                  background: 'transparent',
+                  border: '1px solid #00FF41',
+                  color: '#00FF41'
+                }}>
+                  Dashboard
                 </Link>
-
-                <button 
-                  className="voice-launcher"
-                  onClick={() => setShowVoiceModal(true)}
-                  title="Voice Command"
-                >
-                  🎤
+                <button className="px-4 py-2 text-sm rounded-lg transition-all" style={{
+                  background: '#FF6B35',
+                  color: '#0A1628',
+                  fontWeight: 600
+                }}>
+                  Sign Out
                 </button>
-                
-                {/* <TokenBalance /> */}
-                
-                {isSuperAdmin && (
-                  <Link to="/admin" className="admin-link">
-                    Admin
-                  </Link>
-                )}
-                
-                {/* Only show UserButton if Clerk is available */}
-                {typeof UserButton !== 'undefined' ? (
-                  <UserButton afterSignOutUrl="/" />
-                ) : (
-                  <button className="nav-cta" onClick={() => console.log('Sign out clicked')}>
-                    Sign Out
-                  </button>
-                )}
               </>
             ) : (
-              <Link to="/auth" className="nav-cta">
-                Sign In
-              </Link>
+              <>
+                <Link to="/auth" className="px-4 py-2 text-sm rounded-lg transition-all hover:opacity-80" style={{
+                  background: 'transparent',
+                  border: '1px solid #00D4FF',
+                  color: '#00D4FF'
+                }}>
+                  Sign In
+                </Link>
+                <Link to="/auth/signup" className="px-4 py-2 text-sm rounded-lg transition-all hover:opacity-90" style={{
+                  background: '#FF6B35',
+                  color: '#0A1628',
+                  fontWeight: 600
+                }}>
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
         </div>
-      </nav>
-
-      {/* Voice Modal */}
-      {showVoiceModal && (
-        <div className="voice-modal-overlay" onClick={() => setShowVoiceModal(false)}>
-          <div className="voice-modal" onClick={(e) => e.stopPropagation()}>
-            <button 
-              className="modal-close"
-              onClick={() => setShowVoiceModal(false)}
-            >
-              ✕
-            </button>
-            <h2>🎤 What would you like to build?</h2>
-            {/* <VoiceRecorder 
-              autoStart={true}
-              onTranscript={(transcript) => {
-                console.log('Voice command:', transcript);
-                setShowVoiceModal(false);
-                // Navigate to ACHEEVY with custom intent
-                window.location.href = `/acheevy?intent=${encodeURIComponent(transcript)}`;
-              }} */}
-            <div>Voice Recorder Disabled</div>
-          </div>
-        </div>
-      )}
-    </>
+      </div>
+    </nav>
   );
 };
 

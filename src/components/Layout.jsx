@@ -1,26 +1,22 @@
 import React from 'react';
 import Navbar from './Navbar';
-import ClerkVersionMonitor from './ClerkVersionMonitor';
-// import './Layout.css';
+import Footer from './Footer';
 
+/**
+ * Layout Component - Nurds Code VibeSDK Theme
+ * Obsidian dark background with neon green/cyan accents
+ */
 const Layout = ({ children, isSignedIn, user }) => {
-  const isDev = import.meta.env.MODE === 'development';
-  
-  console.log('🔍 Layout rendering with:', { isSignedIn, user: user?.id || 'null', childrenType: typeof children });
-  
   return (
-    <div className="app-layout" style={{ minHeight: '100vh', background: '#000' }}>
-      <div style={{ padding: '10px', background: '#333', color: '#39FF14', fontSize: '12px' }}>
-        🔍 DEBUG: Layout loaded - Auth: {isSignedIn ? 'YES' : 'NO'} | User: {user?.id || 'null'}
-      </div>
+    <div className="min-h-screen flex flex-col" style={{ 
+      background: 'linear-gradient(180deg, #0A1628 0%, #0F1A2B 50%, #0A1628 100%)',
+      color: '#E2E8F0'
+    }}>
       <Navbar isSignedIn={isSignedIn} user={user} />
-      <main className="main-content">
-        <div style={{ padding: '10px', background: '#444', color: '#39FF14', fontSize: '12px' }}>
-          🔍 DEBUG: Main content area - Children type: {typeof children}
-        </div>
+      <main className="flex-1 pt-16">
         {children}
       </main>
-      {/* {isDev && <ClerkVersionMonitor />} */}
+      <Footer />
     </div>
   );
 };

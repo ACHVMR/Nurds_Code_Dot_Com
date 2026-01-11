@@ -9,8 +9,14 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@clerk/clerk-react';
 import { ChevronRight, Coins, Loader2 } from 'lucide-react';
+
+// Dev mode auth fallback (no Clerk dependency)
+const useAuth = () => ({
+  getToken: async () => null,
+  isSignedIn: import.meta.env.DEV,
+  userId: 'dev-user',
+});
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
