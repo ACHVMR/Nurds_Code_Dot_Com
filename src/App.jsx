@@ -21,6 +21,8 @@ import ACHEEVYIntent from './pages/ACHEEVYIntent';
 import LiveBuildEditor from './pages/LiveBuildEditor';
 import ACHEEVY from './pages/ACHEEVY';
 import TestPermissions from './pages/TestPermissions';
+import ValidationResults from './pages/ValidationResults';
+import Dashboard from './pages/Dashboard';
 
 // Voice-First Platform Pages
 import VoiceProfileSettings from './pages/VoiceProfileSettings';
@@ -100,7 +102,15 @@ function AppContent({ isSignedIn, user, isSuperAdmin, deployEnabled }) {
         <Route path="/editor/:projectId" element={
           isSignedIn ? <LiveBuildEditor /> : <Navigate to="/" />
         } />
-        
+
+        <Route path="/editor/results" element={
+          isSignedIn ? <ValidationResults /> : <Navigate to="/" />
+        } />
+
+        <Route path="/dashboard" element={
+          isSignedIn ? <Dashboard /> : <Navigate to="/" />
+        } />
+
         <Route path="/insights" element={
           isSignedIn ? <DailyInsights /> : <Navigate to="/" />
         } />
@@ -180,20 +190,14 @@ function AppContent({ isSignedIn, user, isSuperAdmin, deployEnabled }) {
 // Main App component that chooses the right auth wrapper
 function App() {
   console.log('🔍 App component rendering...');
-  
-  return (
-    <div style={{ 
-      padding: '20px', 
-      background: '#000', 
-      color: '#39FF14',
-      minHeight: '100vh',
-      fontFamily: 'monospace'
-    }}>
-      <h1>🎉 WORKING VERSION!</h1>
-      <p>App component is rendering successfully!</p>
-      <p>This confirms React Router and basic setup is working.</p>
-    </div>
-  );
+
+  // Try to use auth wrapper, fallback to no-auth for development
+  try {
+    return <AppWithAuth />;
+  } catch (error) {
+    console.warn('Clerk auth not available, using fallback:', error);
+    return <AppWithoutAuth />;
+  }
 }
 
 export default App;
