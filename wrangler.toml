@@ -1,5 +1,5 @@
 name = "nurds-platform-api"
-main = "src/index.ts"
+main = "workers/src/index.ts"
 compatibility_date = "2025-12-11"
 
 [[d1_databases]]
@@ -12,16 +12,14 @@ migrations_dir = "workers/migrations"
 # === Light Core: Cloudflare AI Gateway ===
 AI_GATEWAY_URL = "https://gateway.ai.cloudflare.com/v1/YOUR_ACCOUNT_ID/nurdscode-gateway"
 
-# === Heavy Swarm: GCP Cloud Run Endpoints ===
-# Update these after running scripts/deploy-swarm.sh
-ACHEEVY_ENDPOINT = "https://acheevy-orchestrator-REPLACE_ME.run.app"
-II_RESEARCHER_ENDPOINT = "https://ii-researcher-REPLACE_ME.run.app"
-CODEX_ENDPOINT = "https://codex-agent-REPLACE_ME.run.app"
-COMMON_GROUND_ENDPOINT = "https://common-ground-REPLACE_ME.run.app"
+# === Heavy Swarm: GCP Cloud Run Endpoints (OPTIONAL - Disabled for Cloudflare-only deployment) ===
+# ACHEEVY_ENDPOINT = "https://acheevy-orchestrator-REPLACE_ME.run.app"
+# II_RESEARCHER_ENDPOINT = "https://ii-researcher-REPLACE_ME.run.app"
+# CODEX_ENDPOINT = "https://codex-agent-REPLACE_ME.run.app"
+# COMMON_GROUND_ENDPOINT = "https://common-ground-REPLACE_ME.run.app"
 
-# === GCP Configuration ===
-VERTEX_PROJECT_ID = "nurds-code-gcp-prod"
-VERTEX_LOCATION = "us-central1"
+# === Agent Runtime URL (Optional for Cloudflare-only) ===
+AGENT_RUNTIME_URL = "https://placeholder.example.com"
 
 # === Circuit Box: Plugs (Disabled by default) ===
 ENABLE_HIGGSFIELD = "false"
@@ -43,7 +41,8 @@ AGENT_RUNTIME_TIMEOUT_MS = 300000
 LIGHT_TIMEOUT_MS = 30000
 HEAVY_TIMEOUT_MS = 300000
 
-# === Feature Flags ===
-ENABLE_SWARM = "true"
-ENABLE_ORACLE_FRAMEWORK = "true"
+# === Feature Flags (Cloudflare-only deployment) ===
+ENABLE_SWARM = "false"
+ENABLE_ORACLE_FRAMEWORK = "false"
 ENABLE_KINGMODE = "true"
+CLOUDFLARE_ONLY = "true"
