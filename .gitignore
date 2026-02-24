@@ -13,7 +13,8 @@ build/
 # Misc
 .DS_Store
 .env
-.env*
+.env.local
+.env.*.local
 .dev.vars
 *.pem
 *.key
@@ -38,6 +39,9 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Next.js
+.next/
 
 # Cloudflare
 .wrangler/
