@@ -5,6 +5,7 @@
 
 import { nanoid } from "nanoid";
 import { callOrchestrator, callArchitect, callCoder, callReviewer } from "./agents";
+import type { AgentCallOptions } from "./agents";
 import { Workspace } from "./workspace";
 import type {
   Project,
@@ -57,7 +58,8 @@ function emitStage(emit: Emitter, stage: PipelineStage): void {
 
 export async function runPipeline(
   prompt: string,
-  emit: Emitter
+  emit: Emitter,
+  agentOptions?: AgentCallOptions
 ): Promise<Project> {
   const projectId = nanoid();
   const workspace = new Workspace();
@@ -80,7 +82,7 @@ export async function runPipeline(
     emitMessage(emit, projectId, "orchestrator", "thinking",
       `ACHEEVY analyzing prompt: "${prompt.slice(0, 100)}${prompt.length > 100 ? "..." : ""}"`);
 
-    const specRaw = await callOrchestrator(prompt);
+    const specRaw = await callOrchestrator(prompt, agentOptions);
     let spec: ProjectSpec;
     try {
       const parsed = parseJSON(specRaw) as Record<string, unknown>;
@@ -119,7 +121,7 @@ export async function runPipeline(
     emitMessage(emit, projectId, "architect", "thinking",
       "Architect_Ang designing system architecture...");
 
-    const archRaw = await callArchitect(JSON.stringify(spec, null, 2));
+    const archRaw = await callArchitect(JSON.stringify(spec, null, 2), agentOptions);
     let archPlan: {
       files: { path: string; purpose: string; order: number }[];
       installDeps: string[];
@@ -161,7 +163,8 @@ export async function runPipeline(
         JSON.stringify(spec, null, 2),
         filePlan.path,
         filePlan.purpose,
-        workspace.getProjectFiles()
+        workspace.getProjectFiles(),
+        agentOptions
       );
 
       workspace.writeFile(filePlan.path, code);
@@ -191,7 +194,8 @@ export async function runPipeline(
 
     const reviewRaw = await callReviewer(
       JSON.stringify(spec, null, 2),
-      workspace.getProjectFiles()
+      workspace.getProjectFiles(),
+      agentOptions
     );
 
     let review: {
@@ -223,7 +227,8 @@ export async function runPipeline(
           JSON.stringify(spec, null, 2),
           fixPath,
           `Fix: ${issue.fix}`,
-          workspace.getProjectFiles()
+          workspace.getProjectFiles(),
+          agentOptions
         );
 
         workspace.writeFile(fixPath, fixedCode);
@@ -247,7 +252,8 @@ export async function runPipeline(
           JSON.stringify(spec, null, 2),
           missingPath,
           "Missing file identified during review",
-          workspace.getProjectFiles()
+          workspace.getProjectFiles(),
+          agentOptions
         );
 
         workspace.writeFile(missingPath, newCode);

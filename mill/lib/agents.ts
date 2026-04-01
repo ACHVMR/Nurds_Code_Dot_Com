@@ -1,17 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
-// Agents - Claude-powered agent roles for the Agentic Mill
-// Each agent is Claude with a specialized system prompt and tools
+// Agents - OpenRouter-powered agent roles for the Agentic Mill
+// Supports any OpenRouter-compatible chat model via env config
 // ═══════════════════════════════════════════════════════════════
 
-import Anthropic from "@anthropic-ai/sdk";
-import type { AgentRole, ProjectFile } from "./types";
-import type { Workspace } from "./workspace";
+import type { ProjectFile } from "./types";
 
-const client = new Anthropic();
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_PRIMARY_MODEL = "openai/gpt-5.4";
+const DEFAULT_FALLBACK_MODELS = ["openai/gpt-5.4", "openai/gpt-5.4-mini"];
+const REQUEST_TIMEOUT_MS = 120_000;
 
 // ── System Prompts ──────────────────────────────────────────
 
-const SYSTEM_PROMPTS: Record<string, string> = {
+const SYSTEM_PROMPTS = {
   orchestrator: `You are ACHEEVY, the orchestrator of the Nurds Code Agentic Mill.
 Your job: decompose a user's app idea into a concrete project specification.
 
@@ -93,41 +94,136 @@ Return JSON:
 
 If status is "pass", issues array should be empty.
 Respond ONLY with JSON.`,
+} as const;
+
+type AgentRole = keyof typeof SYSTEM_PROMPTS;
+
+export interface AgentCallOptions {
+  modelOverride?: string;
+  fallbackModelsOverride?: string[];
+}
+
+type OpenRouterMessageContent = string | Array<{ type?: string; text?: string }>;
+
+type OpenRouterResponse = {
+  choices?: Array<{
+    message?: {
+      content?: OpenRouterMessageContent;
+    };
+  }>;
 };
+
+function parseModelList(csv: string | undefined): string[] {
+  if (!csv) return [];
+  return csv
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+}
+
+function resolveModelRouting(role: AgentRole, options?: AgentCallOptions) {
+  const roleKey = `OPENROUTER_MODEL_${role.toUpperCase()}`;
+  const roleSpecificModel = process.env[roleKey];
+  const primaryModel = options?.modelOverride ?? roleSpecificModel ?? process.env.OPENROUTER_MODEL ?? DEFAULT_PRIMARY_MODEL;
+
+  const fallbackModels = Array.from(
+    new Set([
+      primaryModel,
+      ...(options?.fallbackModelsOverride ?? parseModelList(process.env.OPENROUTER_MODELS)),
+      ...DEFAULT_FALLBACK_MODELS,
+    ])
+  );
+
+  return { primaryModel, fallbackModels };
+}
+
+function extractContent(data: OpenRouterResponse): string {
+  const content = data?.choices?.[0]?.message?.content;
+
+  if (typeof content === "string") {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((item) => (item?.type === "text" ? item.text ?? "" : ""))
+      .join("")
+      .trim();
+  }
+
+  return "";
+}
+
+async function callModel({
+  role,
+  userPrompt,
+  maxTokens,
+  options,
+}: {
+  role: AgentRole;
+  userPrompt: string;
+  maxTokens: number;
+  options?: AgentCallOptions;
+}): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not configured");
+
+  const { primaryModel, fallbackModels } = resolveModelRouting(role, options);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  const response = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    signal: controller.signal,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": process.env.OPENROUTER_SITE_URL ?? "http://localhost:3000",
+      "X-Title": process.env.OPENROUTER_APP_NAME ?? "Nurds Agentic Mill",
+    },
+    body: JSON.stringify({
+      model: primaryModel,
+      models: fallbackModels,
+      max_tokens: maxTokens,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPTS[role] },
+        { role: "user", content: userPrompt },
+      ],
+    }),
+  }).finally(() => clearTimeout(timeout));
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter request failed (${response.status}): ${errorText}`);
+  }
+
+  const data = (await response.json()) as OpenRouterResponse;
+  return extractContent(data);
+}
 
 // ── Agent Call Functions ────────────────────────────────────
 
-export async function callOrchestrator(prompt: string): Promise<string> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPTS.orchestrator,
-    messages: [{ role: "user", content: prompt }],
-  });
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
+export async function callOrchestrator(prompt: string, options?: AgentCallOptions): Promise<string> {
+  return callModel({ role: "orchestrator", userPrompt: prompt, maxTokens: 4096, options });
 }
 
-export async function callArchitect(spec: string): Promise<string> {
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 8192,
-    system: SYSTEM_PROMPTS.architect,
-    messages: [{ role: "user", content: `Project specification:\n${spec}` }],
+export async function callArchitect(spec: string, options?: AgentCallOptions): Promise<string> {
+  return callModel({
+    role: "architect",
+    userPrompt: `Project specification:\n${spec}`,
+    maxTokens: 8192,
+    options,
   });
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
 }
 
 export async function callCoder(
   spec: string,
   filePath: string,
   purpose: string,
-  existingFiles: ProjectFile[]
+  existingFiles: ProjectFile[],
+  options?: AgentCallOptions
 ): Promise<string> {
-  const contextStr = existingFiles
-    .map((f) => `=== ${f.path} ===\n${f.content}`)
-    .join("\n\n");
+  const contextStr = existingFiles.map((f) => `=== ${f.path} ===\n${f.content}`).join("\n\n");
 
   const prompt = `Project specification:
 ${spec}
@@ -139,35 +235,16 @@ ${existingFiles.length > 0 ? `Already written files for context:\n${contextStr}`
 
 Write the complete content for ${filePath}:`;
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 8192,
-    system: SYSTEM_PROMPTS.coder,
-    messages: [{ role: "user", content: prompt }],
-  });
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
+  return callModel({ role: "coder", userPrompt: prompt, maxTokens: 8192, options });
 }
 
-export async function callReviewer(
-  spec: string,
-  files: ProjectFile[]
-): Promise<string> {
-  const filesStr = files
-    .map((f) => `=== ${f.path} ===\n${f.content}`)
-    .join("\n\n");
+export async function callReviewer(spec: string, files: ProjectFile[], options?: AgentCallOptions): Promise<string> {
+  const filesStr = files.map((f) => `=== ${f.path} ===\n${f.content}`).join("\n\n");
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPTS.reviewer,
-    messages: [
-      {
-        role: "user",
-        content: `Project specification:\n${spec}\n\nProject files:\n${filesStr}`,
-      },
-    ],
+  return callModel({
+    role: "reviewer",
+    userPrompt: `Project specification:\n${spec}\n\nProject files:\n${filesStr}`,
+    maxTokens: 4096,
+    options,
   });
-  const block = response.content[0];
-  return block.type === "text" ? block.text : "";
 }

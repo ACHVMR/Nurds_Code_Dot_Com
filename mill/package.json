@@ -2,15 +2,15 @@
   "name": "nurds-agentic-mill",
   "version": "0.1.0",
   "private": true,
-  "description": "Agentic Mill - Prompt to Deployment pipeline powered by Claude",
+  "description": "Agentic Mill - Prompt to Deployment pipeline powered by OpenRouter",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cli": "node ./bin/mill-cli.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.39.0",
     "@monaco-editor/react": "^4.7.0",
     "@xterm/xterm": "^5.5.0",
     "@xterm/addon-fit": "^0.10.0",

@@ -5,7 +5,7 @@
 export type AgentRole =
   | "orchestrator"   // ACHEEVY - decomposes intent, manages pipeline
   | "architect"      // Architect_Ang - system design, file structure
-  | "coder"          // Coding_Ang - code generation via Claude tool use
+  | "coder"          // Coding_Ang - code generation via OpenRouter models
   | "tester"         // Testing_Ang - test generation and execution
   | "reviewer"       // Review_Ang - code review, quality gates
   | "deployer";      // Forge_Ang - build and deployment
